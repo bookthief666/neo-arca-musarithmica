@@ -1,0 +1,44 @@
+name: hardening-ci
+
+on:
+  push:
+    branches:
+      - feature/m0-history-phase1-hardening-gpt-b8
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Record runtime
+        run: |
+          python --version
+          python - <<'PY'
+          import music21, pydantic, fastapi, uvicorn, pytest, httpx
+          print('music21', music21.VERSION_STR)
+          print('pydantic', pydantic.__version__)
+          print('fastapi', fastapi.__version__)
+          print('uvicorn', uvicorn.__version__)
+          print('pytest', pytest.__version__)
+          print('httpx', httpx.__version__)
+          PY
+          pip freeze | sort > pip-freeze.txt
+      - name: Run full suite
+        run: pytest -q
+      - name: Upload dependency snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-freeze-py311
+          path: pip-freeze.txt
+          if-no-files-found: ignore
