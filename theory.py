@@ -228,6 +228,13 @@ _ACCIDENTAL_ALTER: Dict[str, int] = {
 }
 _ALTER_SUFFIX: Dict[int, str] = {-2: "bb", -1: "b", 0: "", 1: "#", 2: "##"}
 
+#: Circle-of-fifths position of each natural letter.  Each sharp adds seven
+#: positions, each flat subtracts seven, so the signature follows from how the
+#: final is *spelled* rather than from which key it sounds.
+_LETTER_FIFTHS: Dict[str, int] = {
+    "F": -1, "C": 0, "G": 1, "D": 2, "A": 3, "E": 4, "B": 5,
+}
+
 #: Tonics the engine is willing to choose on its own -- readable key signatures only.
 CANDIDATE_TONICS: Tuple[str, ...] = ("C", "D", "Eb", "E", "F", "G", "A", "Bb")
 
@@ -304,18 +311,38 @@ class Speller:
         self._prefer_sharps = self.signature_sharps() >= 0
 
     def signature_sharps(self) -> int:
-        """Signed key-signature count: positive = sharps, negative = flats."""
-        # Circle-of-fifths position of the final, then the mode's own offset.
-        fifths = {0: 0, 7: 1, 2: 2, 9: 3, 4: 4, 11: 5, 6: 6, 1: 7,
-                  8: -4, 3: -3, 10: -2, 5: -1}
-        base = fifths[self.tonic_pc]
-        total = base + self.mode.signature_offset
-        # Keep within a writable range by enharmonic wrap.
+        """Signed key-signature count: positive = sharps, negative = flats.
+
+        Derived from the final's **spelling**, not its pitch class.  Keying this on the
+        pitch class collapses every enharmonic pair -- C# with Db, F# with Gb, G# with
+        Ab, D# with Eb, A# with Bb -- and worse, it picked one arbitrary member of each
+        pair, so G# Ionian was reported as four flats when it is eight sharps.
+
+        The value is the true circle-of-fifths position and may legitimately exceed the
+        seven accidentals a conventional signature can write; see
+        :meth:`notatable_signature` for the value notation and MIDI can carry.
+        """
+        letter = self.tonic[0].upper()
+        alter = _ACCIDENTAL_ALTER[self.tonic[1:]]
+        return _LETTER_FIFTHS[letter] + 7 * alter + self.mode.signature_offset
+
+    def notatable_signature(self) -> int:
+        """The signature wrapped into the +/-7 a staff and a MIDI file can express.
+
+        Twelve steps around the circle of fifths is an enharmonic respelling, so wrapping
+        by twelve keeps the sounding pitches while giving up the theoretically exact
+        spelling.  Some mode-and-final combinations genuinely need more than seven
+        accidentals -- Db Aeolian wants eight flats -- and no staff can write those.
+        """
+        total = self.signature_sharps()
         while total > 7:
             total -= 12
         while total < -7:
             total += 12
         return total
+
+    def signature_is_notatable(self) -> bool:
+        return abs(self.signature_sharps()) <= 7
 
     def spell(self, midi: int) -> SpelledPitch:
         pc = midi % 12

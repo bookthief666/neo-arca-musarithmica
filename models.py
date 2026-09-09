@@ -279,7 +279,19 @@ class ScoreModel(BaseModel):
     duration_seconds: float
     law_profile: str
     key_signature_sharps: int = Field(
-        ..., description="Signed: positive is sharps, negative is flats."
+        ...,
+        description="Signed circle-of-fifths position of the final AS SPELLED: positive "
+                    "is sharps, negative is flats. Derived from the spelling, so C# and "
+                    "Db differ (7 sharps against 5 flats). May exceed 7 -- G# Ionian is "
+                    "genuinely 8 sharps.",
+    )
+    key_signature_notatable: int = Field(
+        ...,
+        description="The same signature wrapped into the +/-7 a staff and a MIDI file "
+                    "can express. Equal to key_signature_sharps unless that exceeds 7.",
+    )
+    key_signature_is_notatable: bool = Field(
+        ..., description="False when the true signature needs more than 7 accidentals."
     )
     musica_ficta_pitch_classes: List[int]
     progression: List[str]
@@ -509,6 +521,8 @@ def build_compose_response(composition: Any, midi_base64: str) -> ComposeRespons
             duration_seconds=round(composition.duration_seconds, 3),
             law_profile=composition.profile.name,
             key_signature_sharps=speller.signature_sharps(),
+            key_signature_notatable=speller.notatable_signature(),
+            key_signature_is_notatable=speller.signature_is_notatable(),
             musica_ficta_pitch_classes=sorted(plan.ficta_pcs),
             progression=plan.progression(),
             phrases=[

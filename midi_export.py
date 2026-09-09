@@ -85,7 +85,9 @@ def build_part(
     part.insert(0.0, inst)
 
     part.insert(0.0, _CLEFS[voice]())
-    part.insert(0.0, key.KeySignature(speller.signature_sharps()))
+    # A staff and a MIDI key-signature meta event can only carry +/-7 accidentals;
+    # G# Ionian's true eight sharps has to be written enharmonically.
+    part.insert(0.0, key.KeySignature(speller.notatable_signature()))
     part.insert(0.0, m21meter.TimeSignature(config.meter))
     if lead:
         part.insert(0.0, m21tempo.MetronomeMark(number=config.tempo))
