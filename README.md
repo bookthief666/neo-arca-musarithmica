@@ -46,6 +46,11 @@ pytest -q
 uvicorn main:app --reload
 ```
 
+For a reproducible install — the exact versions this was developed and tested against,
+including transitive dependencies — use `requirements.lock.txt` instead:
+`pip install -r requirements.lock.txt`. See `docs/DETERMINISM.md` for what that does and
+does not guarantee about byte-identical output across environments.
+
 Interactive documentation is at <http://127.0.0.1:8000/docs>.
 
 ```bash
