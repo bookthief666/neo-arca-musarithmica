@@ -15,9 +15,17 @@ signature.  The engine does the same, records the raised pitch class in
 ``HarmonicPlan.ficta_pcs``, and exempts it from the "chromatic alteration" rule.
 
 **Modes without a usable dominant.**  Phrygian closes with the flat-second triad falling
-a semitone in the bass.  Locrian has no perfect fifth above its final at all; its
-strongest available close is IV -> i(diminished), which is deliberately unstable and is
-reported with a reduced cadence ceiling rather than being faked into stability.
+a semitone in the bass.  Locrian has no perfect fifth above its final at all, and our
+answer -- IV -> i(diminished) -- is a **Neo-Arca invention with no historical warrant**:
+Locrian was not a practical mode in this repertoire and nothing in the period cadences
+onto a diminished final.  It exists so that a mode our own system offers has some way to
+stop, and it is reported with a reduced cadence ceiling rather than faked into stability.
+
+**Cadences here are chord pairs, not clausulae.**  Historically a cadence in this
+repertoire is a dyadic, contrapuntal event; we select pairs of scale degrees and let the
+voicing solver find the voices.  :data:`CADENCE_PROVENANCE` records, per formula, exactly
+how much each is entitled to claim, and ``docs/PROVENANCE.md`` section 3 explains the
+difference.
 """
 
 from __future__ import annotations
@@ -144,6 +152,32 @@ class CadenceKind(str, Enum):
     SUSPENDED = "suspended"            # Heretical: closes on an alien triad
 
 
+@dataclass(frozen=True)
+class CadenceProvenance:
+    """How much historical authority a cadence formula actually carries.
+
+    Recorded in code rather than only in prose, because the code's own vocabulary is what
+    overstates things: naming a chord pair "phrygian" invites the reading that we have
+    implemented the historical cadence, and we have not.
+
+    In this repertoire a cadence is a **clausula** -- a dyadic, intervallic event, not a
+    chordal one.  Two voices approach an octave or unison by step: the *cantizans* rises
+    by semitone, the *tenorizans* falls by step, and the *bassizans*, a third below the
+    tenorizans, leaps down a fourth or up a fifth.  The identity of the cadence lives in
+    that voice-leading.
+
+    We select cadences as **pairs of scale degrees** and let the voicing solver find the
+    voices, constrained only by the leading-tone rule.  That reproduces the harmonic
+    gesture and, at the Phrygian close, the characteristic descending semitone in the
+    bass -- but it does not implement the clausulae, and nothing here should claim it
+    does.  See ``docs/PROVENANCE.md`` section 3.
+    """
+
+    #: H1 = period practice, implemented approximately.  N1 = our own construction.
+    classification: str
+    note: str
+
+
 #: (penultimate degree, final degree) for the diatonic cadence kinds.  ``None`` in the
 #: final slot means "the phrase simply stops here", used by the half cadence.
 _CADENCE_DEGREES: Dict[CadenceKind, Tuple[Optional[int], Optional[int]]] = {
@@ -154,6 +188,62 @@ _CADENCE_DEGREES: Dict[CadenceKind, Tuple[Optional[int], Optional[int]]] = {
     CadenceKind.HALF: (0, 4),
     CadenceKind.DECEPTIVE: (4, 5),
 }
+
+
+#: What each cadence formula is actually entitled to claim.
+CADENCE_PROVENANCE: Dict[CadenceKind, CadenceProvenance] = {
+    CadenceKind.AUTHENTIC: CadenceProvenance(
+        "H1",
+        "Degree V to the final, with musica ficta raising the third where the mode's "
+        "seventh is flat. The practice is documented for the period; the chord-pair "
+        "implementation is ours, and the cantizans is enforced only as a leading-tone "
+        "resolution rule.",
+    ),
+    CadenceKind.PHRYGIAN: CadenceProvenance(
+        "N1",
+        "The flat-second triad falling to the final. The descending semitone in the bass "
+        "is the characteristic gesture of the historical mi cadence and our output does "
+        "produce it, but the cadence is realised as a chord pair, not as the contrapuntal "
+        "clausulae that actually define it.",
+    ),
+    CadenceKind.PLAGAL: CadenceProvenance(
+        "N1",
+        "Degree IV to the final. Scholarship notes that many apparent plagal cadences in "
+        "this repertoire lack the melodic clausulae defining the other types, so treating "
+        "IV-I as a cadence formula is a modern reading.",
+    ),
+    CadenceKind.PLAGAL_DIMINISHED: CadenceProvenance(
+        "N1",
+        "Locrian IV to a diminished final. No historical warrant whatsoever: Locrian was "
+        "not a practical mode, and nothing in the period cadences onto a diminished "
+        "final. Invented so that a mode our own system offers has some way to stop.",
+    ),
+    CadenceKind.HALF: CadenceProvenance(
+        "N1",
+        "Stopping the phrase on degree V. The half cadence is a functional-tonal "
+        "concept: it depends on hearing the dominant as an unresolved tension pointing "
+        "back to a tonic, which is not how a modal repertoire organised around clausulae "
+        "works. Used here as a phrase-level breathing mark.",
+    ),
+    CadenceKind.DECEPTIVE: CadenceProvenance(
+        "N1",
+        "Degree V moving to vi instead of the final. Like the half cadence this is a "
+        "functional-tonal device -- it means something only if the listener already "
+        "expects V to resolve to I. Used here to keep interior phrases from all closing "
+        "the same way.",
+    ),
+    CadenceKind.TRITONE_FALL: CadenceProvenance(
+        "HAERETIC", "A Modus Haereticus close. Invented, and declared as such.",
+    ),
+    CadenceKind.SUSPENDED: CadenceProvenance(
+        "HAERETIC",
+        "A Modus Haereticus close that refuses the final altogether. Invented.",
+    ),
+}
+
+
+def cadence_provenance(cadence: CadenceKind) -> CadenceProvenance:
+    return CADENCE_PROVENANCE[cadence]
 
 
 def full_close_for(mode: ModeName) -> CadenceKind:
@@ -543,6 +633,7 @@ def _cadence_tail(
 
 __all__ = [
     "Quality", "Triad", "diatonic_triad", "apply_ficta", "chromatic_triad",
-    "CadenceKind", "full_close_for", "ORTHODOX_TRANSITIONS", "HERETICAL_ROOT_MOVES",
+    "CadenceKind", "CadenceProvenance", "CADENCE_PROVENANCE",
+    "cadence_provenance", "full_close_for", "ORTHODOX_TRANSITIONS", "HERETICAL_ROOT_MOVES",
     "Phrase", "HarmonicSlot", "HarmonicPlan", "build_plan", "ROMAN",
 ]

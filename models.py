@@ -254,6 +254,17 @@ class PhraseModel(BaseModel):
     first_slot: int
     last_slot: int
     cadence: str
+    cadence_provenance: str = Field(
+        ...,
+        description="How much historical authority this formula carries. 'H1' = period "
+                    "practice implemented approximately; 'N1' = a Neo-Arca construction; "
+                    "'HAERETIC' = a declared transgression. Cadences here are chord "
+                    "pairs, not the contrapuntal clausulae that historically define "
+                    "them -- see docs/PROVENANCE.md section 3.",
+    )
+    cadence_note: str = Field(
+        ..., description="What this particular formula does and does not claim."
+    )
 
 
 class HarmonicSlotModel(BaseModel):
@@ -496,6 +507,7 @@ class ErrorResponse(BaseModel):
 
 def build_compose_response(composition: Any, midi_base64: str) -> ComposeResponse:
     """Project a :class:`kircher_engine.Composition` onto the wire format."""
+    from harmony import cadence_provenance
     from theory import Speller  # local import keeps models.py free of engine imports
 
     speller = Speller(composition.config.tonic, composition.config.mode)
@@ -533,6 +545,8 @@ def build_compose_response(composition: Any, midi_base64: str) -> ComposeRespons
                     first_slot=p.first_slot,
                     last_slot=p.last_slot,
                     cadence=p.cadence.value,
+                    cadence_provenance=cadence_provenance(p.cadence).classification,
+                    cadence_note=cadence_provenance(p.cadence).note,
                 )
                 for p in plan.phrases
             ],
