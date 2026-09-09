@@ -197,7 +197,11 @@ class MusicalFrame:
     mode: ModeName
     ranges: Mapping[Voice, VoiceRange]
     scale_pcs: FrozenSet[int]
-    ficta_pcs: FrozenSet[int] = frozenset()
+    #: Slot index -> the pitch classes *musica ficta* licenses **at that slot only**.
+    #: Ficta is a cadential inflection, not a change of scale: a seventh raised to lead
+    #: into one cadence remains a chromatic alteration if it sounds anywhere else, and
+    #: must not become a freely available ornamental tone for the rest of the piece.
+    ficta_by_slot: Mapping[int, FrozenSet[int]] = field(default_factory=dict)
 
     @classmethod
     def build(
@@ -205,15 +209,28 @@ class MusicalFrame:
         tonic_pc: int,
         mode: ModeName,
         ranges: Mapping[Voice, VoiceRange],
-        ficta_pcs: Iterable[int] = (),
+        ficta_by_slot: Optional[Mapping[int, Iterable[int]]] = None,
     ) -> "MusicalFrame":
         return cls(
             tonic_pc=tonic_pc,
             mode=mode,
             ranges=ranges,
             scale_pcs=frozenset(scale_pcs(tonic_pc, mode)),
-            ficta_pcs=frozenset(ficta_pcs),
+            ficta_by_slot={
+                index: frozenset(pcs)
+                for index, pcs in (ficta_by_slot or {}).items()
+            },
         )
+
+    def licensed_ficta(self, slot_index: int) -> FrozenSet[int]:
+        """Pitch classes raised by ficta that are admissible at *slot_index*."""
+        return self.ficta_by_slot.get(slot_index, frozenset())
+
+    @property
+    def ficta_pcs(self) -> FrozenSet[int]:
+        """Every ficta pitch class used anywhere -- for reporting only, never for rules."""
+        return frozenset().union(*self.ficta_by_slot.values()) if self.ficta_by_slot \
+            else frozenset()
 
 
 @dataclass(frozen=True)
@@ -396,9 +413,12 @@ def rule_vertical_intervals(
 
 
 def rule_chromatic(ctx: MomentContext, frame: MusicalFrame) -> Iterable[RuleFinding]:
+    # Ficta is licensed only where the cadence called for it, so the exemption is looked
+    # up per slot rather than applied to the whole composition.
+    licensed = frame.licensed_ficta(ctx.current.slot_index)
     for voice in VOICE_ORDER:
         pc = ctx.current.pitch(voice) % 12
-        if pc in frame.scale_pcs or pc in frame.ficta_pcs:
+        if pc in frame.scale_pcs or pc in licensed:
             continue
         yield RuleFinding(
             Rules.CHROMATIC_ALTERATION, (voice.value,), ctx.current.offset,

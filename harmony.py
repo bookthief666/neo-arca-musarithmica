@@ -262,6 +262,21 @@ class HarmonicPlan:
     def total_ql(self) -> float:
         return self.measures * self.meter.measure_ql
 
+    def ficta_by_slot(self) -> Dict[int, FrozenSet[int]]:
+        """Which slots license which raised pitch classes.
+
+        *Musica ficta* is a cadential inflection, not a change of scale.  The raised
+        seventh belongs to the cadence that needs a leading tone; the same pitch class
+        sounding elsewhere in the piece is an ordinary chromatic alteration and must
+        still be reported as one.  ``ficta_pcs`` (the union) remains available for
+        reporting, but the engine and the rules work from this per-slot licence.
+        """
+        return {
+            slot.index: frozenset({slot.triad.third_pc})
+            for slot in self.slots
+            if slot.triad.ficta
+        }
+
     def progression(self) -> List[str]:
         return [slot.triad.label for slot in self.slots]
 

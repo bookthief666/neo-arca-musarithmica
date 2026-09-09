@@ -53,7 +53,7 @@ def build_solver(budget: SearchBudget, **overrides):
     )
     ranges = {v: shifted_range(v, config.register_shift) for v in VOICE_ORDER}
     frame = MusicalFrame.build(
-        config.tonic_pc, config.mode, ranges, ficta_pcs=plan.ficta_pcs
+        config.tonic_pc, config.mode, ranges, ficta_by_slot=plan.ficta_by_slot()
     )
     stats = SearchStats(slots=len(plan.slots))
     solver = VoicingSolver(

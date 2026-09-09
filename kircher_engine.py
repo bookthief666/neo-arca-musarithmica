@@ -33,7 +33,7 @@ from __future__ import annotations
 import math
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, FrozenSet, List, Optional, Sequence, Tuple
 
 import constraints as law
 from constraints import (
@@ -633,20 +633,30 @@ class DiminutionEngine:
         self.config = config
         self.stream = stream
         self.stats = stats
-        self._scale_cache: Dict[Voice, Tuple[int, ...]] = {}
+        self._scale_cache: Dict[Tuple[Voice, FrozenSet[int]], Tuple[int, ...]] = {}
 
-    def _scale(self, voice: Voice) -> Tuple[int, ...]:
-        cached = self._scale_cache.get(voice)
+    def _scale(self, voice: Voice, slot_index: int) -> Tuple[int, ...]:
+        """The ornamental pitches available to *voice* **at this slot**.
+
+        A cadential ficta pitch is part of the scale only where the cadence licensed it.
+        Letting it into the pool for the whole piece would quietly turn a raised seventh
+        into an unrestricted passing and neighbour tone everywhere.
+        """
+        licensed = self.frame.licensed_ficta(slot_index)
+        key = (voice, licensed)
+        cached = self._scale_cache.get(key)
         if cached is None:
             vr = self.frame.ranges[voice]
-            pcs = set(self.frame.scale_pcs) | set(self.frame.ficta_pcs)
+            pcs = set(self.frame.scale_pcs) | set(licensed)
             cached = tuple(pitches_in_range(pcs, vr.low, vr.high))
-            self._scale_cache[voice] = cached
+            self._scale_cache[key] = cached
         return cached
 
-    def _step_from(self, voice: Voice, pitch: int, direction: int) -> Optional[int]:
+    def _step_from(
+        self, voice: Voice, pitch: int, direction: int, slot_index: int
+    ) -> Optional[int]:
         """The next scale pitch above (+1) or below (-1) *pitch*, if it exists."""
-        scale = self._scale(voice)
+        scale = self._scale(voice, slot_index)
         if direction > 0:
             for p in scale:
                 if p > pitch:
@@ -657,8 +667,10 @@ class DiminutionEngine:
                 return p
         return None
 
-    def _between(self, voice: Voice, low: int, high: int) -> Optional[int]:
-        for p in self._scale(voice):
+    def _between(
+        self, voice: Voice, low: int, high: int, slot_index: int
+    ) -> Optional[int]:
+        for p in self._scale(voice, slot_index):
             if low < p < high:
                 return p
         return None
@@ -731,7 +743,9 @@ class DiminutionEngine:
             target = following.pitch(voice)
             gap = target - pitch
             if 3 <= abs(gap) <= 4:
-                mid = self._between(voice, min(pitch, target), max(pitch, target))
+                mid = self._between(
+                    voice, min(pitch, target), max(pitch, target), slot.index
+                )
                 if mid is not None:
                     options.append((
                         "passing",
@@ -741,7 +755,7 @@ class DiminutionEngine:
                     ))
             elif gap == 0:
                 direction = 1 if picker.chance(0.5) else -1
-                neighbour = self._step_from(voice, pitch, direction)
+                neighbour = self._step_from(voice, pitch, direction, slot.index)
                 if neighbour is not None and vr.contains(neighbour):
                     options.append((
                         "neighbour",
@@ -792,7 +806,9 @@ class DiminutionEngine:
                     3.6 * rate,
                 ))
             if following is not None:
-                escape = self._step_from(voice, pitch, 1 if picker.chance(0.5) else -1)
+                escape = self._step_from(
+                    voice, pitch, 1 if picker.chance(0.5) else -1, slot.index
+                )
                 if escape is not None and vr.contains(escape):
                     options.append((
                         "escape",
@@ -1235,7 +1251,7 @@ class KircherEngine:
         )
         ranges = {v: shifted_range(v, config.register_shift) for v in VOICE_ORDER}
         frame = MusicalFrame.build(
-            config.tonic_pc, config.mode, ranges, ficta_pcs=plan.ficta_pcs
+            config.tonic_pc, config.mode, ranges, ficta_by_slot=plan.ficta_by_slot()
         )
 
         stats = SearchStats(slots=len(plan.slots))
