@@ -117,16 +117,36 @@ def weakened_orthodox():
     return dataclasses.replace(ORTHODOX, policies=policies)
 
 
+#: Searched rather than pinned: which seed first yields a parallel depends on the seed
+#: derivation, which legitimately moves when ENGINE_VERSION changes.
+DEFECT_CANDIDATES = [(mode, seed) for mode in ("ionian", "dorian", "aeolian")
+                     for seed in range(6)]
+
+
+def first_refusal(engine):
+    for mode, seed in DEFECT_CANDIDATES:
+        try:
+            engine.compose(
+                text="a solemn procession through the vaults", seed=seed, mode=mode,
+                measures=8, heretical=False,
+            )
+        except GenerationError as error:
+            if error.diagnostics.get("defects"):
+                return mode, seed, error
+    return None
+
+
 def test_a_composition_containing_defects_is_refused_not_returned(monkeypatch):
     monkeypatch.setattr(
         kircher_engine, "get_profile", lambda heretical: weakened_orthodox()
     )
-    with pytest.raises(GenerationError) as caught:
-        KircherEngine().compose(
-            text="a solemn procession through the vaults", seed=3, mode="ionian",
-            measures=8, heretical=False,
-        )
-    diagnostics = caught.value.diagnostics
+    refusal = first_refusal(KircherEngine())
+    assert refusal is not None, (
+        "removing the parallel prohibition produced no parallels anywhere in the "
+        "candidate matrix; this test can no longer exercise the refusal path"
+    )
+    _, _, error = refusal
+    diagnostics = error.diagnostics
     assert diagnostics["defects"], "the failure must say what was wrong"
     assert all(d["intent"] == "defect" for d in diagnostics["defects"])
     assert {d["rule"] for d in diagnostics["defects"]} & {
@@ -139,9 +159,12 @@ def test_the_refusal_reaches_the_api_as_a_structured_error(client, monkeypatch):
     monkeypatch.setattr(
         kircher_engine, "get_profile", lambda heretical: weakened_orthodox()
     )
+    refusal = first_refusal(KircherEngine())
+    assert refusal is not None, "no configuration exercises the refusal path"
+    mode, seed, _ = refusal
     response = client.post("/compose", json={
-        "text": "a solemn procession through the vaults", "seed": 3,
-        "mode": "ionian", "measures": 8,
+        "text": "a solemn procession through the vaults", "seed": seed,
+        "mode": mode, "measures": 8,
     })
     assert response.status_code == 500
     body = response.json()

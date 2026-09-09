@@ -425,6 +425,12 @@ class ProvenanceModel(BaseModel):
     requested_seed: Optional[Union[int, str]]
     law_profile: str
     config_fingerprint: str
+    runtime: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Python and music21 versions this was produced on. The engine "
+                    "chooses the same notes on any runtime; these versions scope the "
+                    "stronger claim that the MIDI bytes are identical too.",
+    )
 
 
 class ConfigurationModel(BaseModel):

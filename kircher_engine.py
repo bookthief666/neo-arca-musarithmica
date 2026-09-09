@@ -40,7 +40,9 @@ from constraints import (
     ConstraintProfile, MomentContext, MusicalFrame, RuleViolation, Rules, Severity,
     Sonority, ValidationReport, get_profile, validate,
 )
-from determinism import Provenance, SeedStream, coerce_seed, fingerprint, stable_hash
+from determinism import (
+    Provenance, SeedStream, coerce_seed, fingerprint, runtime_versions, stable_hash,
+)
 from harmony import HarmonicPlan, HarmonicSlot, build_plan
 from rhythm import MIN_EVENT_QL, diminution_probability, meter_spec
 from semantics import ARTICULATIONS, INSTRUMENTS, SemanticAnalysis, SemanticAnalyzer
@@ -50,7 +52,10 @@ from theory import (
 )
 
 ENGINE_NAME = "neo-arca-musarithmica"
-ENGINE_VERSION = "1.0.0"
+#: Bumped whenever a change alters the notes produced for an unchanged request.
+#: 1.1.0 replaced repr()-based hashing with canonical serialisation (see
+#: determinism.canonical), which moves every derived seed and therefore the music.
+ENGINE_VERSION = "1.1.0"
 
 
 class GenerationError(RuntimeError):
@@ -1468,6 +1473,7 @@ class KircherEngine:
                 requested_seed=seed,
                 law_profile=profile.name,
                 config_fingerprint=config_fp,
+                runtime=runtime_versions(),
             ),
             structural=structural,
             rendered=grid,

@@ -14,9 +14,12 @@ compositions.  Two things follow, and this module enforces both:
 from __future__ import annotations
 
 import hashlib
+import json
+import platform
 import random
 from dataclasses import dataclass
-from typing import Any, List, Mapping, Sequence, TypeVar
+from enum import Enum
+from typing import Any, Dict, List, Mapping, Sequence, TypeVar
 
 T = TypeVar("T")
 
@@ -25,15 +28,73 @@ _SEED_BITS = 64
 _SEED_MASK = (1 << _SEED_BITS) - 1
 
 
+class CanonicalisationError(TypeError):
+    """Raised when a value cannot be serialised deterministically.
+
+    Deliberately loud.  Silently falling back on ``repr`` for an unrecognised type is how
+    a hash starts depending on something that was never meant to be part of it.
+    """
+
+
+def canonical(value: Any) -> str:
+    """A deterministic textual form of *value*, independent of ``repr``.
+
+    ``repr`` is not a serialisation format and must not be treated as one:
+
+    * ``repr(ModeName.IONIAN)`` is ``"<ModeName.IONIAN: 'ionian'>"`` -- it embeds the
+      class name and the interpreter's enum formatting, both of which have changed
+      between Python releases;
+    * ``repr({"a": 1, "b": 2})`` differs from ``repr({"b": 2, "a": 1})``, so two equal
+      configurations could hash differently purely from insertion order;
+    * float formatting is stable in current CPython but is not a language guarantee.
+
+    So mappings are emitted with sorted keys, sets are sorted, enums reduce to their
+    value, floats are written with enough digits to round-trip exactly, and anything not
+    explicitly understood raises rather than being guessed at.
+    """
+    return json.dumps(
+        _normalise(value), sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True, allow_nan=False,
+    )
+
+
+def _normalise(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, float):
+        if value != value or value in (float("inf"), float("-inf")):
+            raise CanonicalisationError(f"cannot canonicalise non-finite float {value!r}")
+        # 17 significant digits round-trips any IEEE double exactly; normalise -0.0 so it
+        # cannot hash differently from 0.0.
+        return f"{value + 0.0:.17g}"
+    if isinstance(value, Enum):
+        # The *value* is the semantic content; the class name is an implementation
+        # detail that renaming should not change the music.
+        return _normalise(value.value)
+    if isinstance(value, (bytes, bytearray)):
+        return value.hex()
+    if isinstance(value, Mapping):
+        return {str(k): _normalise(v) for k, v in value.items()}
+    if isinstance(value, (set, frozenset)):
+        return sorted(canonical(v) for v in value)
+    if isinstance(value, Sequence):
+        return [_normalise(v) for v in value]
+    raise CanonicalisationError(
+        f"no deterministic form defined for {type(value).__name__}; add one to "
+        f"determinism._normalise rather than relying on repr()"
+    )
+
+
 def stable_hash(*parts: Any) -> int:
     """A stable, cross-process, cross-version integer hash of *parts*.
 
     ``hash()`` is deliberately avoided: CPython randomises string hashing per process,
-    which would silently break reproducibility between requests.
+    which would silently break reproducibility between requests.  Each part is
+    canonicalised (see :func:`canonical`) rather than ``repr``-ed.
     """
     digest = hashlib.blake2b(digest_size=16)
     for part in parts:
-        digest.update(repr(part).encode("utf-8"))
+        digest.update(canonical(part).encode("utf-8"))
         digest.update(b"\x1f")  # unit separator, so ("ab","c") != ("a","bc")
     return int.from_bytes(digest.digest(), "big") & _SEED_MASK
 
@@ -62,6 +123,8 @@ class Provenance:
     requested_seed: "int | str | None"
     law_profile: str
     config_fingerprint: str
+    #: Versions the byte-identical MIDI claim is scoped to.  Not part of the seed.
+    runtime: Mapping[str, str] = ()
 
     def as_dict(self) -> dict:
         return {
@@ -70,19 +133,38 @@ class Provenance:
             "requested_seed": self.requested_seed,
             "law_profile": self.law_profile,
             "config_fingerprint": self.config_fingerprint,
+            "runtime": dict(self.runtime),
         }
 
 
 def fingerprint(payload: Mapping[str, Any]) -> str:
-    """A short, stable hex fingerprint of a configuration mapping."""
-    items = sorted((str(k), repr(v)) for k, v in payload.items())
-    digest = hashlib.blake2b(digest_size=8)
-    for key, value in items:
-        digest.update(key.encode("utf-8"))
-        digest.update(b"=")
-        digest.update(value.encode("utf-8"))
-        digest.update(b";")
+    """A short, stable hex fingerprint of a configuration mapping.
+
+    Canonicalised, so two configurations that are equal fingerprint identically no matter
+    what order their keys were built in.
+    """
+    digest = hashlib.blake2b(canonical(payload).encode("utf-8"), digest_size=8)
     return digest.hexdigest()
+
+
+def runtime_versions() -> Dict[str, str]:
+    """The versions a byte-identical reproduction depends on.
+
+    Recorded in provenance, and deliberately **not** hashed into the seed: the same
+    request must choose the same notes on any machine.  What these versions affect is the
+    final serialisation -- music21 decides how a score becomes MIDI bytes -- so they bound
+    the *byte-identical* claim, not the *same-composition* claim.  See
+    ``docs/DETERMINISM.md``.
+    """
+    try:
+        from music21 import VERSION_STR as music21_version
+    except Exception:  # pragma: no cover - music21 is a hard dependency
+        music21_version = "unknown"
+    return {
+        "python": platform.python_version(),
+        "music21": music21_version,
+        "implementation": platform.python_implementation(),
+    }
 
 
 class SeedStream:
@@ -192,4 +274,5 @@ class SeedStream:
 
 __all__ = [
     "stable_hash", "coerce_seed", "fingerprint", "Provenance", "SeedStream",
+    "canonical", "CanonicalisationError", "runtime_versions",
 ]

@@ -231,9 +231,11 @@ def test_the_conditional_preferences_are_genuinely_reachable():
     """Documented as needing particular semantics -- so drive those semantics."""
     tally = collections.Counter()
     for text in ("forbidden abyss unresolved endless drift",
-                 "broken endless mist unresolved"):
-        for mode in (ModeName.LOCRIAN, ModeName.PHRYGIAN, ModeName.AEOLIAN):
-            for seed in (0, 1, 2, 3):
+                 "broken endless mist unresolved",
+                 "chaos madness fracture unresolved endless"):
+        for mode in (ModeName.IONIAN, ModeName.LYDIAN, ModeName.LOCRIAN,
+                     ModeName.PHRYGIAN, ModeName.AEOLIAN):
+            for seed in (0, 1, 2, 3, 4, 5):
                 composition = ENGINE.compose(
                     text=text, seed=seed, mode=mode.value, measures=8, heretical=True,
                 )
