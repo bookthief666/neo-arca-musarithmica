@@ -909,6 +909,13 @@ class ConstraintProfile:
     allows_chromatic_harmony: bool
     #: Probability weight for ornaments that break Orthodox treatment.
     transgressive_ornament_rate: float
+    #: A genuine grammar *invariant*: every phrase must expose a sounding tritone, and
+    #: the engine enforces it deterministically rather than merely hoping for it.
+    #: Everything else this grammar wants -- parallel perfects, unresolved dissonance,
+    #: chromatic contamination, dissonance left by leap -- is a weighted *preference*
+    #: expressed through the policy table, not a guarantee.  The distinction is the
+    #: difference between a law and a taste, and the profile states which it means.
+    requires_phrase_tritone: bool = False
 
     def policy(self, rule: str) -> RulePolicy:
         return self.policies.get(rule, _DEFAULT_POLICY)
@@ -950,6 +957,7 @@ ORTHODOX = ConstraintProfile(
     leap_appetite=0.0,
     allows_chromatic_harmony=False,
     transgressive_ornament_rate=0.0,
+    requires_phrase_tritone=False,
     policies={
         Rules.RANGE_VIOLATION: RulePolicy(24.0, Severity.ERROR, _ALWAYS),
         Rules.PARALLEL_FIFTH: RulePolicy(14.0, Severity.ERROR, _ALWAYS),
@@ -995,13 +1003,15 @@ ORTHODOX = ConstraintProfile(
 
 HERETICAL = ConstraintProfile(
     name="hereticus",
-    title="MODUS HAERETICUS — an inverted grammar: the same laws, deliberately "
-          "transgressed and scored as virtues",
+    title="MODUS HAERETICUS — an inverted grammar: the same laws re-judged, with one "
+          "enforced invariant (every phrase exposes a tritone) and the rest expressed "
+          "as weighted preferences",
     melodic_smoothness=0.0,
     tessitura_cost=0.18,
     leap_appetite=0.22,
     allows_chromatic_harmony=True,
     transgressive_ornament_rate=0.55,
+    requires_phrase_tritone=True,
     policies={
         # The two inviolable constraints: a voice may not leave its body, and it may
         # not collapse through its neighbour.  Everything else is negotiable.
@@ -1054,6 +1064,69 @@ HERETICAL = ConstraintProfile(
 PROFILES: Dict[str, ConstraintProfile] = {
     ORTHODOX.name: ORTHODOX,
     HERETICAL.name: HERETICAL,
+}
+
+
+# --------------------------------------------------------------------------------------
+# What Modus Haereticus actually delivers
+# --------------------------------------------------------------------------------------
+#
+# A grammar that rewards a rule is not the same as a grammar that produces it.  The three
+# groups below were established by generating across every mode, several seeds and both
+# densities and counting what actually came out -- not by reading the policy table.
+# ``tests/test_heretical_grammar.py`` re-checks all three, so the classification cannot
+# quietly drift away from the truth.
+
+#: Enforced deterministically, not merely hoped for.  See
+#: :meth:`kircher_engine.Renderer.enforce_phrase_tritones`.
+HERETICAL_INVARIANTS: FrozenSet[str] = frozenset({"phrase_exposes_tritone"})
+
+#: Weighted preferences that measurably shift the output: each of these occurs
+#: **strictly more often** under Modus Haereticus than under Orthodox law on the same
+#: inputs.  They are tastes the scoring expresses, not guarantees; a given phrase may
+#: contain none of them.
+HERETICAL_ACTIVE_PREFERENCES: FrozenSet[str] = frozenset({
+    Rules.PARALLEL_FIFTH,
+    Rules.PARALLEL_OCTAVE,
+    Rules.TRITONE_SONORITY,
+    Rules.SEMITONE_CLUSTER,
+    Rules.CHROMATIC_ALTERATION,
+    Rules.MELODIC_FORBIDDEN_INTERVAL,
+    Rules.MELODIC_LEAP_EXCESSIVE,
+    Rules.REGISTRAL_DISPLACEMENT,
+    Rules.VOICE_CROSSING,
+    Rules.VOICE_OVERLAP,
+    Rules.HARMONIC_DISSONANCE,
+    Rules.LEAP_NOT_RECOVERED,
+})
+
+#: Reachable, but only when the semantics ask for it -- absent from an ordinary sweep and
+#: plentiful once the text drives the configuration that produces them.  Documented
+#: separately from the active preferences so neither is overstated.
+HERETICAL_CONDITIONAL_PREFERENCES: Mapping[str, str] = {
+    Rules.FINAL_SONORITY_NOT_TONIC:
+        "requires the 'suspended' cadence formula, which the planner only offers when "
+        "the semantic cadence_strength falls below 0.35",
+    Rules.LEADING_TONE_UNRESOLVED:
+        "requires a cadential slot whose triad actually contains the leading tone; the "
+        "alien triads this grammar favours usually do not",
+}
+
+#: Policies the profile declares but which the engine has **never been observed to
+#: produce**, under any configuration tried.  They are kept so the grammar's stance is
+#: defined if such an event ever arises, but nothing may claim Modus Haereticus delivers
+#: them.  Each entry says why it cannot currently occur.
+HERETICAL_LATENT_POLICIES: Mapping[str, str] = {
+    Rules.DISSONANT_SONORITY:
+        "requires a dissonant pair with neither a chord-tone nor an ornament "
+        "explanation; alien triads make both notes chord tones (reported as "
+        "harmonic_dissonance) and every transgressive figure carries an ornament role",
+    Rules.DISSONANT_STRONG_BEAT:
+        "ROLE_CHROMATIC is in STRONG_BEAT_ROLES, so the chromatic ornaments this "
+        "grammar favours are always admissible on a strong position",
+    Rules.SUSPENSION_UNRESOLVED:
+        "the suspension figure is built as hold-then-step-down, so it resolves "
+        "correctly by construction; nothing currently generates an abandoned one",
 }
 
 
@@ -1178,6 +1251,21 @@ class ValidationReport:
         }
 
 
+def phrase_exposes_tritone(
+    grid: Sequence[Sonority], first_slot: int, last_slot: int
+) -> bool:
+    """Whether any sonority within the slot range sounds a tritone between two voices."""
+    for sonority in grid:
+        if not (first_slot <= sonority.slot_index <= last_slot):
+            continue
+        pitches = sonority.pitches
+        for i in range(len(pitches)):
+            for j in range(i + 1, len(pitches)):
+                if abs(pitches[i] - pitches[j]) % 12 == TRITONE:
+                    return True
+    return False
+
+
 def validate(
     grid: Sequence[Sonority],
     frame: MusicalFrame,
@@ -1283,6 +1371,9 @@ __all__ = [
     "MomentContext", "Rule", "RULES", "GRID_RULES", "LINE_RULES",
     "line_findings", "MAX_LEAP", "RulePolicy", "ConstraintProfile",
     "Intent", "IntentRecord", "IntentLedger", "INTENT_RULES",
+    "phrase_exposes_tritone", "HERETICAL_INVARIANTS",
+    "HERETICAL_ACTIVE_PREFERENCES", "HERETICAL_CONDITIONAL_PREFERENCES",
+    "HERETICAL_LATENT_POLICIES",
     "ORTHODOX", "HERETICAL", "PROFILES", "get_profile", "MomentResult",
     "collect_findings", "evaluate_moment", "ValidationReport", "validate",
     "MAX_RELAXATION",

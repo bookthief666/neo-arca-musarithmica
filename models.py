@@ -372,6 +372,12 @@ class SearchModel(BaseModel):
     )
     solver_restarts: int
     repair_passes: int
+    phrases_without_tritone: int = Field(
+        0,
+        description="Phrases that left repair with no sounding tritone. Under "
+                    "MODUS HAERETICUS the grammar then injects one.",
+    )
+    tritone_injections: int = 0
     repair_exhausted: bool = Field(
         ...,
         description="True when repair hit max_repair_passes with hard violations still "

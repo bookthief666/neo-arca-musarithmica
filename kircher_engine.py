@@ -209,6 +209,10 @@ class SearchStats:
     relaxation_level: int = 0
     solver_restarts: int = 0
     repair_passes: int = 0
+    #: Phrases that came out of repair without a sounding tritone, and how many of
+    #: those the Heretical invariant was able to fix by injection.
+    phrases_without_tritone: int = 0
+    tritone_injections: int = 0
     #: True when the repair loop reached ``SearchBudget.max_repair_passes`` with hard
     #: violations still outstanding.  The remaining violations are reported honestly by
     #: the validator rather than silently tolerated.
@@ -230,6 +234,8 @@ class SearchStats:
             "relaxation_level": self.relaxation_level,
             "solver_restarts": self.solver_restarts,
             "repair_passes": self.repair_passes,
+            "phrases_without_tritone": self.phrases_without_tritone,
+            "tritone_injections": self.tritone_injections,
             "repair_exhausted": self.repair_exhausted,
             "ornaments_applied": self.ornaments_applied,
             "ornaments_reverted": self.ornaments_reverted,
@@ -1085,6 +1091,91 @@ class Renderer:
         events = self.events(structural, figures)
         return events, self.grid(events, structural)
 
+    # -- grammar invariants ------------------------------------------------------
+    def enforce_phrase_tritones(
+        self,
+        structural: Sequence[Sonority],
+        figures: Dict[Tuple[Voice, int], List[Figure]],
+        ledger: law.IntentLedger,
+        relaxation: int,
+    ) -> Tuple[Dict[Voice, List[NoteEvent]], List[Sonority]]:
+        """Guarantee the Heretical invariant that every phrase exposes a tritone.
+
+        The grammar claims this as a law, so it is enforced rather than hoped for: any
+        phrase that comes out of repair without a sounding tritone gets one injected as
+        a chromatic ornament.  Candidates are tried in a fixed order -- slots ascending,
+        voices bass to soprano -- so the result is deterministic without consuming any
+        randomness, and each injection is accepted only if it lands in range and
+        introduces no hard violation.  A phrase where nothing fits is left alone and
+        counted, so the reporter can still say the invariant was missed.
+        """
+        events = self.events(structural, figures)
+        grid = self.grid(events, structural)
+        for phrase in self.plan.phrases:
+            if law.phrase_exposes_tritone(grid, phrase.first_slot, phrase.last_slot):
+                continue
+            self.stats.phrases_without_tritone += 1
+            injected = self._inject_tritone(
+                phrase, structural, figures, ledger, relaxation
+            )
+            if injected:
+                self.stats.tritone_injections += 1
+                events = self.events(structural, figures)
+                grid = self.grid(events, structural)
+        return events, grid
+
+    def _inject_tritone(
+        self,
+        phrase,
+        structural: Sequence[Sonority],
+        figures: Dict[Tuple[Voice, int], List[Figure]],
+        ledger: law.IntentLedger,
+        relaxation: int,
+    ) -> bool:
+        for slot in self.plan.slots:
+            if not (phrase.first_slot <= slot.index <= phrase.last_slot):
+                continue
+            if slot.is_final:
+                continue
+            half = slot.duration / 2.0
+            if half < MIN_EVENT_QL:
+                continue
+            position = self._structural_index(slot.index)
+            for voice in VOICE_ORDER:
+                key = (voice, slot.index)
+                if len(figures.get(key, ())) > 1:
+                    continue  # already ornamented; leave the surface it chose alone
+                pitch = structural[position].pitch(voice)
+                vr = self.frame.ranges[voice]
+                stab = next(
+                    (p for p in (pitch + 6, pitch - 6) if vr.contains(p)), None
+                )
+                if stab is None:
+                    continue
+                previous = figures.get(key)
+                figures[key] = [
+                    (pitch, half, law.ROLE_STRUCTURAL),
+                    (stab, slot.duration - half, law.ROLE_CHROMATIC),
+                ]
+                events = self.events(structural, figures)
+                grid = self.grid(events, structural)
+                self._events_cache = events
+                gained = law.phrase_exposes_tritone(
+                    grid, phrase.first_slot, phrase.last_slot
+                )
+                if gained and not self._hard_offenders(grid, relaxation):
+                    ledger.record(
+                        reason="tritone_stab", slot_index=slot.index,
+                        voices=(voice.value,), rules=law.INTENT_RULES["tritone_stab"],
+                    )
+                    self.stats.ornaments_applied += 1
+                    return True
+                if previous is None:  # pragma: no cover - keys are pre-seeded
+                    figures.pop(key, None)
+                else:
+                    figures[key] = previous
+        return False
+
     def _structural_index(self, slot_index: int) -> int:
         for i, slot in enumerate(self.plan.slots):
             if slot.index == slot_index:
@@ -1312,6 +1403,10 @@ class KircherEngine:
             plan, frame, profile, config, root.derive("render"), stats, self.budget
         )
         events, grid = renderer.repair(structural, figures, stats.relaxation_level)
+        if profile.requires_phrase_tritone:
+            events, grid = renderer.enforce_phrase_tritones(
+                structural, figures, ledger, stats.relaxation_level
+            )
 
         lines = {
             voice: [(event.midi, event.offset, event.role) for event in voice_events]
