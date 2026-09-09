@@ -235,14 +235,14 @@ def test_every_mode_produces_lawful_orthodox_counterpoint(compose, mode):
                    heretical=False, seed=31)
     assert parallel_perfects(body) == []
     assert crossings(body) == []
-    assert body["validation"]["unintended_error_count"] == 0
+    assert body["validation"]["defect_count"] == 0
 
 
 @pytest.mark.parametrize("text,seed", CASES)
 def test_the_engine_reports_its_own_output_as_lawful(compose, text, seed):
     body = compose(text=text, seed=seed, heretical=False)
     assert body["validation"]["passed"] is True
-    assert body["validation"]["unintended_error_count"] == 0
+    assert body["validation"]["defect_count"] == 0
     errors = [v for v in body["validation"]["violations"]
               if v["severity"] == Severity.ERROR.value]
     assert errors == []
@@ -331,11 +331,11 @@ def test_heretical_mode_produces_intended_violations_without_crashing(
     body = compose(text=text, seed=seed, heretical=True)
     validation = body["validation"]
     assert validation["profile"] == "hereticus"
-    assert validation["intended_violation_count"] > 0, (
+    assert validation["licensed_count"] > 0, (
         "Modus Haereticus produced nothing the Orthodox law would object to"
     )
-    assert validation["unintended_error_count"] == 0, (
-        "an unintended error is an implementation defect, not a transgression"
+    assert validation["defect_count"] == 0, (
+        "a defect is an implementation fault, not a transgression"
     )
     assert validation["passed"] is True
 
@@ -346,11 +346,11 @@ def test_heretical_violations_are_labelled_as_deliberate(compose, text, seed):
     transgressive = {"parallel_fifth", "parallel_octave", "tritone_sonority",
                      "semitone_cluster", "chromatic_alteration", "voice_crossing",
                      "melodic_forbidden_interval", "dissonant_sonority"}
-    seen = {v["rule"] for v in body["validation"]["violations"] if v["intended"]}
+    seen = {v["rule"] for v in body["validation"]["violations"] if v["licensed"]}
     assert seen & transgressive, f"no recognisable transgression: {seen}"
     for violation in body["validation"]["violations"]:
         if violation["rule"] in transgressive:
-            assert violation["intended"] is True
+            assert violation["licensed"] is True
 
 
 def test_heretical_still_respects_the_voices_ranges(compose):
@@ -383,5 +383,5 @@ def test_the_two_profiles_diverge_on_identical_input(compose):
     assert orthodox["score"]["progression"] != heretical["score"]["progression"]
     assert (events_by_voice(orthodox)["soprano"]
             != events_by_voice(heretical)["soprano"])
-    assert heretical["validation"]["intended_violation_count"] > \
-        orthodox["validation"]["intended_violation_count"]
+    assert heretical["validation"]["licensed_count"] > \
+        orthodox["validation"]["licensed_count"]

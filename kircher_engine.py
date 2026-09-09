@@ -614,6 +614,16 @@ class VoicingSolver:
 #: One fragment of a voice's surface: pitch, notated length, and the role it plays.
 Figure = Tuple[int, float, str]
 
+#: Diminution figures whose *purpose* is transgression, mapped to the kind of decision
+#: they represent.  Only these are written to the intent ledger: a passing tone or a
+#: suspension is ordinary craft, not a deliberate breach, whichever profile is active.
+TRANSGRESSIVE_FIGURES: Dict[str, str] = {
+    "chromatic": "chromatic_ornament",
+    "tritone_stab": "tritone_stab",
+    "escape": "escape_tone",
+    "displacement": "registral_displacement",
+}
+
 
 class DiminutionEngine:
     """Adds the rhythmic and melodic surface over the structural backbone."""
@@ -626,6 +636,7 @@ class DiminutionEngine:
         config: GenesisConfig,
         stream: SeedStream,
         stats: SearchStats,
+        ledger: Optional[law.IntentLedger] = None,
     ) -> None:
         self.plan = plan
         self.frame = frame
@@ -633,6 +644,10 @@ class DiminutionEngine:
         self.config = config
         self.stream = stream
         self.stats = stats
+        #: Where deliberate transgressions are written down as they are chosen.  The
+        #: named Heretical figures below are the only surface decisions whose *purpose*
+        #: is to break a law; everything else the search produces is emergent.
+        self.ledger = ledger if ledger is not None else law.IntentLedger()
         self._scale_cache: Dict[Tuple[Voice, FrozenSet[int]], Tuple[int, ...]] = {}
 
     def _scale(self, voice: Voice, slot_index: int) -> Tuple[int, ...]:
@@ -704,13 +719,22 @@ class DiminutionEngine:
                     continue
                 previous = structural[i - 1] if i >= 1 else None
                 following = structural[i + 1] if i + 1 < len(structural) else None
-                figure = self._figure(
+                chosen = self._figure(
                     voice, slot, pitch, previous, following, picker
                 )
-                if figure is not None and len(figure) > 1:
+                if chosen is None:
+                    continue
+                name, figure = chosen
+                if len(figure) > 1:
                     figures[(voice, slot.index)] = figure
                     active += 1
                     self.stats.ornaments_applied += 1
+                    reason = TRANSGRESSIVE_FIGURES.get(name)
+                    if reason is not None:
+                        self.ledger.record(
+                            reason=reason, slot_index=slot.index,
+                            voices=(voice.value,), rules=law.INTENT_RULES[reason],
+                        )
         return figures
 
     def _figure(
@@ -721,7 +745,7 @@ class DiminutionEngine:
         previous: Optional[Sonority],
         following: Optional[Sonority],
         picker: SeedStream,
-    ) -> Optional[List[Figure]]:
+    ) -> Optional[Tuple[str, List[Figure]]]:
         half = slot.duration / 2.0
         if half < MIN_EVENT_QL:
             return None
@@ -828,7 +852,7 @@ class DiminutionEngine:
         if not options:
             return None
         chosen = picker.derive("shape").weighted_choice(
-            [figure for _, figure, _ in options],
+            [(name, figure) for name, figure, _ in options],
             [weight for _, _, weight in options],
         )
         return chosen
@@ -1279,8 +1303,9 @@ class KircherEngine:
                 },
             )
 
+        ledger = self._plan_intents(plan, profile)
         diminution = DiminutionEngine(
-            plan, frame, profile, config, root.derive("diminution"), stats
+            plan, frame, profile, config, root.derive("diminution"), stats, ledger
         )
         figures = diminution.build(structural)
         renderer = Renderer(
@@ -1292,7 +1317,7 @@ class KircherEngine:
             voice: [(event.midi, event.offset, event.role) for event in voice_events]
             for voice, voice_events in events.items()
         }
-        report = validate(grid, frame, profile, lines=lines)
+        report = validate(grid, frame, profile, lines=lines, ledger=ledger)
         self._append_phrase_findings(report, plan, grid, profile)
         stats.elapsed_ms = (time.perf_counter() - started) * 1000.0
 
@@ -1315,6 +1340,37 @@ class KircherEngine:
             validation=report,
             stats=stats,
         )
+
+    @staticmethod
+    def _plan_intents(plan: HarmonicPlan, profile: ConstraintProfile) -> law.IntentLedger:
+        """Transgressions the *harmonic planner* chose, read back off the finished plan.
+
+        Two kinds are genuine decisions rather than accidents: a triad built on a root
+        outside the mode, and a cadence formula that deliberately refuses to close on the
+        final.  Both are recorded against the slots they occupy.
+        """
+        ledger = law.IntentLedger()
+        if not profile.allows_chromatic_harmony:
+            return ledger
+        every_voice = tuple(v.value for v in VOICE_ORDER)
+        for slot in plan.slots:
+            if slot.triad.degree is None:
+                ledger.record(
+                    reason="alien_triad", slot_index=slot.index, voices=every_voice,
+                    rules=law.INTENT_RULES["alien_triad"],
+                )
+        heretical_closes = {"tritone_fall", "suspended"}
+        for phrase in plan.phrases:
+            if phrase.cadence.value not in heretical_closes:
+                continue
+            for index in (phrase.last_slot, phrase.last_slot - 1):
+                if index >= phrase.first_slot:
+                    ledger.record(
+                        reason="heretical_cadence", slot_index=index,
+                        voices=every_voice,
+                        rules=law.INTENT_RULES["heretical_cadence"],
+                    )
+        return ledger
 
     @staticmethod
     def _append_phrase_findings(
@@ -1355,7 +1411,8 @@ class KircherEngine:
                     position=float(plan.slots[phrase.first_slot].offset),
                     detail=f"phrase {phrase.index} exposes no tritone",
                     penalty=profile.policy(Rules.PHRASE_LACKS_TRITONE).weight,
-                    intended=False,
+                    licensed=False,
+                    intent=law.Intent.INCIDENTAL,
                 ))
 
 

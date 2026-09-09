@@ -50,7 +50,7 @@ def test_every_mode_and_profile_resolves_at_full_strictness(mode, heretical):
     assert composition.stats.relaxation_level == 0, (
         f"{mode} ({'heretical' if heretical else 'orthodox'}) needed relaxation"
     )
-    assert composition.validation.unintended_errors == []
+    assert composition.validation.defects == []
 
 
 def test_an_impossible_budget_fails_fast_instead_of_hanging():
@@ -104,7 +104,7 @@ def test_the_longest_permitted_request_completes():
     )
     assert time.perf_counter() - started < 30.0
     assert composition.total_ql > 0
-    assert composition.validation.unintended_errors == []
+    assert composition.validation.defects == []
 
 
 def test_a_single_measure_still_produces_a_complete_cadence():

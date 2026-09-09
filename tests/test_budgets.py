@@ -207,4 +207,4 @@ def test_a_lenient_composition_is_still_lawful():
     """Bounded relaxation must not become an escape hatch from the Orthodox contract."""
     composition = KircherEngine().compose(**LENIENT_CASE)
     assert composition.stats.lenient_enumerations > 0
-    assert composition.validation.unintended_errors == []
+    assert composition.validation.defects == []

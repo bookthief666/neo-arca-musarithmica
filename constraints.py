@@ -20,8 +20,13 @@ profiles ship:
   It is an alternate grammar, not a disabled checker.
 
 Because both profiles score the *same* findings, a Heretical composition can always be
-validated against Orthodox law, and every violation it contains can be marked as
-`intended` rather than mistaken (see :func:`validate`).
+validated against Orthodox law.  Judging it then needs two separate questions, and
+:func:`validate` answers both: whether the active law *licenses* a rule class, and how a
+particular occurrence actually arose -- deliberately (the generator recorded the decision
+in an :class:`IntentLedger`), emergently (licensed, but nothing sought it), or as a
+defect.  Collapsing those two questions into one flag would stamp every parallel fifth in
+a Heretical piece as intentional, which tells you nothing about whether the engine is
+working.
 """
 
 from __future__ import annotations
@@ -60,6 +65,86 @@ class RuleFinding:
     magnitude: float = 1.0
 
 
+class Intent(str, Enum):
+    """How a violation came to be there.
+
+    This is deliberately *not* the same question as "does the active law allow it".
+    A profile licenses whole rule *classes*; it says nothing about whether the generator
+    actually set out to produce any particular occurrence.  Inferring intent from the
+    policy alone would stamp every parallel fifth in a Heretical piece as deliberate,
+    including ones the search merely stumbled into, which makes the flag useless for
+    telling transgression from defect.
+    """
+
+    #: The generator recorded an explicit decision that produces this (see
+    #: :class:`IntentLedger`) -- a chromatic ornament, a tritone stab, an alien triad.
+    DELIBERATE = "deliberate"
+    #: The active law licenses this rule class, but nothing specifically sought this
+    #: occurrence: it emerged from the search, nudged by the reward but not chosen.
+    EMERGENT = "emergent"
+    #: Error-severity and *not* licensed by the active law: an implementation fault.
+    DEFECT = "defect"
+    #: An ordinary stylistic observation, neither sought nor faulty.
+    INCIDENTAL = "incidental"
+
+
+@dataclass(frozen=True)
+class IntentRecord:
+    """One transgressive decision the generator actually made."""
+
+    reason: str                  # "chromatic_ornament", "alien_triad", ...
+    slot_index: int
+    voices: FrozenSet[str]
+    #: The rule ids this decision is expected to produce.  Matching on the rule as well
+    #: as the place keeps a chromatic ornament in the soprano from excusing a parallel
+    #: fifth between bass and tenor in the same slot.
+    rules: FrozenSet[str]
+
+    def explains(self, rule: str, voices: Sequence[str], slot_index: int) -> bool:
+        return (
+            slot_index == self.slot_index
+            and rule in self.rules
+            and bool(self.voices.intersection(voices))
+        )
+
+
+@dataclass
+class IntentLedger:
+    """What the generator deliberately sought, recorded as it decided.
+
+    Empty for Orthodox generation, which seeks no transgressions at all.
+    """
+
+    records: List[IntentRecord] = field(default_factory=list)
+
+    def record(
+        self, reason: str, slot_index: int, voices: Iterable[str], rules: Iterable[str]
+    ) -> None:
+        self.records.append(IntentRecord(
+            reason=reason, slot_index=slot_index,
+            voices=frozenset(voices), rules=frozenset(rules),
+        ))
+
+    def explanation(
+        self, rule: str, voices: Sequence[str], slot_index: Optional[int]
+    ) -> Optional[IntentRecord]:
+        if slot_index is None:
+            return None
+        for entry in self.records:
+            if entry.explains(rule, voices, slot_index):
+                return entry
+        return None
+
+    def reasons(self) -> Dict[str, int]:
+        tally: Dict[str, int] = {}
+        for entry in self.records:
+            tally[entry.reason] = tally.get(entry.reason, 0) + 1
+        return dict(sorted(tally.items()))
+
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return len(self.records)
+
+
 @dataclass(frozen=True)
 class RuleViolation:
     """A finding judged by a profile."""
@@ -70,7 +155,13 @@ class RuleViolation:
     position: float
     detail: str
     penalty: float
-    intended: bool
+    #: True when the *active* law profile licenses this rule class.  Drives ``passed``.
+    licensed: bool
+    #: How this particular occurrence arose.  See :class:`Intent`.
+    intent: Intent = Intent.INCIDENTAL
+    #: The recorded decision that explains it, when ``intent`` is DELIBERATE.
+    reason: Optional[str] = None
+    slot_index: Optional[int] = None
 
     def as_dict(self) -> Dict[str, object]:
         return {
@@ -80,7 +171,10 @@ class RuleViolation:
             "position": round(self.position, 4),
             "detail": self.detail,
             "penalty": round(self.penalty, 3),
-            "intended": self.intended,
+            "licensed": self.licensed,
+            "intent": self.intent.value,
+            "reason": self.reason,
+            "slot": self.slot_index,
         }
 
 
@@ -128,6 +222,41 @@ class Rules:
     DISSONANCE_RESOLVED_BY_STEP = "dissonance_resolved_by_step"
     REGISTRAL_DISPLACEMENT = "registral_displacement"
     PHRASE_LACKS_TRITONE = "phrase_lacks_tritone"
+
+
+#: Which rules each kind of deliberate decision is expected to produce.  A record only
+#: explains findings whose rule appears here, so a chromatic ornament in the soprano
+#: cannot be used to excuse a parallel fifth between bass and tenor in the same slot.
+INTENT_RULES: Dict[str, FrozenSet[str]] = {
+    "chromatic_ornament": frozenset({
+        Rules.CHROMATIC_ALTERATION, Rules.DISSONANT_SONORITY,
+        Rules.DISSONANT_STRONG_BEAT, Rules.NONCHORD_TONE_UNSTEPWISE,
+        Rules.SEMITONE_CLUSTER, Rules.MELODIC_FORBIDDEN_INTERVAL,
+    }),
+    "tritone_stab": frozenset({
+        Rules.TRITONE_SONORITY, Rules.CHROMATIC_ALTERATION,
+        Rules.MELODIC_FORBIDDEN_INTERVAL, Rules.DISSONANT_SONORITY,
+        Rules.DISSONANT_STRONG_BEAT, Rules.NONCHORD_TONE_UNSTEPWISE,
+    }),
+    "escape_tone": frozenset({
+        Rules.NONCHORD_TONE_UNSTEPWISE, Rules.DISSONANT_SONORITY,
+        Rules.DISSONANT_STRONG_BEAT, Rules.SUSPENSION_UNRESOLVED,
+    }),
+    "registral_displacement": frozenset({
+        Rules.REGISTRAL_DISPLACEMENT, Rules.MELODIC_LEAP_EXCESSIVE,
+        Rules.SPACING_UPPER, Rules.VOICE_CROSSING, Rules.VOICE_OVERLAP,
+        Rules.LEAP_NOT_RECOVERED,
+    }),
+    "alien_triad": frozenset({
+        Rules.CHROMATIC_ALTERATION, Rules.HARMONIC_DISSONANCE,
+        Rules.TRITONE_SONORITY, Rules.SEMITONE_CLUSTER,
+        Rules.DISSONANT_SONORITY,
+    }),
+    "heretical_cadence": frozenset({
+        Rules.FINAL_SONORITY_NOT_TONIC, Rules.CADENCE_SOPRANO_NOT_FINAL,
+        Rules.LEADING_TONE_UNRESOLVED, Rules.LEADING_TONE_UNRESOLVED_INNER,
+    }),
+}
 
 
 #: Melodic roles a note may play.  Anything other than ``structural`` is an ornament and
@@ -750,7 +879,9 @@ class RulePolicy:
     weight: float
     severity: Severity = Severity.WARNING
     hard_until: int = -1
-    intended: bool = False
+    #: This grammar licenses the rule *class*.  It says nothing about whether any
+    #: particular occurrence was deliberately sought -- see :class:`Intent`.
+    licensed: bool = False
 
     def is_hard(self, relaxation: int) -> bool:
         return relaxation <= self.hard_until
@@ -791,7 +922,7 @@ class ConstraintProfile:
             position=finding.position,
             detail=finding.detail,
             penalty=policy.weight * max(1.0, finding.magnitude),
-            intended=policy.intended,
+            licensed=policy.licensed,
         )
 
     def shape_cost(self, ctx: MomentContext, frame: MusicalFrame) -> float:
@@ -878,31 +1009,31 @@ HERETICAL = ConstraintProfile(
         Rules.CROSSING_EXCESSIVE: RulePolicy(15.0, Severity.ERROR, _ALWAYS),
 
         # Orthodox errors, deliberately sought.
-        Rules.PARALLEL_FIFTH: RulePolicy(-4.5, Severity.INFO, intended=True),
-        Rules.PARALLEL_OCTAVE: RulePolicy(-3.5, Severity.INFO, intended=True),
-        Rules.CONTRARY_PERFECT: RulePolicy(-0.8, Severity.INFO, intended=True),
-        Rules.HIDDEN_PERFECT: RulePolicy(-1.2, Severity.INFO, intended=True),
-        Rules.TRITONE_SONORITY: RulePolicy(-3.5, Severity.INFO, intended=True),
-        Rules.SEMITONE_CLUSTER: RulePolicy(-2.6, Severity.INFO, intended=True),
-        Rules.DISSONANT_SONORITY: RulePolicy(-2.2, Severity.INFO, intended=True),
-        Rules.HARMONIC_DISSONANCE: RulePolicy(-1.5, Severity.INFO, intended=True),
-        Rules.DISSONANT_STRONG_BEAT: RulePolicy(-2.0, Severity.INFO, intended=True),
-        Rules.NONCHORD_TONE_UNSTEPWISE: RulePolicy(-1.6, Severity.INFO, intended=True),
-        Rules.SUSPENSION_UNRESOLVED: RulePolicy(-1.6, Severity.INFO, intended=True),
-        Rules.MELODIC_FORBIDDEN_INTERVAL: RulePolicy(-3.0, Severity.INFO, intended=True),
-        Rules.MELODIC_LEAP_EXCESSIVE: RulePolicy(-0.6, Severity.INFO, intended=True),
-        Rules.LEAP_NOT_RECOVERED: RulePolicy(-1.4, Severity.INFO, intended=True),
-        Rules.REGISTRAL_DISPLACEMENT: RulePolicy(-1.8, Severity.INFO, intended=True),
-        Rules.CHROMATIC_ALTERATION: RulePolicy(-2.4, Severity.INFO, intended=True),
-        Rules.VOICE_CROSSING: RulePolicy(-1.0, Severity.INFO, intended=True),
-        Rules.VOICE_OVERLAP: RulePolicy(-0.6, Severity.INFO, intended=True),
-        Rules.SPACING_UPPER: RulePolicy(-0.5, Severity.INFO, intended=True),
-        Rules.DOUBLED_LEADING_TONE: RulePolicy(-1.5, Severity.INFO, intended=True),
-        Rules.LEADING_TONE_UNRESOLVED: RulePolicy(-2.2, Severity.INFO, intended=True),
-        Rules.LEADING_TONE_UNRESOLVED_INNER: RulePolicy(-0.6, Severity.INFO, intended=True),
-        Rules.FINAL_SONORITY_NOT_TONIC: RulePolicy(-1.0, Severity.INFO, intended=True),
-        Rules.CADENCE_SOPRANO_NOT_FINAL: RulePolicy(-0.6, Severity.INFO, intended=True),
-        Rules.SIMILAR_MOTION_OUTER: RulePolicy(-0.9, Severity.INFO, intended=True),
+        Rules.PARALLEL_FIFTH: RulePolicy(-4.5, Severity.INFO, licensed=True),
+        Rules.PARALLEL_OCTAVE: RulePolicy(-3.5, Severity.INFO, licensed=True),
+        Rules.CONTRARY_PERFECT: RulePolicy(-0.8, Severity.INFO, licensed=True),
+        Rules.HIDDEN_PERFECT: RulePolicy(-1.2, Severity.INFO, licensed=True),
+        Rules.TRITONE_SONORITY: RulePolicy(-3.5, Severity.INFO, licensed=True),
+        Rules.SEMITONE_CLUSTER: RulePolicy(-2.6, Severity.INFO, licensed=True),
+        Rules.DISSONANT_SONORITY: RulePolicy(-2.2, Severity.INFO, licensed=True),
+        Rules.HARMONIC_DISSONANCE: RulePolicy(-1.5, Severity.INFO, licensed=True),
+        Rules.DISSONANT_STRONG_BEAT: RulePolicy(-2.0, Severity.INFO, licensed=True),
+        Rules.NONCHORD_TONE_UNSTEPWISE: RulePolicy(-1.6, Severity.INFO, licensed=True),
+        Rules.SUSPENSION_UNRESOLVED: RulePolicy(-1.6, Severity.INFO, licensed=True),
+        Rules.MELODIC_FORBIDDEN_INTERVAL: RulePolicy(-3.0, Severity.INFO, licensed=True),
+        Rules.MELODIC_LEAP_EXCESSIVE: RulePolicy(-0.6, Severity.INFO, licensed=True),
+        Rules.LEAP_NOT_RECOVERED: RulePolicy(-1.4, Severity.INFO, licensed=True),
+        Rules.REGISTRAL_DISPLACEMENT: RulePolicy(-1.8, Severity.INFO, licensed=True),
+        Rules.CHROMATIC_ALTERATION: RulePolicy(-2.4, Severity.INFO, licensed=True),
+        Rules.VOICE_CROSSING: RulePolicy(-1.0, Severity.INFO, licensed=True),
+        Rules.VOICE_OVERLAP: RulePolicy(-0.6, Severity.INFO, licensed=True),
+        Rules.SPACING_UPPER: RulePolicy(-0.5, Severity.INFO, licensed=True),
+        Rules.DOUBLED_LEADING_TONE: RulePolicy(-1.5, Severity.INFO, licensed=True),
+        Rules.LEADING_TONE_UNRESOLVED: RulePolicy(-2.2, Severity.INFO, licensed=True),
+        Rules.LEADING_TONE_UNRESOLVED_INNER: RulePolicy(-0.6, Severity.INFO, licensed=True),
+        Rules.FINAL_SONORITY_NOT_TONIC: RulePolicy(-1.0, Severity.INFO, licensed=True),
+        Rules.CADENCE_SOPRANO_NOT_FINAL: RulePolicy(-0.6, Severity.INFO, licensed=True),
+        Rules.SIMILAR_MOTION_OUTER: RulePolicy(-0.9, Severity.INFO, licensed=True),
 
         # Orthodox virtues, penalised.  "Dissonance must leap"; inertia is still a sin.
         Rules.DISSONANCE_RESOLVED_BY_STEP: RulePolicy(2.2, Severity.WARNING),
@@ -986,26 +1117,45 @@ class ValidationReport:
     profile: str
     violations: List[RuleViolation] = field(default_factory=list)
 
-    @property
-    def unintended_errors(self) -> List[RuleViolation]:
-        return [
-            v for v in self.violations
-            if v.severity is Severity.ERROR and not v.intended
-        ]
+    profile_ledger_reasons: Dict[str, int] = field(default_factory=dict)
 
     @property
-    def intended_violations(self) -> List[RuleViolation]:
-        return [v for v in self.violations if v.intended]
+    def defects(self) -> List[RuleViolation]:
+        """Error-severity findings the active law does *not* license.
+
+        These are implementation faults, and the only category that fails validation.
+        """
+        return [v for v in self.violations if v.intent is Intent.DEFECT]
+
+    @property
+    def deliberate_violations(self) -> List[RuleViolation]:
+        """Transgressions the generator recorded a decision to produce."""
+        return [v for v in self.violations if v.intent is Intent.DELIBERATE]
+
+    @property
+    def emergent_violations(self) -> List[RuleViolation]:
+        """Licensed by the active law, but not specifically sought."""
+        return [v for v in self.violations if v.intent is Intent.EMERGENT]
+
+    @property
+    def licensed_violations(self) -> List[RuleViolation]:
+        return [v for v in self.violations if v.licensed]
 
     @property
     def passed(self) -> bool:
-        return not self.unintended_errors
+        return not self.defects
 
     def counts(self) -> Dict[str, int]:
         tally: Dict[str, int] = {}
         for v in self.violations:
             tally[v.rule] = tally.get(v.rule, 0) + 1
         return dict(sorted(tally.items()))
+
+    def counts_by_intent(self) -> Dict[str, int]:
+        return {
+            intent.value: sum(1 for v in self.violations if v.intent is intent)
+            for intent in Intent
+        }
 
     def as_dict(self) -> Dict[str, object]:
         return {
@@ -1018,8 +1168,12 @@ class ValidationReport:
                 )
                 for severity in Severity
             },
-            "unintended_error_count": len(self.unintended_errors),
-            "intended_violation_count": len(self.intended_violations),
+            "counts_by_intent": self.counts_by_intent(),
+            "defect_count": len(self.defects),
+            "deliberate_count": len(self.deliberate_violations),
+            "emergent_count": len(self.emergent_violations),
+            "licensed_count": len(self.licensed_violations),
+            "recorded_intents": dict(self.profile_ledger_reasons),
             "violations": [v.as_dict() for v in self.violations],
         }
 
@@ -1030,6 +1184,7 @@ def validate(
     profile: ConstraintProfile,
     *,
     lines: Optional[Mapping[Voice, Sequence[Tuple[int, float]]]] = None,
+    ledger: Optional[IntentLedger] = None,
     reference: ConstraintProfile = ORTHODOX,
 ) -> ValidationReport:
     """Validate a rendered composition.
@@ -1041,17 +1196,48 @@ def validate(
     both, which is correct only when every voice attacks at every moment.
 
     Findings are graded under *reference* (Orthodox by default) so severities are
-    comparable across profiles, while a finding the *active* profile deliberately rewards
-    is flagged ``intended``.  A Heretical composition therefore reports its parallel
-    fifths as intended transgressions, and an accidental implementation error still shows
-    up as an unintended ``error``.
+    comparable across profiles.  Each is then classified on two independent axes:
+
+    ``licensed``
+        Does the *active* law permit this rule class?  This is a property of the profile
+        and it is what decides whether the composition passes.
+
+    ``intent``
+        How did this particular occurrence arise?  A finding is DELIBERATE only when
+        *ledger* holds a decision that explains it -- same slot, same rule class, an
+        overlapping voice.  Licensed findings with no such decision are EMERGENT: the
+        reward shaped the search, but nothing set out to produce them.  Unlicensed
+        error-severity findings are DEFECTs.  Everything else is INCIDENTAL.
+
+    Passing ``ledger=None`` (the Orthodox case, which seeks no transgressions) leaves
+    every licensed finding EMERGENT rather than pretending it was planned.
     """
     report = ValidationReport(profile=profile.name)
+    if ledger is not None:
+        report.profile_ledger_reasons = ledger.reasons()
 
-    def record(finding: RuleFinding) -> None:
+    #: Offsets map back to slots so line findings can be matched against the ledger.
+    slot_at_offset: Dict[float, int] = {}
+    for sonority in grid:
+        slot_at_offset.setdefault(round(sonority.offset, 6), sonority.slot_index)
+
+    def record(finding: RuleFinding, slot_index: Optional[int]) -> None:
         reference_policy = reference.policy(finding.rule)
         if reference_policy.weight <= 0.0 and reference_policy.severity is Severity.INFO:
             return  # a reward or a neutral observation, not a violation
+        licensed = profile.policy(finding.rule).licensed
+        explanation = (
+            ledger.explanation(finding.rule, finding.voices, slot_index)
+            if ledger is not None else None
+        )
+        if explanation is not None:
+            intent = Intent.DELIBERATE
+        elif licensed:
+            intent = Intent.EMERGENT
+        elif reference_policy.severity is Severity.ERROR:
+            intent = Intent.DEFECT
+        else:
+            intent = Intent.INCIDENTAL
         report.violations.append(RuleViolation(
             rule=finding.rule,
             severity=reference_policy.severity,
@@ -1059,7 +1245,10 @@ def validate(
             position=finding.position,
             detail=finding.detail,
             penalty=reference_policy.weight * max(1.0, finding.magnitude),
-            intended=profile.policy(finding.rule).intended,
+            licensed=licensed,
+            intent=intent,
+            reason=explanation.reason if explanation is not None else None,
+            slot_index=slot_index,
         ))
 
     history: Dict[Voice, List[int]] = {v: [] for v in VOICE_ORDER}
@@ -1073,17 +1262,17 @@ def validate(
             is_last=index == len(grid) - 1,
         )
         for finding in collect_findings(ctx, frame, GRID_RULES):
-            record(finding)
+            record(finding, sonority.slot_index)
         if lines is None:
             for finding in collect_findings(ctx, frame, LINE_RULES):
-                record(finding)
+                record(finding, sonority.slot_index)
         for voice in VOICE_ORDER:
             history[voice].append(sonority.pitch(voice))
 
     if lines is not None:
         for voice in VOICE_ORDER:
             for finding in line_findings(voice, list(lines.get(voice, ()))):
-                record(finding)
+                record(finding, slot_at_offset.get(round(finding.position, 6)))
 
     report.violations.sort(key=lambda v: (v.position, v.rule))
     return report
@@ -1093,6 +1282,7 @@ __all__ = [
     "Severity", "RuleFinding", "RuleViolation", "Rules", "Sonority", "MusicalFrame",
     "MomentContext", "Rule", "RULES", "GRID_RULES", "LINE_RULES",
     "line_findings", "MAX_LEAP", "RulePolicy", "ConstraintProfile",
+    "Intent", "IntentRecord", "IntentLedger", "INTENT_RULES",
     "ORTHODOX", "HERETICAL", "PROFILES", "get_profile", "MomentResult",
     "collect_findings", "evaluate_moment", "ValidationReport", "validate",
     "MAX_RELAXATION",

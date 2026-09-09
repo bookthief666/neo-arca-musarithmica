@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from constraints import Severity
+from constraints import Intent, Severity
 from rhythm import SUPPORTED_METERS
 from theory import ModeName, TheoryError, normalize_note_name
 
@@ -295,28 +295,56 @@ class ScoreModel(BaseModel):
 
 class RuleViolationModel(BaseModel):
     rule: str
-    severity: Severity
+    severity: Severity = Field(
+        ...,
+        description="Graded under Orthodox law so severities are comparable between "
+                    "profiles, whichever profile generated the music.",
+    )
     voices: List[str]
     position: float = Field(..., description="Offset in quarter-lengths.")
     detail: str
     penalty: float
-    intended: bool = Field(
+    slot: Optional[int] = Field(None, description="Harmonic slot this falls in.")
+    licensed: bool = Field(
         ...,
-        description="True when the active law profile deliberately seeks this. Under "
-                    "MODUS HAERETICUS a parallel fifth is intended; an unintended error "
-                    "is a genuine defect.",
+        description="True when the ACTIVE law profile permits this rule class. Under "
+                    "MODUS HAERETICUS a parallel fifth is licensed; under Orthodox law "
+                    "it is not. This is what decides `passed`.",
+    )
+    intent: Intent = Field(
+        ...,
+        description="How this occurrence arose. 'deliberate': the generator recorded a "
+                    "decision that produces it (a chromatic ornament, an alien triad). "
+                    "'emergent': licensed by the active law, but nothing sought this "
+                    "one. 'defect': an unlicensed error, i.e. an implementation fault. "
+                    "'incidental': an ordinary stylistic observation.",
+    )
+    reason: Optional[str] = Field(
+        None,
+        description="The recorded decision that explains a 'deliberate' violation.",
     )
 
 
 class ValidationModel(BaseModel):
     profile: str
     passed: bool = Field(
-        ..., description="True when no *unintended* error-severity violation remains."
+        ...,
+        description="True when no violation is classified as a 'defect'. Licensed "
+                    "transgressions never fail a composition.",
     )
     counts_by_rule: Dict[str, int]
     counts_by_severity: Dict[str, int]
-    unintended_error_count: int
-    intended_violation_count: int
+    counts_by_intent: Dict[str, int]
+    defect_count: int = Field(
+        ..., description="Unlicensed error-severity violations: genuine faults."
+    )
+    deliberate_count: int
+    emergent_count: int
+    licensed_count: int
+    recorded_intents: Dict[str, int] = Field(
+        default_factory=dict,
+        description="What the generator deliberately sought, by kind of decision.",
+    )
     violations: List[RuleViolationModel]
 
 
