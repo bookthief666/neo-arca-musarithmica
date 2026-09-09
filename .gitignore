@@ -6,3 +6,10 @@ venv/
 .mypy_cache/
 *.mid
 .DS_Store
+
+# Stress-matrix runs (scripts/stress_matrix.py): the rolling "latest" output is
+# regenerated on every run and would otherwise be a noisy diff on every commit.
+# A versioned report (artifacts/stress/stress-engine-<version>.json) is meant to be
+# committed explicitly as release evidence and is NOT covered by this rule.
+artifacts/stress/latest.json
+artifacts/stress/latest-*.json

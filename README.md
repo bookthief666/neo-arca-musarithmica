@@ -53,6 +53,12 @@ does not guarantee about byte-identical output across environments.
 
 Interactive documentation is at <http://127.0.0.1:8000/docs>.
 
+For a broader correctness/performance sweep than the unit suite exercises, see
+`scripts/stress_matrix.py --profile smoke` (development, seconds) or `--profile full`
+(release verification, several minutes; ~1,800 generations against a checked-in,
+inspectable, machine-readable matrix). It writes a structured JSON report and a concise
+terminal summary; see the module docstring for the full contract.
+
 ```bash
 curl -s -X POST http://127.0.0.1:8000/compose \
   -H 'Content-Type: application/json' \
