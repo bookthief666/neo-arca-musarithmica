@@ -122,18 +122,26 @@ def test_no_frontend_consumer_needs_to_store_the_resolved_seed_in_a_js_number(cl
     """The practical guarantee this whole file exists to prove: a consumer that treats
     `seed` purely as an opaque string -- never coercing it through Number()/parseFloat --
     round-trips it losslessly through compare/store/resubmit, with no numeric decoding
-    at all."""
-    response = client.post("/compose", json={
-        "text": "a solemn procession", "seed": LARGE_SEED, "measures": 4,
-    })
-    seed_text = response.json()["provenance"]["seed"]
+    at all.
+
+    This must assert more than an echoed `requested_seed`: the whole point of a replay is
+    that resubmitting the string reproduces the SAME composition, not merely that the API
+    remembers what string it was given. See tests/test_seed_replay.py for the full
+    resolved-seed/events/MIDI proof; this one stays narrowly about the JS-number-free
+    property named in the title.
+    """
+    payload = {"text": "a solemn procession", "seed": LARGE_SEED, "measures": 4}
+    original = client.post("/compose", json=payload).json()
+    seed_text = original["provenance"]["seed"]
     assert isinstance(seed_text, str)
-    # A resubmission that only ever handles it as a string still resolves the identical
-    # seed -- proving nothing downstream needs numeric precision to use this value.
-    replay = client.post("/compose", json={
-        "text": "a solemn procession", "seed": seed_text, "measures": 4,
-    }).json()
+
+    # A resubmission that only ever handles the seed as a string -- never as a JS Number
+    # -- must reproduce the IDENTICAL resolved seed, not merely echo the string back.
+    replay = client.post("/compose", json={**payload, "seed": seed_text}).json()
     assert replay["provenance"]["requested_seed"] == seed_text
+    assert replay["provenance"]["seed"] == original["provenance"]["seed"]
+    assert replay["score"]["voices"] == original["score"]["voices"]
+    assert replay["midi_base64"] == original["midi_base64"]
 
 
 def test_null_requested_seed_is_a_literal_json_null_not_a_string(client):

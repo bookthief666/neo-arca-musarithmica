@@ -118,19 +118,50 @@ and is why the runtime is reported *alongside* the seed rather than folded into 
 | "Will this request always produce the same MIDI bytes?" | The above, **plus** `provenance.runtime` matching **and** the same OS/arch/Python build as `requirements.lock.txt` — only guaranteed if all of it matches (tier D) |
 | "Did the semantic mapping resolve to a different seed than I expected?" | `provenance.requested_seed` (what you sent) vs. `provenance.seed` (what was resolved) — both wire-safe decimal strings, see "Seed wire format" below |
 
-## Seed wire format — why it is a string, not a number
+## Seed wire format — why it is a string, and how to replay it
 
 `provenance.seed` and `provenance.requested_seed` are drawn from a full 64-bit range
 internally, and are serialised as **decimal strings**, not JSON numbers. JavaScript's
 `Number` type represents integers exactly only up to `2**53 - 1`; a seed above that,
 returned as a bare JSON number, would silently lose precision the instant a browser or
-Node parses the response — the classic "large ID rounds itself off" bug. A Tone.js/React
-consumer should treat these fields as opaque strings for storage, comparison and
-resubmission, and use `BigInt(seed)` rather than `Number(seed)` if the actual numeric
-value is ever needed. `tests/test_seed_wire_contract.py` proves a seed above `2**53`
-survives the full API round trip with no precision loss, and proves the raw JSON token is
-a quoted string (not a bare number) for both an explicit large integer seed and an
-auto-derived one.
+Node parses the response — the classic "large ID rounds itself off" bug. `BigInt(seed)`
+recovers the actual numeric value if it's ever needed; `Number(seed)` and the unary `+`
+operator must not be used on it.
+
+That much makes the value safe to *display and store* without precision loss. It is not,
+by itself, enough to make the value *replayable* — resubmitting it has to resolve back to
+the same seed, or a consumer has an exact string with nowhere to use it. So
+`determinism.coerce_seed` treats a request's `seed` field as **numeric seed syntax
+first, textual seed second**:
+
+- A string consisting only of ASCII digits (`"418"`, and the decimal string
+  `provenance.seed` always is one) is parsed as that same integer and resolves *exactly
+  as if the equivalent integer had been sent instead* — `seed: 418` and `seed: "418"` are
+  defined as equivalent inputs, deliberately, precisely so the returned string can be
+  fed straight back in. Leading zeros are permitted and insignificant (`"007"` == `"7"`),
+  matching plain `int()` parsing; a magnitude beyond the 64-bit seed space is wrapped by
+  the same masking policy every integer seed already goes through.
+- A signed decimal (`"-5"`, `"+5"`) is **not** treated as numeric — `provenance.seed`
+  itself is never signed, so this only affects a request typed by hand, and refusing to
+  silently wrap a negative value onto some large positive one is the safer default.
+- Anything else (`"musurgia universalis"`, `""`) remains a textual seed, resolved through
+  stable hashing exactly as before.
+
+**Practical consequence for a Tone.js/React consumer:** treat `provenance.seed` as an
+opaque string for storage and comparison, and pass it straight back as `seed` in a later
+request to reproduce the identical composition — no parsing, no `BigInt`, no numeric
+handling required for the replay path itself. `tests/test_seed_wire_contract.py` proves a
+seed above `2**53` survives the full API round trip with no precision loss and that the
+raw JSON token is a quoted string, not a bare number; `tests/test_seed_replay.py` proves
+the replay itself — read `provenance.seed` from a response, resubmit that exact string,
+and get back the identical resolved seed, event JSON and MIDI bytes — and that a
+genuinely textual seed (`"musurgia universalis"`) still resolves through hashing rather
+than being reinterpreted as numeric.
+
+One consequence of this is that `requested_seed` can no longer distinguish `seed: 418`
+from `seed: "418"` in the original request — by design, since they are now defined as the
+same input. It still distinguishes either of those from a textual seed, or from an
+omitted one (`null`).
 
 ## What is regression-tested
 
@@ -149,6 +180,10 @@ auto-derived one.
   non-equivalences (bool/int).
 - `tests/test_seed_wire_contract.py` — the JS-safety property above, end to end through
   the real API.
+- `tests/test_seed_replay.py` — the replay contract specifically: numeric-string and
+  integer seeds resolve identically, a large seed read back from a response and
+  resubmitted verbatim reproduces the identical seed/events/MIDI, a textual seed remains
+  textual, and two distinct large decimal-string seeds remain distinct.
 - `tests/test_budgets.py`, `tests/test_ficta.py`, `tests/test_intent.py`,
   `tests/test_heretical_grammar.py`, `tests/test_relaxation.py`,
   `tests/test_key_signatures.py`, `tests/test_cadence_provenance.py` — each exercises
@@ -167,10 +202,14 @@ auto-derived one.
 
 `ENGINE_VERSION` (`kircher_engine.py`) is bumped whenever a change alters the notes
 produced for an unchanged request — including changes to *how* a seed is derived, not
-just changes to musical logic. This has already happened twice for exactly that reason,
-not for any musical one: `1.0.0` → `1.1.0` introduced `canonical()` in place of `repr()`;
-`1.1.0` → `1.2.0` then fixed type collisions *within* `canonical()` itself (a float and
-the string of its own digits used to hash identically), which moved every derived seed a
-second time. Neither bump changed a single rule, mode, or cadence. A client that wants
-long-term reproducibility across engine upgrades should pin `engine_version` in its own
-records alongside `seed` and `config_fingerprint`.
+just changes to musical logic. This has already happened three times for exactly that
+reason, not for any musical one: `1.0.0` → `1.1.0` introduced `canonical()` in place of
+`repr()`; `1.1.0` → `1.2.0` then fixed type collisions *within* `canonical()` itself (a
+float and the string of its own digits used to hash identically), which moved every
+derived seed a second time; `1.2.0` → `1.3.0` made `coerce_seed()` treat an unsigned
+decimal string as numeric seed syntax (see "Seed wire format" above), so a request whose
+`seed` is a purely numeric string (`seed="418"`) now resolves to a *different* seed, and
+different music, than it did before — a non-numeric string seed is unaffected. None of
+the three bumps changed a single rule, mode, or cadence. A client that wants long-term
+reproducibility across engine upgrades should pin `engine_version` in its own records
+alongside `seed` and `config_fingerprint`.

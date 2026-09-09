@@ -64,8 +64,13 @@ class ComposeRequest(BaseModel):
     )
     seed: Optional[Union[int, str]] = Field(
         None,
-        description="Deterministic seed. Integers are used directly; strings are "
-                    "hashed stably. Omit to derive a seed from the request itself.",
+        description="Deterministic seed. An integer, or a string of only ASCII digits "
+                    "(e.g. \"418\"), is treated as that same numeric seed -- this is "
+                    "what makes `provenance.seed` (always returned as a decimal string, "
+                    "for JavaScript's benefit) exactly replayable by resubmitting it "
+                    "unchanged. Any other string (e.g. \"musurgia universalis\") is "
+                    "hashed stably as a textual seed instead. Omit to derive a seed from "
+                    "the request itself.",
     )
     mode: Optional[str] = Field(
         None, description=f"One of: {', '.join(MODE_NAMES)}. Overrides the semantics."
@@ -427,24 +432,38 @@ class ProvenanceModel(BaseModel):
                     "drawn from a full 64-bit range, which exceeds 2**53 - 1 -- the "
                     "largest integer JavaScript's Number type represents exactly -- so "
                     "a bare JSON number here would silently lose precision in a browser. "
-                    "Parse it with BigInt(seed) if you need the numeric value; never "
-                    "with Number(seed) or the unary + operator. If you only need to "
-                    "compare or store it, treat it as an opaque string.",
+                    "This string is EXACTLY REPLAYABLE: resubmitting it unchanged as "
+                    "`seed` in a later request resolves to this same value (a bare-digit "
+                    "string is parsed as that numeric seed, not hashed as text -- see "
+                    "ComposeRequest.seed). Never decode it with Number(seed) or the unary "
+                    "+ operator; if you need the numeric value for some other reason, use "
+                    "BigInt(seed). For replay, comparison, or storage, treat it as an "
+                    "opaque string and pass it straight back.",
     )
     requested_seed: Optional[str] = Field(
         None,
-        description="The seed exactly as the request gave it, also as a decimal string "
-                    "when numeric (same precision rationale as `seed`), or the original "
-                    "string unchanged, or null if the request omitted it.",
+        description="The seed exactly as the request gave it, as a decimal string when "
+                    "numeric (same precision rationale as `seed`), or the original "
+                    "string unchanged, or null if the request omitted it. An integer "
+                    "seed and the decimal string of that same integer are defined as "
+                    "equivalent inputs (both resolve `seed` identically), so this field "
+                    "intentionally cannot distinguish `seed: 418` from `seed: \"418\"` "
+                    "in the original request -- only a non-numeric string (a textual "
+                    "seed, hashed rather than parsed) remains distinguishable here.",
     )
     law_profile: str
     config_fingerprint: str
     runtime: Dict[str, str] = Field(
         default_factory=dict,
-        description="Python and music21 versions this was produced on. The engine "
-                    "chooses the same notes on any runtime; these versions scope the "
-                    "stronger claim that the MIDI bytes are identical too. See "
-                    "docs/DETERMINISM.md for the precise, tiered guarantee.",
+        description="Python and music21 versions this was produced on. The engine's "
+                    "same-process and fresh-process guarantees (see docs/DETERMINISM.md, "
+                    "tiers A/B) do NOT extend across a different Python version or "
+                    "implementation (tier C) -- that is explicitly untested and "
+                    "unguaranteed, not merely 'scoped'. These fields let a consumer "
+                    "detect whether two responses share a runtime at all; matching "
+                    "runtime is necessary (not sufficient on its own) for the further, "
+                    "narrower claim that MIDI bytes are identical (tier D), which also "
+                    "depends on OS/architecture -- see requirements.lock.txt.",
     )
 
 
@@ -535,6 +554,12 @@ def _wire_safe_provenance(provenance: Any) -> "ProvenanceModel":
     fields are therefore converted to decimal strings here, at the API boundary, rather
     than by widening the internal `Provenance` dataclass -- the engine's own arithmetic on
     seeds stays ordinary integer arithmetic; only the wire representation changes.
+
+    This conversion is only a *display* fix on its own; what makes the resulting string
+    actually replayable -- resubmitting it as ``ComposeRequest.seed`` resolving to the
+    same integer -- is ``determinism.coerce_seed`` treating a bare-digit string as numeric
+    seed syntax rather than hashing it as text.  See ``docs/DETERMINISM.md``, "Seed wire
+    format", for the full contract.
     """
     payload = provenance.as_dict()
     payload["seed"] = str(payload["seed"])

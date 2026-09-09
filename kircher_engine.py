@@ -58,7 +58,12 @@ ENGINE_NAME = "neo-arca-musarithmica"
 #: 1.2.0 closed type collisions in that same canonical() (e.g. canonical(1.0) used to
 #: equal canonical("1")); fixing the collisions changed the hash function's output again,
 #: so every derived seed moves a second time even though no musical rule changed.
-ENGINE_VERSION = "1.2.0"
+#: 1.3.0 made coerce_seed() treat an unsigned decimal string as numeric seed syntax
+#: (seed="418" now resolves identically to seed=418, so provenance.seed can actually be
+#: replayed) instead of always hashing strings as text; a request with a purely numeric
+#: string seed therefore now resolves to a different seed, and different music, than it
+#: did under 1.2.0. Non-numeric string seeds are unaffected.
+ENGINE_VERSION = "1.3.0"
 
 
 class GenerationError(RuntimeError):

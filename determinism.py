@@ -1,14 +1,22 @@
 """determinism.py -- Provenance and controlled randomness.
 
-Determinism is a first-class requirement of the Neo-Arca: for identical semantic input,
-configuration, seed, law profile and engine version, the engine must emit byte-identical
-compositions.  Two things follow, and this module enforces both:
+Determinism is a first-class requirement of the Neo-Arca, but it is not one guarantee at
+one strength -- see ``docs/DETERMINISM.md`` for the precise, tiered contract this module
+exists to support. What this module itself enforces, unconditionally:
 
 1. **No global randomness.**  ``random.random`` / ``random.seed`` are never touched.
    Every stochastic decision draws from an explicit :class:`SeedStream` instance.
 2. **Structured seed derivation.**  Sub-streams are derived by hashing the parent seed
    with a label, so adding a new decision point in (say) the diminution stage cannot
    perturb the pitches already chosen by the harmony stage.
+
+Both of those hold for identical semantic input, configuration, seed, law profile and
+engine version, on the *same Python runtime* the request was served from before and
+after -- that is ``docs/DETERMINISM.md`` tiers A and B, "the same notes". Neither claim
+extends to a different Python version or implementation (tier C, not guaranteed, not
+attempted here), and neither is the same claim as byte-identical MIDI output (tier D,
+scoped further still to one locked, tested environment). Nothing in this module should be
+read as promising more than tiers A/B on its own.
 """
 
 from __future__ import annotations
@@ -17,9 +25,10 @@ import hashlib
 import json
 import platform
 import random
+import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Mapping, Sequence, TypeVar
+from typing import Any, Dict, List, Mapping, Optional, Sequence, TypeVar
 
 T = TypeVar("T")
 
@@ -172,11 +181,57 @@ def stable_hash(*parts: Any) -> int:
     return int.from_bytes(digest.digest(), "big") & _SEED_MASK
 
 
+#: An unsigned decimal integer literal: one or more ASCII digits, nothing else. No sign,
+#: no whitespace, no underscores, no hex/octal/binary prefix, no fractional part. This is
+#: deliberately the *only* string shape ``coerce_seed`` treats as numeric -- see
+#: :func:`_parse_decimal_seed`.
+_DECIMAL_SEED_RE = re.compile(r"[0-9]+")
+
+
+def _parse_decimal_seed(text: str) -> Optional[int]:
+    """Parse *text* as an unsigned decimal seed, or return ``None`` if it isn't one.
+
+    This is what closes the seed replay contract: ``provenance.seed`` is returned to a
+    client as a decimal string precisely so a value above JavaScript's 2**53 - 1 survives
+    the round trip (see ``docs/DETERMINISM.md``, "Seed wire format"). That string is only
+    actually *replayable* if resubmitting it resolves to the same seed -- otherwise the
+    client has an exact string it can display, but not one it can use to reproduce
+    anything, which would make the whole wire-safety exercise pointless.
+
+    Three deliberate grammar choices, each with a reason:
+
+    * **Leading zeros are permitted and insignificant.** ``"007"`` and ``"7"`` parse to
+      the same integer, exactly as Python's own ``int("007")`` already behaves. A seed is
+      a number, not a token; nothing here should be sensitive to how it was padded.
+    * **Signed forms are rejected as numeric.** ``"-5"`` and ``"+5"`` fall through to the
+      textual/hash path instead of being parsed as -5 or 5. A negative number has no
+      natural meaning in an unsigned 64-bit seed space, and silently wrapping "-5" onto
+      some large positive value via the mask below would be a far easier mistake to make
+      than to notice; refusing it as numeric is the safer default. ``provenance.seed``
+      itself is never signed, so this asymmetry costs nothing on the replay path.
+    * **Out-of-range magnitudes are wrapped, not rejected.** A decimal string longer than
+      the 64-bit seed space still parses, then is masked by the same ``_SEED_MASK`` that
+      every integer seed already goes through, so a decimal-string seed and the
+      equal-valued integer literal always resolve identically regardless of magnitude --
+      the existing masking policy is not special-cased for strings.
+    """
+    if not _DECIMAL_SEED_RE.fullmatch(text):
+        return None
+    return int(text) & _SEED_MASK
+
+
 def coerce_seed(seed: "int | str | None", *, fallback: Any = None) -> int:
     """Turn a user-supplied seed of any accepted shape into a stable integer.
 
     ``None`` derives the seed from *fallback* (normally the normalised request), so an
     omitted seed still yields a reproducible composition for the same request.
+
+    A string is numeric seed syntax first, textual seed second: ``seed=418`` and
+    ``seed="418"`` resolve to the *same* integer (see :func:`_parse_decimal_seed`), which
+    is what makes ``provenance.seed`` -- always returned as a decimal string, for
+    JavaScript's benefit -- exactly replayable by resubmitting it unchanged. A string that
+    is not a bare unsigned decimal integer (``"musurgia universalis"``, ``"-5"``, ``""``)
+    remains a textual seed and continues to resolve through stable hashing, as before.
     """
     if seed is None:
         return stable_hash("auto-seed", fallback)
@@ -184,7 +239,12 @@ def coerce_seed(seed: "int | str | None", *, fallback: Any = None) -> int:
         raise TypeError("seed must be an integer or string, not bool")
     if isinstance(seed, int):
         return seed & _SEED_MASK
-    return stable_hash("string-seed", str(seed))
+    if isinstance(seed, str):
+        numeric = _parse_decimal_seed(seed)
+        if numeric is not None:
+            return numeric
+        return stable_hash("string-seed", seed)
+    raise TypeError(f"seed must be an int, str, or None, not {type(seed).__name__}")
 
 
 @dataclass(frozen=True)
@@ -225,13 +285,18 @@ def fingerprint(payload: Mapping[str, Any]) -> str:
 
 
 def runtime_versions() -> Dict[str, str]:
-    """The versions a byte-identical reproduction depends on.
+    """The versions the stronger, narrower determinism claims depend on.
 
-    Recorded in provenance, and deliberately **not** hashed into the seed: the same
-    request must choose the same notes on any machine.  What these versions affect is the
-    final serialisation -- music21 decides how a score becomes MIDI bytes -- so they bound
-    the *byte-identical* claim, not the *same-composition* claim.  See
-    ``docs/DETERMINISM.md``.
+    Recorded in provenance, and deliberately **not** hashed into the seed: within the
+    same Python runtime (tier A/B of ``docs/DETERMINISM.md``), the same request must
+    choose the same notes regardless of which of these versions happen to be installed.
+    That is *not* the same as promising identical output on any machine or any Python
+    version -- tier C is explicitly unguaranteed and untested. What these versions do
+    bound is the further, narrower claim that the final MIDI *bytes* match (tier D):
+    music21 decides how a score becomes MIDI bytes, so a different music21 (or a
+    different OS/architecture -- see ``requirements.lock.txt``) can legitimately produce a
+    different file for the identical composition. See ``docs/DETERMINISM.md`` for the
+    complete, tiered contract.
     """
     try:
         from music21 import VERSION_STR as music21_version
