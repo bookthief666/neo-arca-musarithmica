@@ -107,7 +107,11 @@ def test_string_seeds_work_end_to_end(compose):
     assert strip_timing(first) == strip_timing(second)
     assert first["midi_base64"] != other["midi_base64"]
     assert first["provenance"]["requested_seed"] == "musurgia universalis"
-    assert isinstance(first["provenance"]["seed"], int)
+    # Wire-safe: the resolved seed is a decimal string, not a JSON number, so a value
+    # near the top of the 64-bit range survives a browser's JSON parser exactly. See
+    # tests/test_seed_wire_contract.py for the full round-trip proof.
+    assert isinstance(first["provenance"]["seed"], str)
+    assert int(first["provenance"]["seed"]) > 0
 
 
 def test_an_omitted_seed_is_still_reproducible(compose):
@@ -117,7 +121,8 @@ def test_an_omitted_seed_is_still_reproducible(compose):
     second = compose(**payload)
     assert strip_timing(first) == strip_timing(second)
     assert first["provenance"]["requested_seed"] is None
-    assert first["provenance"]["seed"] > 0
+    assert isinstance(first["provenance"]["seed"], str)
+    assert int(first["provenance"]["seed"]) > 0
 
 
 def test_the_law_profile_changes_the_composition_under_the_same_seed(compose):
@@ -133,7 +138,9 @@ def test_provenance_records_everything_needed_to_reconstruct(compose):
     body = compose(**REQUEST)
     provenance = body["provenance"]
     assert provenance["engine_version"] == ENGINE_VERSION
-    assert provenance["seed"] == 1650
+    # Wire-safe decimal string, not a JSON number -- see test_seed_wire_contract.py.
+    assert provenance["seed"] == "1650"
+    assert int(provenance["seed"]) == 1650
     assert provenance["law_profile"] == body["configuration"]["law_profile"]
     assert provenance["config_fingerprint"]
     # The fingerprint tracks the configuration, not the seed.

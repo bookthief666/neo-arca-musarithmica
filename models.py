@@ -421,15 +421,30 @@ class SearchModel(BaseModel):
 
 class ProvenanceModel(BaseModel):
     engine_version: str
-    seed: int = Field(..., description="The resolved integer seed actually used.")
-    requested_seed: Optional[Union[int, str]]
+    seed: str = Field(
+        ...,
+        description="The resolved seed, as a DECIMAL STRING, not a JSON number. It is "
+                    "drawn from a full 64-bit range, which exceeds 2**53 - 1 -- the "
+                    "largest integer JavaScript's Number type represents exactly -- so "
+                    "a bare JSON number here would silently lose precision in a browser. "
+                    "Parse it with BigInt(seed) if you need the numeric value; never "
+                    "with Number(seed) or the unary + operator. If you only need to "
+                    "compare or store it, treat it as an opaque string.",
+    )
+    requested_seed: Optional[str] = Field(
+        None,
+        description="The seed exactly as the request gave it, also as a decimal string "
+                    "when numeric (same precision rationale as `seed`), or the original "
+                    "string unchanged, or null if the request omitted it.",
+    )
     law_profile: str
     config_fingerprint: str
     runtime: Dict[str, str] = Field(
         default_factory=dict,
         description="Python and music21 versions this was produced on. The engine "
                     "chooses the same notes on any runtime; these versions scope the "
-                    "stronger claim that the MIDI bytes are identical too.",
+                    "stronger claim that the MIDI bytes are identical too. See "
+                    "docs/DETERMINISM.md for the precise, tiered guarantee.",
     )
 
 
@@ -511,6 +526,23 @@ class ErrorResponse(BaseModel):
 # --------------------------------------------------------------------------------------
 
 
+def _wire_safe_provenance(provenance: Any) -> "ProvenanceModel":
+    """Project :class:`determinism.Provenance` with seeds as JS-safe decimal strings.
+
+    ``Provenance.seed`` is a Python int drawn from a full 64-bit range -- correct and
+    convenient internally, but a JSON *number* that large silently loses precision the
+    moment a browser parses it (JS ``Number`` is exact only up to 2**53 - 1). Both seed
+    fields are therefore converted to decimal strings here, at the API boundary, rather
+    than by widening the internal `Provenance` dataclass -- the engine's own arithmetic on
+    seeds stays ordinary integer arithmetic; only the wire representation changes.
+    """
+    payload = provenance.as_dict()
+    payload["seed"] = str(payload["seed"])
+    requested = payload["requested_seed"]
+    payload["requested_seed"] = None if requested is None else str(requested)
+    return ProvenanceModel(**payload)
+
+
 def build_compose_response(composition: Any, midi_base64: str) -> ComposeResponse:
     """Project a :class:`kircher_engine.Composition` onto the wire format."""
     from harmony import cadence_provenance
@@ -525,7 +557,7 @@ def build_compose_response(composition: Any, midi_base64: str) -> ComposeRespons
             law_profile=composition.profile.name,
             law_title=composition.profile.title,
         ),
-        provenance=ProvenanceModel(**composition.provenance.as_dict()),
+        provenance=_wire_safe_provenance(composition.provenance),
         configuration=ConfigurationModel(**composition.config.as_dict()),
         semantics=SemanticAnalysisModel(**composition.analysis.as_dict()),
         score=ScoreModel(

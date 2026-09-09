@@ -17,13 +17,20 @@ import hashlib
 import json
 import platform
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Mapping, Sequence, TypeVar
 
 T = TypeVar("T")
 
-#: Width of the derived integer seeds.  64 bits is ample and stays JSON-safe.
+#: Width of the derived integer seeds.  64 bits is ample for the seed space, but it is
+#: NOT "JSON-safe" in the sense that matters for a JS/Tone.js consumer: JavaScript's
+#: ``Number`` only represents integers exactly up to 2**53 - 1, and this seed space goes
+#: up to 2**64 - 1.  A seed at the top of this range serialised as a bare JSON number
+#: would silently lose precision the moment a browser parses it.  The API therefore
+#: serialises resolved seeds as decimal strings (see ``models.ProvenanceModel.seed`` and
+#: ``docs/DETERMINISM.md``); this constant only bounds the internal integer, never the
+#: wire representation.
 _SEED_BITS = 64
 _SEED_MASK = (1 << _SEED_BITS) - 1
 
@@ -36,49 +43,115 @@ class CanonicalisationError(TypeError):
     """
 
 
+#: Tags for the container/leaf types whose JSON rendering would otherwise be ambiguous.
+#: Every tagged node is a two-element JSON array ``[tag, payload]``.  This is what makes
+#: the scheme injective rather than merely "usually fine": a raw JSON array *always*
+#: starts with ``[``, so a tagged node can never collide with an untagged scalar (which
+#: always starts with ``"``, a digit, ``-``, or one of ``true``/``false``/``null``), and
+#: two tagged nodes can only collide if both their tag string *and* their payload match --
+#: the tag alone already rules out cross-type collisions such as a float and a bytes
+#: value both formatting to the digits ``"61"``.
+_FLOAT_TAG = "float"
+_BYTES_TAG = "bytes"
+_SET_TAG = "set"
+_MAP_TAG = "map"
+_LIST_TAG = "list"
+
+
+def _dumps(node: Any) -> str:
+    return json.dumps(node, separators=(",", ":"), ensure_ascii=True, allow_nan=False)
+
+
 def canonical(value: Any) -> str:
-    """A deterministic textual form of *value*, independent of ``repr``.
+    """A deterministic, **type-unambiguous** textual form of *value*.
 
-    ``repr`` is not a serialisation format and must not be treated as one:
+    ``repr`` is not a serialisation format and must not be treated as one -- see the
+    module docstring for the concrete failures that motivated this function. But
+    avoiding ``repr`` is not sufficient by itself: naively mapping every Python value onto
+    a "natural" JSON shape reintroduces the same class of bug one level down, because
+    JSON's own type system is coarser than Python's.  Untagged, all of the following would
+    silently collide:
 
-    * ``repr(ModeName.IONIAN)`` is ``"<ModeName.IONIAN: 'ionian'>"`` -- it embeds the
-      class name and the interpreter's enum formatting, both of which have changed
-      between Python releases;
-    * ``repr({"a": 1, "b": 2})`` differs from ``repr({"b": 2, "a": 1})``, so two equal
-      configurations could hash differently purely from insertion order;
-    * float formatting is stable in current CPython but is not a language guarantee.
+    * ``1.0`` and ``"1"``, because ``f"{1.0:.17g}"`` is the string ``"1"``;
+    * ``b"a"`` and ``"61"``, because ``b"a".hex()`` is the string ``"61"``;
+    * ``{1: "x"}`` and ``{"1": "x"}``, because a naive canonicaliser stringifies keys
+      with ``str(k)``;
+    * ``{1, 2, 3}`` and ``["1", "2", "3"]``, because a set canonicalised element-by-element
+      into strings looks exactly like a list of those same strings.
 
-    So mappings are emitted with sorted keys, sets are sorted, enums reduce to their
-    value, floats are written with enough digits to round-trip exactly, and anything not
-    explicitly understood raises rather than being guessed at.
+    So every value that is not already unambiguous in JSON -- floats, bytes/bytearray,
+    sets/frozensets, mappings, and sequences (including plain JSON-representable lists,
+    so an actual Python list can never be mistaken for one of the tagged forms above) --
+    is wrapped as ``[tag, payload]`` before serialisation.  ``None``, ``bool``, ``int``
+    and ``str`` are left bare: JSON already renders them as mutually distinct token
+    shapes (``null``, ``true``/``false``, a bare number, a quoted string), and none of
+    those shapes can ever equal a tagged array's shape, which always starts with ``[``.
+
+    Explicit design choices, each intentional and each tested in
+    ``tests/test_canonical.py``:
+
+    * **Enum reduces transparently to its ``.value``.**  ``ModeName.IONIAN`` and the bare
+      string ``"ionian"`` canonicalise identically and are treated as the same
+      configuration value -- the class name is an implementation detail that renaming
+      an enum should not change the music, so no separate enum tag is added.
+    * **``list`` and ``tuple`` are canonically equivalent.**  Both use the ``"list"`` tag
+      and preserve element order.  The codebase interchanges them freely (a dataclass
+      field typed as a tuple, a JSON payload built as a list), and the property that
+      matters here is *ordered sequence* vs. *unordered collection* (list/tuple vs.
+      set), which remains fully distinct.
+    * **``-0.0`` canonicalises identically to ``0.0``.**  Both are tagged ``"float"`` (so
+      neither collides with any other type), and within that tag they render as the same
+      payload, since the sign of zero carries no meaning for any parameter this engine
+      hashes.
+    * **``bool`` stays distinct from ``int``.**  Left untagged deliberately: JSON already
+      renders ``True`` as ``true`` and ``1`` as ``1``, two token shapes that cannot
+      collide, so no extra tagging is needed here.
+    * **NaN and +/-infinity are refused, not hashed.**  A silently-accepted non-finite
+      float would make two "equal" configurations hash differently depending on platform
+      floating-point behaviour, which is precisely the fragility this function exists to
+      remove.
+    * **An unrecognised type raises `CanonicalisationError`.**  Guessing a shape for a
+      type nobody has reasoned about is how a hash starts depending on something it was
+      never meant to.
     """
-    return json.dumps(
-        _normalise(value), sort_keys=True, separators=(",", ":"),
-        ensure_ascii=True, allow_nan=False,
-    )
+    return _dumps(_normalise(value))
 
 
 def _normalise(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, str)):
         return value
+    if isinstance(value, Enum):
+        return _normalise(value.value)
     if isinstance(value, float):
         if value != value or value in (float("inf"), float("-inf")):
             raise CanonicalisationError(f"cannot canonicalise non-finite float {value!r}")
         # 17 significant digits round-trips any IEEE double exactly; normalise -0.0 so it
-        # cannot hash differently from 0.0.
-        return f"{value + 0.0:.17g}"
-    if isinstance(value, Enum):
-        # The *value* is the semantic content; the class name is an implementation
-        # detail that renaming should not change the music.
-        return _normalise(value.value)
+        # cannot hash differently from 0.0.  Tagged, so this can never collide with a
+        # plain string or int that happens to look like the same digits.
+        return [_FLOAT_TAG, f"{value + 0.0:.17g}"]
     if isinstance(value, (bytes, bytearray)):
-        return value.hex()
+        # Tagged, so hex digits can never collide with an ordinary string of the same
+        # characters (e.g. b"a" -> "61" would otherwise equal the string "61").
+        return [_BYTES_TAG, value.hex()]
     if isinstance(value, Mapping):
-        return {str(k): _normalise(v) for k, v in value.items()}
+        # Keys are canonicalised through this same function, not str()-ed, so an int key
+        # and a string key with the same digits never collide (canonical(1) == "1", a
+        # 1-character token; canonical("1") == "\"1\"", a 3-character token -- distinct
+        # once the outer serialiser re-quotes them). Sorting by that text keeps insertion
+        # order from mattering, and works regardless of the key's original type because
+        # the sort key is always a plain string.
+        entries = sorted((canonical(k), _normalise(v)) for k, v in value.items())
+        return [_MAP_TAG, [[k, v] for k, v in entries]]
     if isinstance(value, (set, frozenset)):
-        return sorted(canonical(v) for v in value)
+        # Elements are normalised (not pre-stringified) so the payload is a real nested
+        # structure, not a list of strings that could be confused with an ordinary list
+        # of strings -- the "list" tag on genuine lists is what actually prevents that
+        # confusion, but storing normalised nodes here keeps the structure uniform too.
+        normalised = [_normalise(v) for v in value]
+        normalised.sort(key=_dumps)
+        return [_SET_TAG, normalised]
     if isinstance(value, Sequence):
-        return [_normalise(v) for v in value]
+        return [_LIST_TAG, [_normalise(v) for v in value]]
     raise CanonicalisationError(
         f"no deterministic form defined for {type(value).__name__}; add one to "
         f"determinism._normalise rather than relying on repr()"
@@ -124,7 +197,11 @@ class Provenance:
     law_profile: str
     config_fingerprint: str
     #: Versions the byte-identical MIDI claim is scoped to.  Not part of the seed.
-    runtime: Mapping[str, str] = ()
+    #: ``default_factory=dict`` rather than a bare mutable default: a frozen dataclass
+    #: still shares one bound default object across every instance that doesn't override
+    #: it, and an empty mapping literal used as a field default is the classic version of
+    #: that trap, so a factory is used even though the field is never mutated in place.
+    runtime: Mapping[str, str] = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {

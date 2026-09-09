@@ -17,7 +17,27 @@
 # Install from the lock for a reproducible environment:
 #   pip install -r requirements.lock.txt
 #
-# Generated against Python 3.11.15, CPython, on 2026-09-09.
+# WHAT THIS LOCK DOES AND DOES NOT PROVE
+#
+# Pinning every version, as this file does, is necessary for reproducible MIDI output
+# but it is NOT sufficient on its own. A wheel built for a different operating system,
+# CPU architecture, or Python build can differ in floating-point rounding, binary layout,
+# or available optional acceleration even at an identical package==version pin -- pip
+# resolves a version pin to whatever wheel matches the *installing* machine, not to one
+# specific binary artifact. Byte-identical MIDI (docs/DETERMINISM.md, tier D) is only
+# claimed for the environment this lock was actually generated and tested against, given
+# below, not for "these versions on any machine".
+#
+# TESTED ENVIRONMENT (exact, not a range):
+#   OS / kernel:     Linux 6.18.44-fc-v24 (x86_64)
+#   platform string: Linux-6.18.44-fc-v24-x86_64-with-glibc2.39
+#   architecture:    x86_64
+#   Python:          3.11.15 (CPython), built 2026-03-03, GCC 13.3.0
+#
+# Reproducing this exact tier-D guarantee elsewhere means matching all four of the above,
+# not only the package versions below. A different OS/arch/build is tier B territory at
+# best (same music, not necessarily the same MIDI bytes) until it has actually been
+# tested -- see docs/DETERMINISM.md for what tier B does and does not promise.
 
 annotated-doc==0.0.5
 annotated-types==0.8.0

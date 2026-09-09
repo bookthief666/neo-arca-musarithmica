@@ -1,22 +1,36 @@
-"""Canonical serialization: the three ways ``repr()``-based hashing was fragile.
+"""Canonical serialization: fragile against ``repr()``, then fragile again against
+naive JSON, until every distinguishable Python type got its own unambiguous shape.
 
-``stable_hash`` and ``fingerprint`` used to feed ``repr(part)`` into blake2b. Three
-concrete problems follow from that, each with a regression below:
+Two separate generations of bug live in this file's history.
 
-1. ``repr(SomeEnum.MEMBER)`` embeds the class name and Python's enum formatting, both of
-   which have changed across interpreter versions.
-2. ``repr(a_dict)`` depends on insertion order, so two semantically-equal configurations
-   built via different code paths could hash differently.
-3. Float ``repr`` is not a language-guaranteed format.
+**Generation 1 -- ``repr()``.** ``stable_hash`` and ``fingerprint`` used to feed
+``repr(part)`` into blake2b: ``repr(SomeEnum.MEMBER)`` embeds the class name and Python's
+own enum formatting (both have changed across interpreter versions), ``repr(a_dict)``
+depends on insertion order, and float ``repr`` is not a language-guaranteed format.
 
-``determinism.canonical()`` fixes all three by normalising before hashing rather than
-relying on ``repr``, and raises rather than silently guessing for anything it doesn't
-recognise. This file tests ``canonical()`` directly, independent of the engine, so a
-regression here is diagnosable without generating a whole composition.
+**Generation 2 -- naive JSON, still collision-prone.** Replacing ``repr()`` with a
+"reasonable" JSON mapping was not enough on its own, because JSON's type system is
+coarser than Python's: without further care, ``canonical(1.0) == canonical("1")`` (a
+float formatted to a string looks exactly like that string), ``canonical(b"a") ==
+canonical("61")`` (hex-encoded bytes look exactly like that hex string), ``canonical({1:
+"x"}) == canonical({"1": "x"})`` (an int key and a string key both stringify to ``"1"``),
+and ``canonical({1, 2, 3}) == canonical(["1", "2", "3"])`` (a set canonicalised
+element-by-element into strings is indistinguishable from a list of those same strings).
+
+``determinism.canonical()`` closes both generations: every value that JSON does not
+already render unambiguously is wrapped as ``[tag, payload]`` before serialisation, so a
+raw JSON array can never be confused with the untagged scalars (``null``/``true``/
+``false``/a bare number/a quoted string), and two different tags can never collide with
+each other regardless of what their payloads happen to contain. This file tests
+``canonical()`` directly, independent of the engine, so a regression here is diagnosable
+without generating a whole composition -- and several tests below are written to FAIL
+against the naive, generation-2 implementation, not just against the original ``repr()``
+one; see the docstring on each for exactly what it catches.
 """
 
 from __future__ import annotations
 
+import json
 import math
 
 import pytest
@@ -59,10 +73,14 @@ def test_nested_dict_order_independence():
 def test_floats_round_trip_and_negative_zero_is_normalised():
     """The defect: float repr is stable in current CPython but not a language guarantee."""
     assert canonical(-0.0) == canonical(0.0)
-    # 17 significant digits is enough to round-trip any IEEE double exactly.
+    # A float canonicalises to a tagged ["float", digits] node, not a bare JSON token, so
+    # it is parsed back (via json.loads, not eval -- the tag makes it a real structure,
+    # not a string) rather than assumed to be directly eval-able.
     value = 0.1 + 0.2
-    recovered = float(eval(canonical(value)))
-    assert recovered == value
+    tag, digits = json.loads(canonical(value))
+    assert tag == "float"
+    # 17 significant digits is enough to round-trip any IEEE double exactly.
+    assert float(digits) == value
 
 
 def test_non_finite_floats_are_rejected_rather_than_silently_hashed():
@@ -74,6 +92,67 @@ def test_non_finite_floats_are_rejected_rather_than_silently_hashed():
 def test_sets_are_order_independent():
     assert canonical({3, 1, 2}) == canonical({2, 3, 1})
     assert canonical(frozenset({"a", "b"})) == canonical(frozenset({"b", "a"}))
+
+
+# --------------------------------------------------------------------------------------
+# Generation 2: type collisions in a naive JSON mapping (would NOT be caught by simply
+# avoiding repr() -- these fail against a "canonicalise, but don't tag" implementation
+# just as surely as they would fail against the original repr()-based one)
+# --------------------------------------------------------------------------------------
+
+
+def test_float_does_not_collide_with_the_string_of_its_own_digits():
+    """canonical(1.0) used to equal canonical("1"): f"{1.0:.17g}" is the string "1", and
+    an untagged float payload is indistinguishable from that same string on its own."""
+    assert canonical(1.0) != canonical("1")
+    assert canonical(2.5) != canonical("2.5")
+
+
+def test_bytes_do_not_collide_with_their_own_hex_string():
+    """canonical(b"a") used to equal canonical("61"): b"a".hex() is the string "61", and
+    an untagged bytes payload is indistinguishable from that same string on its own."""
+    assert canonical(b"a") != canonical("61")
+    assert canonical(bytearray(b"a")) != canonical("61")
+    assert canonical(b"a") == canonical(bytearray(b"a")), (
+        "bytes and bytearray carry the same data and should canonicalise identically"
+    )
+
+
+def test_mapping_keys_are_typed_not_stringified():
+    """canonical({1: "x"}) used to equal canonical({"1": "x"}): str(1) == str("1")=="1",
+    so naively stringifying keys collapses an int key onto a string key with the same
+    digits."""
+    assert canonical({1: "x"}) != canonical({"1": "x"})
+    # But two dicts that really do share the same (typed) keys still agree regardless of
+    # insertion order -- the fix must not reintroduce order-sensitivity.
+    assert canonical({1: "x", 2: "y"}) == canonical({2: "y", 1: "x"})
+
+
+def test_set_of_ints_does_not_collide_with_a_list_of_their_digit_strings():
+    """canonical({1,2,3}) used to equal canonical(["1","2","3"]): a set canonicalised
+    element-by-element into pre-stringified digits is indistinguishable from a list of
+    those same strings, because both end up as a JSON array of the strings "1","2","3"."""
+    assert canonical({1, 2, 3}) != canonical(["1", "2", "3"])
+    assert canonical({1, 2, 3}) != canonical([1, 2, 3]), (
+        "a set must not collide with a list even when the list has the matching order"
+    )
+
+
+def test_tagged_container_cannot_be_spoofed_by_an_ordinary_list():
+    """Adversarial case for a tag-in-the-payload design: an ordinary Python list whose
+    contents literally spell out another type's tag and payload must still not collide
+    with that type's real canonical form."""
+    spoofing_list = ["float", "1"]  # looks like a hand-built float tag from the outside
+    real_float = 1.0
+    assert canonical(spoofing_list) != canonical(real_float)
+
+
+def test_list_and_tuple_are_documented_as_canonically_equivalent():
+    """Explicit design choice (not a collision): list and tuple share a tag because the
+    property that matters here is ordered-sequence vs. unordered-collection, and this
+    codebase interchanges list/tuple freely. Sets remain distinct from both."""
+    assert canonical([1, 2, 3]) == canonical((1, 2, 3))
+    assert canonical((1, 2, 3)) != canonical({1, 2, 3})
 
 
 # --------------------------------------------------------------------------------------

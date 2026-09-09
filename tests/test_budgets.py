@@ -22,18 +22,32 @@ from constraints import MusicalFrame
 from determinism import SeedStream
 from harmony import build_plan
 from kircher_engine import (
-    ENGINE_VERSION, KircherEngine, SearchBudget, SearchStats, VoicingSolver,
+    ENGINE_VERSION, GenerationError, KircherEngine, SearchBudget, SearchStats,
+    VoicingSolver,
 )
 from rhythm import meter_spec
 from theory import VOICE_ORDER, shifted_range
 
-#: Phrygian reliably forces the lenient fallback: its flat-second cadence and its
-#: diminished degree-v pin the bass onto roots the melodic filter cannot always reach,
-#: so at least one slot comes back empty on the strict pass.
-LENIENT_CASE = dict(
-    text="a solemn procession through the vaults",
-    mode="phrygian", meter="4/4", measures=8, seed=1,
-)
+#: Phrygian reliably forces the lenient fallback somewhere in a small seed pool: its
+#: flat-second cadence and its diminished degree-v pin the bass onto roots the melodic
+#: filter cannot always reach, so at least one slot comes back empty on the strict pass.
+#: Searched rather than pinned to one literal seed: which seed first triggers this
+#: depends on the seed-derivation hash (determinism.canonical()), which legitimately
+#: moves whenever ENGINE_VERSION bumps for a reason unrelated to this file's purpose.
+def _find_lenient_case() -> dict:
+    base = dict(text="a solemn procession through the vaults", mode="phrygian",
+                meter="4/4", measures=8)
+    for seed in range(20):
+        candidate = {**base, "seed": seed}
+        if KircherEngine().compose(**candidate).stats.lenient_enumerations:
+            return candidate
+    raise AssertionError(
+        "no seed in the search pool exercises the lenient fallback; every test in this "
+        "file that relies on LENIENT_CASE would silently test nothing"
+    )
+
+
+LENIENT_CASE = _find_lenient_case()
 
 
 def build_solver(budget: SearchBudget, **overrides):
@@ -69,28 +83,58 @@ def build_solver(budget: SearchBudget, **overrides):
 
 @pytest.mark.parametrize("ceiling", [1, 2, 3, 5, 8])
 def test_repair_never_exceeds_the_configured_budget(ceiling):
+    """The ceiling binds either way: repair stops at it, and if what's left when it stops
+    is a genuine defect, B5's guarantee (a returned composition never contains one --
+    see test_relaxation.py) refuses rather than returning partially-repaired music. Both
+    outcomes prove the same thing about *this* budget: repair never ran past `ceiling`.
+    """
     engine = KircherEngine(budget=SearchBudget(max_repair_passes=ceiling))
-    composition = engine.compose(
-        text="a thousand swarming gears in the frost", seed=418, measures=8, density=0.7
-    )
-    assert composition.stats.repair_passes <= ceiling, (
-        f"repair ran {composition.stats.repair_passes} passes under a budget of {ceiling}"
-    )
+    try:
+        composition = engine.compose(
+            text="a thousand swarming gears in the frost", seed=418, measures=8,
+            density=0.7,
+        )
+    except GenerationError as error:
+        reported = error.diagnostics["search"]["repair_passes"]
+        assert reported <= ceiling, (
+            f"repair reported {reported} passes under a budget of {ceiling}"
+        )
+        assert error.diagnostics["defects"], (
+            "refusal must be because of a genuine defect, not some other failure"
+        )
+    else:
+        assert composition.stats.repair_passes <= ceiling, (
+            f"repair ran {composition.stats.repair_passes} passes under a budget of "
+            f"{ceiling}"
+        )
 
 
-def test_a_starved_repair_budget_reports_itself_rather_than_pretending():
-    """One pass is not enough for this composition; that must be visible, not hidden."""
-    starved = KircherEngine(budget=SearchBudget(max_repair_passes=1)).compose(
-        text="a thousand swarming gears in the frost", seed=418, measures=8, density=0.7
-    )
+def test_a_starved_repair_budget_is_visible_one_way_or_the_other():
+    """One pass is not enough for this composition; that must be visible, not hidden --
+    either as stats.repair_exhausted on a returned composition, or as a refusal (B5) when
+    the ornament repair could not finish reverting left a genuine defect behind. A
+    generous budget, by contrast, must converge cleanly with neither.
+    """
+    try:
+        starved = KircherEngine(budget=SearchBudget(max_repair_passes=1)).compose(
+            text="a thousand swarming gears in the frost", seed=418, measures=8,
+            density=0.7,
+        )
+    except GenerationError as error:
+        assert error.diagnostics["search"]["repair_passes"] <= 1
+        assert error.diagnostics["defects"]
+    else:
+        assert starved.stats.repair_passes == 1
+        assert starved.stats.repair_exhausted is True
+
     generous = KircherEngine(budget=SearchBudget(max_repair_passes=8)).compose(
         text="a thousand swarming gears in the frost", seed=418, measures=8, density=0.7
     )
-    assert starved.stats.repair_passes == 1
-    assert starved.stats.repair_exhausted is True
-    # The generous run converges on its own and must NOT claim exhaustion.
+    # The generous run converges on its own and must NOT claim exhaustion, and must
+    # never itself be the refused case -- it exists as the contrasting baseline.
     assert generous.stats.repair_passes <= 8
     assert generous.stats.repair_exhausted is False
+    assert generous.validation.defects == []
 
 
 def test_repair_exhaustion_is_reported_through_the_api(client):

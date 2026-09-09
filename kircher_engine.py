@@ -55,7 +55,10 @@ ENGINE_NAME = "neo-arca-musarithmica"
 #: Bumped whenever a change alters the notes produced for an unchanged request.
 #: 1.1.0 replaced repr()-based hashing with canonical serialisation (see
 #: determinism.canonical), which moves every derived seed and therefore the music.
-ENGINE_VERSION = "1.1.0"
+#: 1.2.0 closed type collisions in that same canonical() (e.g. canonical(1.0) used to
+#: equal canonical("1")); fixing the collisions changed the hash function's output again,
+#: so every derived seed moves a second time even though no musical rule changed.
+ENGINE_VERSION = "1.2.0"
 
 
 class GenerationError(RuntimeError):

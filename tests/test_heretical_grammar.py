@@ -28,7 +28,11 @@ from constraints import (
 from kircher_engine import ENGINE
 from theory import ModeName
 
-SWEEP_SEEDS = (0, 1, 2, 3)
+#: A few of the rarer active preferences (e.g. nonchord_tone_unstepwise) need more than
+#: four seeds to show up even once; widened from (0,1,2,3) so the corpus keeps covering
+#: every declared active preference after a seed-derivation change moves which seed
+#: happens to trigger a low-probability event.
+SWEEP_SEEDS = (0, 1, 2, 3, 4, 5, 6)
 SWEEP_TEXT = "a solemn procession through the vaults"
 
 
