@@ -56,8 +56,12 @@ ENGINE_VERSION = "1.0.0"
 class GenerationError(RuntimeError):
     """A controlled, diagnosable failure of the generative process.
 
-    Raised only when the search has genuinely exhausted its budget at every relaxation
-    level.  Carries enough context for the API layer to explain what happened.
+    Raised in two situations, both of which carry enough context for the API layer to
+    explain what happened: the search genuinely exhausted its budget at every relaxation
+    level, or it produced a composition containing a defect -- an error-severity
+    violation the active law does not license.  The second case matters because
+    relaxation loosens the *search*, and returning music that breaks the law it claims
+    to follow would make the validation report worthless.
     """
 
     def __init__(self, message: str, diagnostics: Optional[Dict[str, object]] = None):
@@ -232,6 +236,7 @@ class SearchStats:
             "node_budget_hits": self.node_budget_hits,
             "backtracks": self.backtracks,
             "relaxation_level": self.relaxation_level,
+            "relaxed": self.relaxation_level > 0,
             "solver_restarts": self.solver_restarts,
             "repair_passes": self.repair_passes,
             "phrases_without_tritone": self.phrases_without_tritone,
@@ -355,6 +360,15 @@ class VoicingSolver:
         heretical = self.profile.allows_chromatic_harmony
         max_gap_upper = 12 if relaxation == 0 else 16
         crossing_slack = 7 if heretical else 0
+        # The enumerator prunes parallels for speed, but the *policy table* decides
+        # whether they are forbidden here.  Deriving this from the profile rather than
+        # from `heretical` keeps a single source of truth: a profile that stops treating
+        # parallels as hard genuinely stops having them pruned, instead of the enumerator
+        # quietly enforcing a rule the table no longer states.
+        prune_parallels = (
+            self.profile.policy(Rules.PARALLEL_FIFTH).is_hard(relaxation)
+            or self.profile.policy(Rules.PARALLEL_OCTAVE).is_hard(relaxation)
+        )
         results: List[Tuple[int, int, int, int]] = []
         nodes = 0
         # One allowance for the whole slot.  The strict pass may spend only part of it so
@@ -382,7 +396,7 @@ class VoicingSolver:
 
         def parallel_free(assigned: List[int], voice_i: int, pitch: int) -> bool:
             """Reject a partial assignment that already forms a parallel perfect."""
-            if previous is None or heretical:
+            if previous is None or not prune_parallels:
                 return True
             for j, other in enumerate(assigned):
                 pl, pu = previous.pitches[j], previous.pitches[voice_i]
@@ -457,10 +471,13 @@ class VoicingSolver:
         if self.profile.allows_chromatic_harmony:
             return True
         classes = [p % 12 for p in pitches]
-        if relaxation == 0 and not slot.triad.pcs.issubset(set(classes)):
+        if (self.profile.policy(Rules.INCOMPLETE_TRIAD).is_hard(relaxation)
+                and not slot.triad.pcs.issubset(set(classes))):
             return False
         lt = slot.leading_tone_pc
-        if lt is not None and relaxation <= 1 and classes.count(lt) > 1:
+        if (lt is not None
+                and self.profile.policy(Rules.DOUBLED_LEADING_TONE).is_hard(relaxation)
+                and classes.count(lt) > 1):
             return False
         return True
 
@@ -1415,6 +1432,29 @@ class KircherEngine:
         report = validate(grid, frame, profile, lines=lines, ledger=ledger)
         self._append_phrase_findings(report, plan, grid, profile)
         stats.elapsed_ms = (time.perf_counter() - started) * 1000.0
+
+        # The public contract: a returned composition never contains a defect -- an
+        # error-severity violation the active law does not license.  Relaxation exists to
+        # let the *search* loosen when a slot is otherwise unsolvable, and five
+        # error-severity rules stop being hard at level 2 (dissonant_sonority,
+        # doubled_leading_tone, leading_tone_unresolved, nonchord_tone_unstepwise,
+        # suspension_unresolved).  A relaxed search may therefore commit something the
+        # unrelaxed law forbids.  Failing here is deliberate: silently returning a 200
+        # whose music breaks the law it claims to follow would make the whole validation
+        # report meaningless.
+        if report.defects:
+            raise GenerationError(
+                "the composition violates laws the active profile does not license; "
+                f"the search succeeded only after relaxing to level "
+                f"{stats.relaxation_level}",
+                {
+                    "config": config.as_dict(),
+                    "progression": plan.progression(),
+                    "search": stats.as_dict(),
+                    "budget": self.budget.as_dict(),
+                    "defects": [v.as_dict() for v in report.defects],
+                },
+            )
 
         return Composition(
             config=config,

@@ -368,7 +368,14 @@ class SearchModel(BaseModel):
     )
     backtracks: int
     relaxation_level: int = Field(
-        ..., description="0 is full strictness; higher means hard rules were relaxed."
+        ...,
+        description="0 is full strictness; higher means the SEARCH had to drop hard "
+                    "rules to find any solution at all. The returned music is still "
+                    "guaranteed defect-free -- a relaxed search that produced an "
+                    "unlicensed error fails with 500 rather than returning.",
+    )
+    relaxed: bool = Field(
+        False, description="Shorthand for relaxation_level > 0."
     )
     solver_restarts: int
     repair_passes: int
