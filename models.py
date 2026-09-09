@@ -324,13 +324,31 @@ class SearchModel(BaseModel):
     slots: int
     candidate_sets_built: int
     candidates_considered: int
-    nodes_visited: int
+    nodes_visited: int = Field(
+        ...,
+        description="Total enumeration nodes actually visited, counting every pass.",
+    )
+    lenient_enumerations: int = Field(
+        ...,
+        description="Slots whose strict enumeration was empty and needed the lenient "
+                    "fallback. The fallback shares the slot's single node allowance.",
+    )
+    node_budget_hits: int = Field(
+        ...,
+        description="Slot enumerations that stopped on the node budget rather than on "
+                    "running out of candidates.",
+    )
     backtracks: int
     relaxation_level: int = Field(
         ..., description="0 is full strictness; higher means hard rules were relaxed."
     )
     solver_restarts: int
     repair_passes: int
+    repair_exhausted: bool = Field(
+        ...,
+        description="True when repair hit max_repair_passes with hard violations still "
+                    "outstanding; whatever remains is reported in `validation`.",
+    )
     ornaments_applied: int
     ornaments_reverted: int
     elapsed_ms: float

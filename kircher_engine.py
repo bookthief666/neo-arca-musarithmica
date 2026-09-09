@@ -75,15 +75,26 @@ class SearchBudget:
     """Hard limits.  The engine never searches without one."""
 
     max_candidates_per_slot: int = 96
+    #: Total nodes one slot's enumeration may visit, across *all* of its passes.
+    #: Enumerating a slot can fall back to a lenient second pass (see
+    #: :meth:`VoicingSolver._enumerate`); both passes draw on this single allowance, so a
+    #: slot can never quietly cost twice what the budget says.
     max_nodes_per_slot: int = 5000
+    #: Share of ``max_nodes_per_slot`` the strict pass may spend.  The remainder is held
+    #: back so the lenient fallback cannot be starved by a long strict pass.
+    strict_node_share: float = 0.8
     max_backtracks: int = 600
     max_repair_passes: int = 8
     max_relaxation: int = law.MAX_RELAXATION
 
-    def as_dict(self) -> Dict[str, int]:
+    def strict_node_cap(self) -> int:
+        return max(1, int(self.max_nodes_per_slot * self.strict_node_share))
+
+    def as_dict(self) -> Dict[str, object]:
         return {
             "max_candidates_per_slot": self.max_candidates_per_slot,
             "max_nodes_per_slot": self.max_nodes_per_slot,
+            "strict_node_share": self.strict_node_share,
             "max_backtracks": self.max_backtracks,
             "max_repair_passes": self.max_repair_passes,
             "max_relaxation": self.max_relaxation,
@@ -189,10 +200,19 @@ class SearchStats:
     candidate_sets_built: int = 0
     candidates_considered: int = 0
     nodes_visited: int = 0
+    #: Slots whose strict enumeration came back empty and needed the lenient fallback.
+    lenient_enumerations: int = 0
+    #: Slot enumerations that stopped because they hit the node budget rather than
+    #: because they ran out of candidates.
+    node_budget_hits: int = 0
     backtracks: int = 0
     relaxation_level: int = 0
     solver_restarts: int = 0
     repair_passes: int = 0
+    #: True when the repair loop reached ``SearchBudget.max_repair_passes`` with hard
+    #: violations still outstanding.  The remaining violations are reported honestly by
+    #: the validator rather than silently tolerated.
+    repair_exhausted: bool = False
     ornaments_reverted: int = 0
     ornaments_applied: int = 0
     elapsed_ms: float = 0.0
@@ -204,10 +224,13 @@ class SearchStats:
             "candidate_sets_built": self.candidate_sets_built,
             "candidates_considered": self.candidates_considered,
             "nodes_visited": self.nodes_visited,
+            "lenient_enumerations": self.lenient_enumerations,
+            "node_budget_hits": self.node_budget_hits,
             "backtracks": self.backtracks,
             "relaxation_level": self.relaxation_level,
             "solver_restarts": self.solver_restarts,
             "repair_passes": self.repair_passes,
+            "repair_exhausted": self.repair_exhausted,
             "ornaments_applied": self.ornaments_applied,
             "ornaments_reverted": self.ornaments_reverted,
             "elapsed_ms": round(self.elapsed_ms, 2),
@@ -328,7 +351,11 @@ class VoicingSolver:
         crossing_slack = 7 if heretical else 0
         results: List[Tuple[int, int, int, int]] = []
         nodes = 0
+        # One allowance for the whole slot.  The strict pass may spend only part of it so
+        # the lenient fallback below always has room; `nodes` is never reset, so both the
+        # cap and the reported figure describe the slot's total real work.
         node_cap = self.budget.max_nodes_per_slot
+        active_cap = self.budget.strict_node_cap()
         candidate_cap = self.budget.max_candidates_per_slot
 
         lenient = False
@@ -370,7 +397,7 @@ class VoicingSolver:
 
         def descend(level: int, assigned: List[int]) -> None:
             nonlocal nodes
-            if len(results) >= candidate_cap or nodes >= node_cap:
+            if len(results) >= candidate_cap or nodes >= active_cap:
                 return
             if level == 4:
                 if self._doubling_ok(slot, assigned, relaxation):
@@ -380,7 +407,7 @@ class VoicingSolver:
             floor = assigned[-1] - crossing_slack if assigned else None
             for pitch in pools[level]:
                 nodes += 1
-                if nodes >= node_cap:
+                if nodes >= active_cap:
                     return
                 if floor is not None and pitch < floor:
                     continue
@@ -404,9 +431,15 @@ class VoicingSolver:
             # a root a tritone away, for instance.  Re-enumerate without it rather than
             # dead-ending -- the offending interval then survives as a scored penalty the
             # search can weigh, which is what a bounded relaxation is for.
+            #
+            # The fallback continues on the same node counter and is released up to the
+            # slot's full allowance; it does not get a second budget of its own.
             lenient = True
-            nodes = 0
+            active_cap = node_cap
+            self.stats.lenient_enumerations += 1
             descend(0, [])
+        if nodes >= active_cap:
+            self.stats.node_budget_hits += 1
         self.stats.nodes_visited += nodes
         self.stats.candidate_sets_built += 1
         self._enumeration_cache[cache_key] = results
@@ -801,6 +834,7 @@ class Renderer:
         config: GenesisConfig,
         stream: SeedStream,
         stats: SearchStats,
+        budget: SearchBudget,
     ) -> None:
         self.plan = plan
         self.frame = frame
@@ -808,6 +842,7 @@ class Renderer:
         self.config = config
         self.stream = stream
         self.stats = stats
+        self.budget = budget
         self.speller = Speller(config.tonic, config.mode)
         self._events_cache: Dict[Voice, List[NoteEvent]] = {}
 
@@ -962,8 +997,14 @@ class Renderer:
         The structural backbone was proved sound during the search; only the diminution
         layer can add new hard violations, and only ornamental figures are reverted, so
         this loop strictly decreases the number of ornaments and terminates.
+
+        ``SearchBudget.max_repair_passes`` is the authority on how long it may run.  If
+        that ceiling is reached with offenders still outstanding, the loop stops, records
+        ``stats.repair_exhausted``, and lets the validator report what remains -- it does
+        not keep going under a private limit of its own.
         """
-        for attempt in range(self.stats.repair_passes, 100):
+        ceiling = max(1, self.budget.max_repair_passes)
+        for attempt in range(self.stats.repair_passes, ceiling):
             events = self.events(structural, figures)
             grid = self.grid(events, structural)
             self._events_cache = events
@@ -999,8 +1040,8 @@ class Renderer:
                 # Nothing ornamental left to undo; the remaining findings belong to the
                 # backbone and are reported honestly by the validator.
                 return events, grid
-            if self.stats.repair_passes >= 100:  # pragma: no cover - guard
-                break
+        # The budget ran out with offenders still outstanding.
+        self.stats.repair_exhausted = True
         events = self.events(structural, figures)
         return events, self.grid(events, structural)
 
@@ -1227,7 +1268,7 @@ class KircherEngine:
         )
         figures = diminution.build(structural)
         renderer = Renderer(
-            plan, frame, profile, config, root.derive("render"), stats
+            plan, frame, profile, config, root.derive("render"), stats, self.budget
         )
         events, grid = renderer.repair(structural, figures, stats.relaxation_level)
 

@@ -20,7 +20,9 @@ from theory import ModeName
 def test_the_default_budget_is_finite():
     budget = SearchBudget()
     for name, value in budget.as_dict().items():
-        assert isinstance(value, int) and value > 0, name
+        assert isinstance(value, (int, float)) and value > 0, name
+    assert 0.0 < budget.strict_node_share <= 1.0
+    assert 1 <= budget.strict_node_cap() <= budget.max_nodes_per_slot
 
 
 def test_normal_generation_stays_well_inside_the_budget():
