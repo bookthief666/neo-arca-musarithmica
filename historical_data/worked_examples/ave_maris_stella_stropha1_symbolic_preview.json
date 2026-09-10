@@ -1,0 +1,79 @@
+{
+  "record": "ave_maris_stella_stropha1_symbolic_preview",
+  "status": "research-preview-noncanonical",
+  "canonical": false,
+  "historical_engine_ready": false,
+  "purpose": "First end-to-end symbolic reconstruction chain joining Kircher's worked Pinax-IV/Tone-II pitch example to one visually read Pinax-IV Notae Temporis series without inventing octave placement or modern tempo.",
+  "sources": {
+    "pitch_chain": "historical_data/worked_examples/pinax04_ave_maris_stella_tone02_pitch_chain.json",
+    "tone_lookup": "historical_data/mensa_tonographica/tone02_hypodorius_staging.json",
+    "rhythm": "historical_data/syntagma1_pinax04/rhythm_duple_staging.json",
+    "primary_text": "Musurgia universalis, Tomus II, Book VIII, Proposition II, pp.51-52; UNC/Internet Archive OCR around lines 67345-67464",
+    "pinax_image": "Musurgia universalis, Tomus II, Syntagma I Pinax IV, p.83; historical image reproduced in Cashner 2024 Figure 2; independent e-rara scan [92] still required for verification"
+  },
+  "historical_selection": {
+    "syntagma": 1,
+    "pinax": 4,
+    "stropha": 1,
+    "tone": 2,
+    "tone_name": "Hypodorius",
+    "system": "mollis",
+    "text_line": "Ave maris stella",
+    "syllables": ["A", "ve", "ma", "ris", "stel", "la"],
+    "rhythm_family": "duple",
+    "rhythm_row": 1
+  },
+  "shared_rhythm": {
+    "source_glyphs_normalized": [
+      "semibreve_dotted",
+      "minim",
+      "minim",
+      "minim",
+      "semibreve",
+      "semibreve"
+    ],
+    "relative_minim_units": [3, 1, 1, 1, 2, 2],
+    "absolute_tempo": null,
+    "note": "The ratios are suitable for symbolic playback/visualization. No modern BPM or quarter-note mapping is claimed."
+  },
+  "voices": {
+    "cantus": {
+      "degrees": [1, 2, 3, 4, 2, 3],
+      "source_letters": ["G", "A", "B", "C", "A", "B"]
+    },
+    "altus": {
+      "degrees": [5, 7, 8, 8, 7, 8],
+      "source_letters": ["D", "F", "G", "G", "F", "G"]
+    },
+    "tenor": {
+      "degrees": [3, 2, 1, 1, 5, 5],
+      "source_letters": ["B", "A", "G", "G", "D", "D"],
+      "degree_status": "the final 5,5 are reconstructed from Kircher's directly stated D,D output because the numeric OCR is damaged"
+    },
+    "bassus": {
+      "degrees": [8, 7, 6, 4, 5, 8],
+      "source_letters": ["G", "F", "E", "C", "D", "G"]
+    }
+  },
+  "events_by_syllable": [
+    {"index": 1, "syllable": "A",    "duration_symbol": "semibreve_dotted", "duration_minim_units": 3, "cantus": {"degree": 1, "letter": "G"}, "altus": {"degree": 5, "letter": "D"}, "tenor": {"degree": 3, "letter": "B"}, "bassus": {"degree": 8, "letter": "G"}},
+    {"index": 2, "syllable": "ve",   "duration_symbol": "minim",             "duration_minim_units": 1, "cantus": {"degree": 2, "letter": "A"}, "altus": {"degree": 7, "letter": "F"}, "tenor": {"degree": 2, "letter": "A"}, "bassus": {"degree": 7, "letter": "F"}},
+    {"index": 3, "syllable": "ma",   "duration_symbol": "minim",             "duration_minim_units": 1, "cantus": {"degree": 3, "letter": "B"}, "altus": {"degree": 8, "letter": "G"}, "tenor": {"degree": 1, "letter": "G"}, "bassus": {"degree": 6, "letter": "E"}},
+    {"index": 4, "syllable": "ris",  "duration_symbol": "minim",             "duration_minim_units": 1, "cantus": {"degree": 4, "letter": "C"}, "altus": {"degree": 8, "letter": "G"}, "tenor": {"degree": 1, "letter": "G"}, "bassus": {"degree": 4, "letter": "C"}},
+    {"index": 5, "syllable": "stel", "duration_symbol": "semibreve",         "duration_minim_units": 2, "cantus": {"degree": 2, "letter": "A"}, "altus": {"degree": 7, "letter": "F"}, "tenor": {"degree": 5, "letter": "D"}, "bassus": {"degree": 5, "letter": "D"}},
+    {"index": 6, "syllable": "la",   "duration_symbol": "semibreve",         "duration_minim_units": 2, "cantus": {"degree": 3, "letter": "B"}, "altus": {"degree": 8, "letter": "G"}, "tenor": {"degree": 5, "letter": "D"}, "bassus": {"degree": 8, "letter": "G"}}
+  ],
+  "inflection_policy": {
+    "B": "The Tone-II mollis system implies B-flat where the signature governs; source-letter B is preserved separately from that modern pitch-class interpretation.",
+    "F": "Source-letter F is preserved without automatically choosing F-natural versus contextual F-sharp. Kircher's broader example/practice can sharpen degree 7 as a leading tone, but the exact accidental placement for this phrase requires visual inspection of the notated worked example."
+  },
+  "explicitly_not_claimed": [
+    "exact octave/register of any event",
+    "modern MIDI note numbers",
+    "absolute tempo/BPM",
+    "final musica-ficta accidental placement",
+    "canonical verification of the rhythm row",
+    "canonical verification against the independent e-rara p.83 witness"
+  ],
+  "next_promotion_gate": "Directly inspect ETH/e-rara scan [92] for Pinax-IV Vperm and rhythm glyphs and the relevant Tone-II/phonotactic source surfaces; then promote only independently agreeing data."
+}
