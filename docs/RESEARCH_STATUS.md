@@ -3,36 +3,35 @@
 **Current archaeology branch:** `feature/m0.1-primary-arca-archaeology`  
 **Ghost/backend freeze point:** `8869e2738d2b31f2682a5b1d30913baa6a8a12e2` (B10)  
 **Permanent Ghost baseline:** `baseline/phase1-ghost-b10`  
-**M0.1 dossier baseline:** `1577d46ad2b2ca109072c2cb66a11d33eac0bdca`  
-**Physical-topology correction:** `docs/M0_6_PRIMARY_TEXT_CORRECTIONS.md`
+**M0.9 executable-kernel commit:** `06c76a2cb857e49ec64d7b8049bb4ce18a9ca887`  
+**M0.9 historical baseline:** `baseline/m0.9-arca-historica-first-fragment` → `06c76a2cb857e49ec64d7b8049bb4ce18a9ca887`  
+**Physical-topology authority:** `docs/M0_6_PRIMARY_TEXT_CORRECTIONS.md`
 
-This file identifies the latest historical authority for implementation. Earlier M0 documents remain part of the research record but must not override later primary-source findings.
+This file identifies the latest authority for implementation. Earlier M0 documents remain part of the research record but must not override later primary-source findings or the M0.9 executable contract.
 
 ## Governing documents
 
 - `HISTORICAL_RESEARCH.md` — historical first-pass record from the source-restricted environment.
 - `VISUAL_RECONSTRUCTION.md` — first-pass visual uncertainty register.
 - `M0_1_PRIMARY_ARCA_RECONSTRUCTION.md` — primary visual/object archaeology dossier.
-- `M0_6_PRIMARY_TEXT_CORRECTIONS.md` — current authority for historical physical-control topology where it conflicts with earlier simplified “pinax-as-slat” language. Kircher's stored/manipulated units are separate musarithmic columns copied from pinakes onto paper/wood carriers and arranged/slid as a combinatorial instrument.
-- `PRODUCT_DIRECTION_M0_2.md` — product authority: the first playable Neo-Arca is an instrument-first musical interface, not a semantic prompt-to-music product.
-- `M0_3_INSTRUMENT_CONTROL_TOPOLOGY.md` — modern musical-control map, interpreted through the M0.6 physical correction.
+- `M0_6_PRIMARY_TEXT_CORRECTIONS.md` — authority for historical physical-control topology where it conflicts with earlier simplified “pinax-as-slat” language. The stored/manipulated units are separate musarithmic columns copied from pinakes onto paper/wood carriers, arranged side-by-side and shifted vertically.
+- `PRODUCT_DIRECTION_M0_2.md` — product authority: the first playable Neo-Arca is a direct musical instrument, not a semantic prompt-to-music product.
+- `M0_3_INSTRUMENT_CONTROL_TOPOLOGY.md` — modern control topology, interpreted through M0.6.
 - `HISTORICAL_DATA_TRANSCRIPTION_SPEC.md` — binding protocol for project-owned `ARCA HISTORICA` data.
 - `historical_data/source_witnesses.json` — machine-readable primary-witness/navigation ledger.
+- `M0_9_ARCA_HISTORICA_KERNEL.md` — executable historical-chain contract and current boundary between HISTORICA and the Ghost.
 - `PROVENANCE.md` — H0/H1/N1/HÆRETIC vocabulary and provenance rules.
 - `PHASE1_ACCEPTANCE.md` — B10 release snapshot; do not rewrite it retroactively.
 
-## M0.8 verified pitch/tone checkpoint
+## Verified historical data
 
-M0.8 recorded direct comparison of printed p.83 / Pinax IV and printed p.51 / Mensa Tonographica in two separate 1650 digitizations:
+### Syntagma I / Pinax IV / Stropha I / Vperm01
 
-1. Bayerische Staatsbibliothek München, call number `2 Mus.th. 264-2`, Internet Archive identifier `bub_gb_97xCAAAAcAAJ`.
-2. EPFL Library, Internet Archive identifier `chepfl-lipr-AXC19_02`, DOI `10.26035/epfl-plume-1455`.
+Canonical record:
 
-Both are independent primary print witnesses. EPFL metadata reports a 600-ppi scan.
+`historical_data/syntagma1_pinax04/vperm01_printed_p83_verified.json`
 
-### Syntagma I / Pinax IV / Stropha I / Vperm 01 — VERIFIED
-
-Two independent primary copies agree on:
+Independent primary witnesses agree on:
 
 ```text
 Cantus  553233
@@ -41,136 +40,103 @@ Tenor   323455
 Bassus  858733
 ```
 
-Canonical project record:
+The Chierotti secondary `868733` Bassus variant remains permanently preserved in `discrepancies.json`. It is not substituted into canonical data.
 
-`historical_data/syntagma1_pinax04/vperm01_printed_p83_verified.json`
-
-The old Chierotti secondary reading `868733` for the Bassus row remains in `discrepancies.json` as permanent discrepancy history.
-
-### Mensa Tonographica / printed p.51 / Tone II Hypodorius — VERIFIED FOR THIS WITNESS
-
-The two primary copies agree on:
-
-```text
-1 G
-2 A
-3 B♭
-4 C
-5 D
-6 E♭
-7 F♯
-8 G
-```
+### Mensa Tonographica / printed p.51 / Tone II Hypodorius
 
 Canonical witness-specific record:
 
 `historical_data/mensa_tonographica/tone02_hypodorius_printed_p51_verified.json`
 
-The prior staging file remains unchanged as research history. This record establishes the printed p.51 Mensa only; the later Iconismus XIV witness must remain independently identified and may disagree.
-
-## M0.8.1 rhythm checkpoint — data-complete historical chain
-
-A third independent 1650 primary witness was inspected:
-
-3. Bibliothèque nationale de France, département Musique / Gallica, shelfmark `RES F-142`, ark `ark:/12148/bpt6k12802862`.
-
-Printed p.83 / Pinax IV was directly inspected in the BnF, EPFL, and BSB copies.
-
-### Rperm 01 — REMAINS AMBIGUOUS
-
-The previously preferred first duple row remains:
+Verified mapping:
 
 ```text
-semibreve_dotted, minim, minim, minim, semibreve, semibreve
-relative units: 3, 1, 1, 1, 2, 2
+1 G
+2 A
+3 Bb
+4 C
+5 D
+6 Eb
+7 F#
+8 G
 ```
 
-but the small augmentation punctus on its first semibreve is not directly legible enough across the available primary renderings to satisfy the strict promotion rule. The ambiguity record remains authoritative:
+This establishes the printed-p.51 witness only. It must not be silently merged with the later Iconismus XIV tone-table witness.
 
-`historical_data/syntagma1_pinax04/rhythm_duple_rperm01_ambiguity.json`
+### Pinax IV / Notae Temporis / duple Rperm03
 
-No value was chosen by majority vote and no secondary transcription was allowed to close the issue.
+Canonical record:
 
-### Rperm 03 — VERIFIED
+`historical_data/syntagma1_pinax04/rhythm_duple_rperm03_printed_p83_verified.json`
 
-Rather than manufacture certainty about Rperm01, the project selected another historical duple row whose glyphs are materially clearer in all three independently inspected primary copies.
-
-The third duple series reads:
+BSB, EPFL, and BnF/Gallica primary witnesses agree on:
 
 ```text
 minim, minim, minim, minim, semibreve, semibreve
 relative minim units: 1, 1, 1, 1, 2, 2
 ```
 
-Canonical project record:
+The original duple Rperm01 augmentation-punctus problem remains unresolved in `rhythm_duple_rperm01_ambiguity.json`. M0.8.1 deliberately used a different unambiguous row rather than resolving Rperm01 by secondary agreement or majority vote.
 
-`historical_data/syntagma1_pinax04/rhythm_duple_rperm03_printed_p83_verified.json`
+## M0.9 — first executable ARCA HISTORICA fragment
 
-The normalization encodes only relative mensural ratios (`minim=1`, `semibreve=2`). It does **not** claim BPM, a modern beat unit, or MIDI duration.
+M0.9 is complete and preserved on `baseline/m0.9-arca-historica-first-fragment`.
 
-This means the smallest historical data chain is now complete:
+Executable:
+
+`scripts/arca_historica_kernel.py`
+
+Focused acceptance tests:
+
+`tests/test_arca_historica_kernel.py`
+
+The kernel consumes only the three verified records above plus the witness ledger. It validates canonical/verified status, independent primary witnesses, direct-inspection/public-domain authority, complete cell provenance, source agreement, event-count compatibility, and absence of silent editorial repair.
+
+It deterministically emits six symbolic four-voice events totaling eight **relative minim units**:
 
 ```text
-verified Pinax-IV Vperm01
-        +
-verified Pinax-IV duple Rperm03
-        +
-verified printed-p.51 Tone-II lookup
-        ↓
-four symbolic historical voices
+pos  off  dur  glyph       cantus  altus  tenor  bassus
+  1    0    1  minim       5:D     8:G    3:Bb   8:G
+  2    1    1  minim       5:D     7:F#   2:A    5:D
+  3    2    1  minim       3:Bb    5:D    3:Bb   8:G
+  4    3    1  minim       2:A     7:F#   4:C    7:F#
+  5    4    2  semibreve   3:Bb    7:F#   5:D    3:Bb
+  6    6    2  semibreve   3:Bb    7:F#   5:D    3:Bb
 ```
 
-## Canonical rendering gate
+This is the first auditable project-owned historical computation. It is described as a **Pinax-IV historical fragment**, not as Kircher's exact prose `Ave maris stella` worked example.
 
-`scripts/historical_symbolic_preview.py` treats provenance as evidence, not as a Boolean assertion. A top-level `"canonical": true` flag is insufficient.
+The kernel remains completely separate from the Neo-Arca Ghost and does **not** claim or infer octave/register placement, MIDI note numbers, BPM, modern beat semantics, hidden phrase-level ficta, or SATB repair.
 
-The current strict policy requires:
+Focused local verification for M0.9: `13/13 PASS` plus `py_compile` and direct CLI execution. The implementation environment could not clone GitHub directly, so no claim is made that the complete pre-existing repository suite was run at this checkpoint.
 
-- an explicit transcription protocol;
-- at least two directly inspected independent primary witnesses;
-- distinct witness IDs and independence keys;
-- nonempty locators;
-- verified component/cell status;
-- active values originating in source readings;
-- no silent editorial correction;
-- sufficient per-cell witness readings.
-
-A future critical-edition mode may explicitly apply documented repairs, but that must be a separate named policy.
-
-## What remains unresolved
+## What remains unresolved historically
 
 - The augmentation punctus on Pinax-IV duple Rperm01.
-- Exact octave/register placement for the four voices.
-- Phrase-level musica-ficta beyond values explicitly carried by the selected tone-table witness.
+- Exact octave/register realization for a historical four-voice output.
+- Phrase-level musica ficta beyond the verified printed-p.51 tone lookup.
 - Direct comparison with the later Iconismus XIV tone table.
-- Syntagma II Pinax II primary grammar at useful resolution.
-- Comparative physical details of additional surviving Arca objects where they materially affect reconstruction.
+- Syntagma II Pinax II primary-table grammar at useful resolution.
+- Comparative construction details of additional surviving Arca objects where those details would materially change the reconstruction.
 
-These are no longer blockers for the first **symbolic** ARCA HISTORICA kernel.
+These questions remain valid research targets, but they no longer block the first physical instrument slice.
 
-## Next gate — M0.9
+## Current implementation gate — ARCA MECHANICA
 
-Do not bulk-transcribe the corpus and do not begin the large frontend yet.
+Do **not** bulk-transcribe the historical corpus and do **not** reopen the frozen Ghost simply to add frontend controls.
 
-Implement the smallest real `ARCA HISTORICA` executable kernel, entirely separate from the Neo-Arca Ghost:
+The next milestone is a bounded physical vertical slice that proves the historical interaction grammar:
 
-```text
-verified Vperm01
-+ verified Rperm03
-+ verified printed-p.51 Tone II
-→ four deterministic symbolic voices
-```
+`open cabinet → open labelled bank/cell → retrieve individual column-rods → arrange rods side-by-side → slide/align → choose verified Vperm/Rperm → resolve through Tonus → display the M0.9 symbolic result`
 
-The kernel must:
+Requirements for that slice:
 
-- consume only verified project-owned records;
-- reject staging/noncanonical components;
-- resolve scale degrees through the selected historical tone witness;
-- apply the shared Syntagma-I rhythm without converting it to modern BPM;
-- emit source/witness provenance with the result;
-- perform no SATB repair or substitution through the Ghost;
-- invent no octave, MIDI pitch, modern tempo, or hidden ficta.
+- the physical control is the individual musarithmic column-rod, not a whole Pinax card;
+- `ARCA HISTORICA` must call the M0.9 historical path, never the Ghost;
+- any Neo material must be visibly/provenance-distinct from historical rods;
+- one real verified fragment is enough for the first slice; missing corpus breadth must not be disguised as historical data;
+- preserve the cabinet/bank/rod logic established by Kircher's construction/use instructions;
+- prioritize direct manipulation and musical consequence over menus or prompt boxes;
+- defer a broad manual Ghost API until the physical interaction reveals the smallest useful explicit-control contract.
 
-The first executable fragment should be described as a **Pinax-IV historical fragment**, not as Kircher's exact `Ave maris stella` worked example: the verified Vperm01 rows differ from the separate degrees reported in Kircher's prose worked example.
-
-Once this kernel passes its focused tests, create a non-destructive historical baseline and begin the bounded Arca Mechanica physical vertical slice around real column-rods.
+Once the Arca Mechanica slice proves that interaction on a real device, the next decision is whether to expand the historical corpus or open the narrow instrument-control bridge into the frozen Ghost for `NEO-ARCA` mode.
