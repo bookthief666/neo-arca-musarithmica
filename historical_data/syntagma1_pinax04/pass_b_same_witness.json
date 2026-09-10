@@ -1,0 +1,43 @@
+{
+  "dataset": "syntagma1_pinax04",
+  "status": "verification-reading-same-1650-witness",
+  "canonical": false,
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page_or_folio": "83",
+    "visual_witness": "1650 Pinax IV facsimile reproduced as Figure 2 in Andrew A. Cashner (2024)",
+    "visual_witness_locator": "Cashner 2024 PDF, Figure 2 / PDF page 7",
+    "relationship_to_pass_a": "same underlying 1650 printed witness; this is a separate verification reading, not an independent repository/facsimile witness"
+  },
+  "pass_b": {
+    "scope": "Stropha I, first musarithm block only",
+    "cells": {
+      "S1.P4.STROPHA1.VPERM01.CANTUS": [5, 5, 3, 2, 3, 3],
+      "S1.P4.STROPHA1.VPERM01.ALTUS": [8, 7, 5, 7, 7, 7],
+      "S1.P4.STROPHA1.VPERM01.TENOR": [3, 2, 3, 4, 5, 5],
+      "S1.P4.STROPHA1.VPERM01.BASSUS": [8, 5, 8, 7, 3, 3]
+    },
+    "confidence": {
+      "S1.P4.STROPHA1.VPERM01.CANTUS": "probable",
+      "S1.P4.STROPHA1.VPERM01.ALTUS": "probable",
+      "S1.P4.STROPHA1.VPERM01.TENOR": "probable",
+      "S1.P4.STROPHA1.VPERM01.BASSUS": "probable"
+    },
+    "visual_note": "The fourth row's second digit is the difficult cell. At the available reproduction scale it reads more plausibly as 5 than 6, yielding 858733, but the mark is not strong enough to promote without another facsimile witness."
+  },
+  "comparison_to_pass_a": {
+    "exact_match": true,
+    "matching_rows": 4,
+    "differing_rows": 0
+  },
+  "verification": {
+    "strict_pass_b_complete": false,
+    "second_primary_facsimile_checked": false,
+    "eligible_for_arca_historica": false,
+    "reason": "Pass A and this verification reading agree, but they derive from the same underlying 1650 printed witness/reproduction. The project protocol requires another public-domain facsimile or comparably independent historical witness before promotion to verified canonical data."
+  }
+}
