@@ -1,0 +1,70 @@
+{
+  "schema_version": "0.1",
+  "status": "research-navigation-ledger",
+  "canonical_data": false,
+  "purpose": "Exact locators for the public-domain witnesses used to independently transcribe ARCA HISTORICA data. This file contains source navigation metadata, not musical values.",
+  "witnesses": [
+    {
+      "id": "ERARA_ETH_RAR610_T2_1650",
+      "institution": "ETH-Bibliothek Zürich / e-rara",
+      "work": "Athanasius Kircher, Musurgia universalis, Tomus II",
+      "year": 1650,
+      "record": "https://www.e-rara.ch/zut/content/titleinfo/3560404",
+      "iiif_manifest": "https://www.e-rara.ch/i3f/v20/3560404/manifest",
+      "license": "Public Domain Mark",
+      "page_mapping_observed_in_viewer": {
+        "printed_1": "scan [10]",
+        "printed_51_mensa_tonographica": "scan [60]",
+        "printed_54_tone_vi_worked_example_region": "scan [63]",
+        "printed_83_syntagma1_pinax04": "scan [92]",
+        "printed_106_syntagma2_pinax02": "scan [115]",
+        "printed_184": "scan [193]",
+        "unnumbered_between_184_and_185": "scan [194]",
+        "printed_185": "scan [195]"
+      },
+      "notes": [
+        "The unnumbered scan [194] falls exactly between printed pp.184 and 185 and is therefore a high-priority candidate for Iconismus XIV / the Arca plate facing p.185; this identification remains to be confirmed visually.",
+        "Printed p.83 maps unambiguously to scan [92] in the e-rara page navigator. This is the preferred independent print witness for Pinax IV Pass B once the page image can be retrieved at useful resolution.",
+        "Printed p.106 maps to scan [115], the target for direct Syntagma II Pinax II inspection."
+      ]
+    },
+    {
+      "id": "IA_UNC_ATHANASIIKIRCHERKIRC_1650",
+      "institution": "University of North Carolina Music Library / Internet Archive",
+      "work": "Athanasius Kircher, Musurgia universalis, vols. I-II",
+      "year": 1650,
+      "identifier": "athanasiikircherkirc",
+      "record": "https://archive.org/details/athanasiikircherkirc",
+      "full_text": "https://archive.org/stream/athanasiikircherkirc/athanasiikircherkirc_djvu.txt",
+      "scan_ppi": 300,
+      "pages": 1262,
+      "rights_note": "1650 public-domain content; repository metadata identifies UNC Music Library as contributor",
+      "textual_locators": {
+        "mensa_tonographica_definition_and_table": "OCR around lines 63089-63474",
+        "tone_vi_worked_example_and_scale_column": "OCR around lines 63670-63748; repeated worked mapping around 66321-66414",
+        "arca_construction_and_dimensions": "OCR around lines 80568-80638",
+        "arca_use_and_column_combination": "OCR around lines 80641-80718"
+      }
+    },
+    {
+      "id": "CORNELL_ICONISMUS_XIV_1650",
+      "institution": "Cornell University Library",
+      "work": "Musurgia Universalis: Musurgical Ark",
+      "year": 1650,
+      "record": "https://digital.library.cornell.edu/catalog/ss:550167",
+      "bibliographic_locator": "Vol. II pp. 184/185, plate facing p.185",
+      "rights": "Presumed public domain because of creation date",
+      "role": "canonical visual witness for the idealised Arca / Iconismus XIV"
+    },
+    {
+      "id": "UVA_SC05725_T2_1650",
+      "institution": "Universidad de Valladolid",
+      "work": "Musurgia universalis, Tomus II",
+      "year": 1650,
+      "record": "https://uvadoc.uva.es/handle/10324/9140",
+      "file": "SC_05725.pdf",
+      "rights": "Public Domain Mark 1.0",
+      "role": "second independent 1650 print facsimile for disputed numerical/rhythmic readings"
+    }
+  ]
+}
