@@ -1,0 +1,59 @@
+{
+  "dataset": "mensa_tonographica_tone06_hypolydius",
+  "status": "primary-text-staging-visual-verification-pending",
+  "canonical": false,
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "primary_repository": "Internet Archive / UNC Music Library",
+    "primary_identifier": "athanasiikircherkirc",
+    "primary_ocr": "https://archive.org/stream/athanasiikircherkirc/athanasiikircherkirc_djvu.txt",
+    "locators": [
+      "Book VIII p.51 Mensa Tonographica region: OCR lines ~63089-63474",
+      "Book VIII worked Tone VI example: OCR lines ~63670-63748",
+      "later worked Tone VI example: OCR lines ~66321-66414"
+    ],
+    "independent_visual_target": "ETH/e-rara Tomus II printed p.51 = scan [60]; worked-example p.54 = scan [63]; corrected Iconismus XIV witness likely unnumbered scan [194] between pp.184-185"
+  },
+  "tone": {
+    "number": 6,
+    "name": "Hypolydius",
+    "system": "mollis",
+    "final": "F",
+    "degree_to_pitch_class": {
+      "1": "F",
+      "2": "G",
+      "3": "A",
+      "4": "Bb",
+      "5": "C",
+      "6": "D",
+      "7": "E",
+      "8": "F"
+    }
+  },
+  "primary_text_evidence": {
+    "degree_sequence_visible_in_ocr": [8, 7, 6, 5, 4, 3, 2, 1],
+    "letter_sequence_visible_in_ocr": ["F", "E", "D", "C", "B", "A", "G", "F"],
+    "system_evidence": "Kircher explicitly describes the sixth tone as Hypolydius and mollis in the worked example; B is therefore interpreted under the one-flat mollis signature as B-flat.",
+    "cross_checks_inside_same_1650_text": [
+      "Kircher says the first voice-number row 5 5 3 5 5 maps to C C A C C, confirming 5=C and 3=A.",
+      "He says a later Bassus row maps to F E D C F, independently confirming 8=F, 7=E, 6=D, 5=C, 1=F.",
+      "The repeated Tone VI scale column near the later worked example again presents F/8, E/7, D/6, C/5, B/4, A/3, G/2, F/1 in OCR order."
+    ]
+  },
+  "verification": {
+    "primary_ocr_reading_complete": true,
+    "second_primary_facsimile_visual_check_complete": false,
+    "corrected_iconismus_witness_checked": false,
+    "eligible_for_arca_historica": false,
+    "confidence": "probable",
+    "blocking_detail": "Visual verification is still required, especially to distinguish the p.51 table from the corrected Iconismus XIV witness and to confirm the printed accidental/signature treatment rather than relying on OCR plus the stated mollis system."
+  },
+  "notes": [
+    "This record is already sufficient to test the historical lookup topology in a noncanonical research harness, but it must not yet be labeled verified historical engine data.",
+    "Witness identity matters: scholarship reports that the p.51 Mensa Tonographica and the later Iconismus XIV table disagree in places; a final ARCA HISTORICA record must state which witness it follows."
+  ]
+}
