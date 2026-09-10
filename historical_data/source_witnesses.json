@@ -1,11 +1,12 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "status": "research-navigation-ledger",
   "canonical_data": false,
   "purpose": "Exact locators for the public-domain witnesses used to independently transcribe ARCA HISTORICA data. This file contains source navigation metadata, not musical values.",
   "witnesses": [
     {
       "id": "ERARA_ETH_RAR610_T2_1650",
+      "independence_key": "ETH-RAR610",
       "institution": "ETH-Bibliothek Zürich / e-rara",
       "work": "Athanasius Kircher, Musurgia universalis, Tomus II",
       "year": 1650,
@@ -24,12 +25,13 @@
       },
       "notes": [
         "The unnumbered scan [194] falls exactly between printed pp.184 and 185 and is therefore a high-priority candidate for Iconismus XIV / the Arca plate facing p.185; this identification remains to be confirmed visually.",
-        "Printed p.83 maps unambiguously to scan [92] in the e-rara page navigator. This is the preferred independent print witness for Pinax IV Pass B once the page image can be retrieved at useful resolution.",
+        "Printed p.83 maps unambiguously to scan [92] in the e-rara page navigator.",
         "Printed p.106 maps to scan [115], the target for direct Syntagma II Pinax II inspection."
       ]
     },
     {
       "id": "IA_UNC_ATHANASIIKIRCHERKIRC_1650",
+      "independence_key": "UNC-MUSIC-LIBRARY-ATHANASIIKIRCHERKIRC",
       "institution": "University of North Carolina Music Library / Internet Archive",
       "work": "Athanasius Kircher, Musurgia universalis, vols. I-II",
       "year": 1650,
@@ -48,6 +50,7 @@
     },
     {
       "id": "CORNELL_ICONISMUS_XIV_1650",
+      "independence_key": "CORNELL-RMC2007-1212",
       "institution": "Cornell University Library",
       "work": "Musurgia Universalis: Musurgical Ark",
       "year": 1650,
@@ -58,13 +61,58 @@
     },
     {
       "id": "UVA_SC05725_T2_1650",
+      "independence_key": "UVA-SC05725",
       "institution": "Universidad de Valladolid",
       "work": "Musurgia universalis, Tomus II",
       "year": 1650,
       "record": "https://uvadoc.uva.es/handle/10324/9140",
       "file": "SC_05725.pdf",
       "rights": "Public Domain Mark 1.0",
-      "role": "second independent 1650 print facsimile for disputed numerical/rhythmic readings"
+      "role": "independent 1650 print facsimile for disputed numerical/rhythmic readings"
+    },
+    {
+      "id": "BSB_MUNICH_2_MUS_TH_264_2_1650",
+      "independence_key": "BSB-2-MUS.TH.264-2",
+      "institution": "Bayerische Staatsbibliothek München",
+      "work": "Athanasius Kircher, Musurgia universalis, Tomus II",
+      "year": 1650,
+      "call_number": "2 Mus.th. 264-2",
+      "internet_archive_identifier": "bub_gb_97xCAAAAcAAJ",
+      "record": "https://archive.org/details/bub_gb_97xCAAAAcAAJ",
+      "google_id": "97xCAAAAcAAJ",
+      "rights": "Public Domain Mark 1.0",
+      "direct_inspection": {
+        "checkpoint": "M0.7 follow-up research session",
+        "directly_inspected": true,
+        "printed_pages": ["83 — Syntagma I, Pinax IV", "51 — Mensa Tonographica"],
+        "note": "Direct visual findings recorded from the research-session handoff; this ledger does not claim a new independent re-reading by the committing assistant."
+      },
+      "roles": [
+        "independent primary visual witness for S1/P4/Stropha-I/Vperm01",
+        "independent primary visual witness for printed-p.51 Tone-II column"
+      ]
+    },
+    {
+      "id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650",
+      "independence_key": "EPFL-PLUME-1455",
+      "institution": "EPFL Library / Internet Archive",
+      "work": "Athanasius Kircher, Musurgia universalis, Tomus II",
+      "year": 1650,
+      "internet_archive_identifier": "chepfl-lipr-AXC19_02",
+      "record": "https://archive.org/details/chepfl-lipr-AXC19_02",
+      "doi": "https://doi.org/10.26035/epfl-plume-1455",
+      "scan_ppi": 600,
+      "rights": "Public Domain Mark 1.0",
+      "direct_inspection": {
+        "checkpoint": "M0.7 follow-up research session",
+        "directly_inspected": true,
+        "printed_pages": ["83 — Syntagma I, Pinax IV", "51 — Mensa Tonographica"],
+        "note": "Direct visual findings recorded from the research-session handoff; OCR was used only as corroboration after visual inspection."
+      },
+      "roles": [
+        "independent primary visual witness for S1/P4/Stropha-I/Vperm01",
+        "independent primary visual witness for printed-p.51 Tone-II column"
+      ]
     }
   ]
 }

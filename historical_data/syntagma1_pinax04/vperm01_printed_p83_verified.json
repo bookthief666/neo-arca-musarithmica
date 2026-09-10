@@ -1,0 +1,77 @@
+{
+  "record": "syntagma1_pinax04_stropha1_vperm01_printed_p83",
+  "schema_version": "0.1",
+  "canonical": true,
+  "verification_status": "verified",
+  "provenance_class": "H0-V",
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "historical_scope": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page": "83",
+    "syntagma": 1,
+    "pinax": 4,
+    "stropha": 1,
+    "vperm": 1,
+    "title": "PINAX IV. Iambica Euripedaea penultima longa."
+  },
+  "verification": {
+    "method": "Independent direct visual comparison of two separate 1650 digitizations, as recorded by the M0.7 follow-up research checkpoint.",
+    "primary_witness_ids": [
+      "BSB_MUNICH_2_MUS_TH_264_2_1650",
+      "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650"
+    ],
+    "independence_keys": ["BSB-2-MUS.TH.264-2", "EPFL-PLUME-1455"],
+    "primary_witness_count": 2,
+    "all_cells_verified": true,
+    "editorial_corrections_applied": false,
+    "recording_note": "This file records the direct-inspection findings supplied by the M0.7 follow-up research checkpoint; it does not claim a third independent re-reading by the committing assistant."
+  },
+  "voice_order_top_to_bottom": ["cantus", "altus", "tenor", "bassus"],
+  "rows": {
+    "cantus": [5, 5, 3, 2, 3, 3],
+    "altus": [8, 7, 5, 7, 7, 7],
+    "tenor": [3, 2, 3, 4, 5, 5],
+    "bassus": [8, 5, 8, 7, 3, 3]
+  },
+  "cell_provenance": {
+    "locator_template": "printed p.83, Pinax IV, Stropha I, Vperm01, {voice}, position {position}",
+    "witnesses": ["BSB_MUNICH_2_MUS_TH_264_2_1650", "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650"],
+    "cells": [
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N01","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N02","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N03","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N04","status":"verified","active_value":2,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"2","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"2"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N05","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.CANTUS.N06","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N01","status":"verified","active_value":8,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"8","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"8"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N02","status":"verified","active_value":7,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"7","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"7"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N03","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N04","status":"verified","active_value":7,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"7","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"7"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N05","status":"verified","active_value":7,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"7","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"7"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.ALTUS.N06","status":"verified","active_value":7,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"7","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"7"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N01","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N02","status":"verified","active_value":2,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"2","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"2"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N03","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N04","status":"verified","active_value":4,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"4","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"4"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N05","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.TENOR.N06","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N01","status":"verified","active_value":8,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"8","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"8"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N02","status":"verified","active_value":5,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"5","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"5"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N03","status":"verified","active_value":8,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"8","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"8"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N04","status":"verified","active_value":7,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"7","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"7"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N05","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}},
+      {"path":"S1.P4.STROPHA1.VPERM01.BASSUS.N06","status":"verified","active_value":3,"active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"3","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"3"}}
+    ]
+  },
+  "secondary_history": {
+    "discrepancy_record": "historical_data/syntagma1_pinax04/discrepancies.json",
+    "note": "Chierotti's secondary 868733 Bassus reading is retained. Both independent primary witnesses read 858733; no secondary value was substituted."
+  },
+  "limits": [
+    "This record verifies the printed scale-degree permutation only.",
+    "It does not verify a rhythm row, tone mapping, octave/register placement, or phrase-level musica ficta."
+  ]
+}

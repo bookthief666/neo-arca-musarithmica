@@ -1,0 +1,65 @@
+{
+  "record": "syntagma1_pinax04_stropha1_duple_rperm01_augmentation_dot",
+  "schema_version": "0.1",
+  "canonical": false,
+  "verification_status": "ambiguous",
+  "provenance_class": "H0-V / unresolved glyph detail",
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "historical_scope": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page": "83",
+    "syntagma": 1,
+    "pinax": 4,
+    "stropha": 1,
+    "field": "Notae Temporis",
+    "mensural_family": "duple",
+    "rperm": 1,
+    "syllable_count": 6
+  },
+  "primary_witnesses_inspected": [
+    {
+      "witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650",
+      "source_locator": "printed p.83, Pinax IV, Stropha I, Notae Temporis, duple Rperm01, first sign",
+      "directly_inspected": true,
+      "result": "augmentation dot not unambiguous at available rendering"
+    },
+    {
+      "witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650",
+      "source_locator": "printed p.83, Pinax IV, Stropha I, Notae Temporis, duple Rperm01, first sign",
+      "directly_inspected": true,
+      "result": "augmentation dot not unambiguous at available rendering"
+    }
+  ],
+  "stable_positions": {
+    "positions_2_to_6": {
+      "glyphs": ["minim", "minim", "minim", "semibreve", "semibreve"],
+      "relative_minim_units": [1, 1, 1, 2, 2],
+      "status": "probable",
+      "note": "The first sign is the immediate blocker; this record does not promote the row piecemeal to canonical executable data."
+    }
+  },
+  "first_position": {
+    "status": "ambiguous",
+    "candidate_readings": [
+      {"glyph": "semibreve_dotted", "relative_minim_units": 3},
+      {"glyph": "semibreve", "relative_minim_units": 2}
+    ],
+    "blocking_feature": "presence or absence of the small augmentation punctus"
+  },
+  "provisional_whole_row": {
+    "preferred_research_reading": ["semibreve_dotted", "minim", "minim", "minim", "semibreve", "semibreve"],
+    "relative_minim_units": [3, 1, 1, 1, 2, 2],
+    "status": "probable-not-canonical"
+  },
+  "secondary_cross_check": {
+    "witness": "Andrew A. Cashner, published modern code/documentation consulted only after primary inspection",
+    "reading": ["SbD", "Mn", "Mn", "Mn", "Sb", "Sb"],
+    "interpretation": "dotted semibreve, minim, minim, minim, semibreve, semibreve",
+    "authority": "secondary-cross-check-only",
+    "effect": "supports the preferred reading but does not satisfy the independent primary-witness promotion rule"
+  },
+  "promotion_gate": "Obtain a higher-resolution public-domain primary crop in which the first semibreve's augmentation punctus is directly legible, then promote only if the glyph is verified without relying on a modern transcription."
+}

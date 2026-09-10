@@ -1,43 +1,31 @@
 {
   "dataset": "syntagma1_pinax04",
   "canonical": false,
-  "purpose": "Record witness disagreements without silently choosing a corrected historical value.",
+  "purpose": "Record witness disagreements and their resolution history without deleting secondary variants.",
   "discrepancies": [
     {
       "id": "S1.P4.STROPHA1.VPERM01.BASSUS.N02",
       "context": "second digit of Bassus row in first musarithm block, Stropha I",
-      "project_pass_a": {
-        "reading": 5,
-        "row": "858733",
-        "status": "probable"
-      },
-      "project_verification_reading_same_witness": {
-        "reading": 5,
-        "row": "858733",
-        "status": "probable"
+      "project_pass_a": {"reading":5,"row":"858733","status":"probable"},
+      "project_verification_reading_same_witness": {"reading":5,"row":"858733","status":"probable"},
+      "primary_resolution": {
+        "status": "resolved-primary-double-witness",
+        "active_historical_value": 5,
+        "resolved_row": "858733",
+        "witnesses": [
+          {"witness_id":"BSB_MUNICH_2_MUS_TH_264_2_1650","reading":5,"row":"858733","source_locator":"printed p.83, Pinax IV, Stropha I, Vperm01, Bassus position 2","directly_inspected":true},
+          {"witness_id":"IA_EPFL_CHEPFL_LIPR_AXC19_02_1650","reading":5,"row":"858733","source_locator":"printed p.83, Pinax IV, Stropha I, Vperm01, Bassus position 2","directly_inspected":true}
+        ],
+        "resolution_basis": "Two independent 1650 primary facsimiles agree on 5. The direct inspections were recorded by the M0.7 follow-up research checkpoint.",
+        "editorial_correction_applied": false
       },
       "secondary_witnesses": [
-        {
-          "witness": "Andrew A. Cashner, 2024 computational study / published transcription context",
-          "reading": 5,
-          "row": "858733",
-          "authority": "secondary-cross-check-only"
-        },
-        {
-          "witness": "Carlo Mario Chierotti, Syntagma 1 study page",
-          "reading": 6,
-          "row": "868733",
-          "authority": "secondary-cross-check-only"
-        }
+        {"witness":"Andrew A. Cashner, 2024 computational study / published transcription context","reading":5,"row":"858733","authority":"secondary-cross-check-only"},
+        {"witness":"Carlo Mario Chierotti, Syntagma 1 study page","reading":6,"row":"868733","authority":"secondary-cross-check-only","retained_after_resolution":true}
       ],
-      "status": "unresolved-primary-witness-disagreement",
-      "active_historical_value": null,
-      "resolution_required": [
-        "inspect a second public-domain 1650 facsimile at useful resolution (preferred: Universidad de Valladolid SC_05725.pdf)",
-        "or inspect an independent historical copy containing Pinax IV (Palafoxiana 31.765 fol. 159r) at useful resolution",
-        "preserve the printed reading even if later musical analysis suggests an editorial correction"
-      ],
-      "note": "The current project readings and Cashner agree on 5; Chierotti reads 6. Majority agreement is not a substitute for the project's primary-source verification rule."
+      "status": "resolved-primary-double-witness",
+      "active_historical_value": 5,
+      "note": "The secondary 868733 variant is preserved permanently as discrepancy history. It is not silently deleted or substituted into canonical data."
     }
   ]
 }

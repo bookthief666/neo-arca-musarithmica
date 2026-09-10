@@ -1,0 +1,60 @@
+{
+  "record": "mensa_tonographica_tone02_hypodorius_printed_p51",
+  "schema_version": "0.1",
+  "canonical": true,
+  "verification_status": "verified",
+  "provenance_class": "H0-V",
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "historical_scope": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page": "51",
+    "table": "Mensa Tonographica",
+    "tone": 2,
+    "tone_name": "Hypodorius",
+    "system": "mollis"
+  },
+  "witness_policy": {
+    "witness_specific": true,
+    "witness": "printed p.51 Mensa Tonographica",
+    "warning": "Do not silently substitute or merge the later Iconismus XIV tone-table witness; witness-level differences are tracked separately."
+  },
+  "degree_to_pitch_class": {"1":"G","2":"A","3":"Bb","4":"C","5":"D","6":"Eb","7":"F#","8":"G"},
+  "degree_to_printed_pitch_normalized": {"1":"G","2":"A","3":"B♭","4":"C","5":"D","6":"E♭","7":"F♯","8":"G"},
+  "verification": {
+    "method": "Independent direct visual comparison of two separate 1650 digitizations, as recorded by the M0.7 follow-up research checkpoint.",
+    "primary_witness_ids": ["BSB_MUNICH_2_MUS_TH_264_2_1650","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650"],
+    "independence_keys": ["BSB-2-MUS.TH.264-2","EPFL-PLUME-1455"],
+    "primary_witness_count": 2,
+    "all_cells_verified": true,
+    "editorial_corrections_applied": false,
+    "recording_note": "This file records the direct-inspection findings supplied by the M0.7 follow-up research checkpoint; it does not claim a third independent re-reading by the committing assistant.",
+    "correction_from_prior_staging": "The prior staging reduced the source to G A B C D E F G plus a generic mollis note. The printed p.51 witness carries B-flat at degree 3, E-flat at degree 6, and F-sharp at degree 7."
+  },
+  "cell_provenance": {
+    "locator_template": "printed p.51, Mensa Tonographica, Tone II/Hypodorius, degree {degree}",
+    "witnesses": ["BSB_MUNICH_2_MUS_TH_264_2_1650","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650"],
+    "cells": [
+      {"path":"MENSA.P51.TONE02.DEGREE01","status":"verified","printed_pitch_normalized":"G","active_value":"G","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"G","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"G"}},
+      {"path":"MENSA.P51.TONE02.DEGREE02","status":"verified","printed_pitch_normalized":"A","active_value":"A","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"A","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"A"}},
+      {"path":"MENSA.P51.TONE02.DEGREE03","status":"verified","printed_pitch_normalized":"B♭","active_value":"Bb","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"B♭","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"B♭"}},
+      {"path":"MENSA.P51.TONE02.DEGREE04","status":"verified","printed_pitch_normalized":"C","active_value":"C","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"C","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"C"}},
+      {"path":"MENSA.P51.TONE02.DEGREE05","status":"verified","printed_pitch_normalized":"D","active_value":"D","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"D","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"D"}},
+      {"path":"MENSA.P51.TONE02.DEGREE06","status":"verified","printed_pitch_normalized":"E♭","active_value":"Eb","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"E♭","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"E♭"}},
+      {"path":"MENSA.P51.TONE02.DEGREE07","status":"verified","printed_pitch_normalized":"F♯","active_value":"F#","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"F♯","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"F♯"}},
+      {"path":"MENSA.P51.TONE02.DEGREE08","status":"verified","printed_pitch_normalized":"G","active_value":"G","active_value_origin":"source_reading","editorial_correction_applied":false,"readings":{"BSB_MUNICH_2_MUS_TH_264_2_1650":"G","IA_EPFL_CHEPFL_LIPR_AXC19_02_1650":"G"}}
+    ]
+  },
+  "history": {
+    "supersedes_for_printed_p51_authority": "historical_data/mensa_tonographica/tone02_hypodorius_staging.json",
+    "staging_file_retained": true,
+    "note": "The staging record remains research history and must not be rewritten to look retrospectively verified."
+  },
+  "limits": [
+    "This record is specific to the printed p.51 Mensa Tonographica witness.",
+    "It does not establish the exact contents of the later Iconismus XIV tone table.",
+    "It does not choose absolute octave/register for a four-voice realization."
+  ]
+}

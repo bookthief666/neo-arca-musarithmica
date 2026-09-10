@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Render the bounded M0 historical phrase as symbolic events.
 
-This is deliberately *not* an ARCA HISTORICA engine yet.  It consumes the explicit
-research-preview record assembled from Kircher's worked example and the staged Pinax-IV
-rhythm reading, validates its internal structure, and emits deterministic symbolic events
-without inventing octaves, MIDI note numbers, tempo, or unresolved musica-ficta.
+This is deliberately *not* an ARCA HISTORICA engine yet. It consumes an explicit
+research-preview record, validates structure and provenance, and emits deterministic
+symbolic events without inventing octaves, MIDI note numbers, tempo, or unresolved
+musica ficta.
 
-The script refuses a staging record unless --allow-staging is passed.  That guard exists
-so a future caller cannot accidentally treat provisional archaeology as canonical data.
+Noncanonical staging requires --allow-staging. A top-level ``canonical: true`` flag is
+not sufficient: canonical records must carry independently witnessed, cell-level
+provenance for pitch permutation, tone lookup, and rhythm.
 """
 
 from __future__ import annotations
@@ -25,10 +26,11 @@ DEFAULT_RECORD = (
     / "ave_maris_stella_stropha1_symbolic_preview.json"
 )
 VOICE_ORDER = ("cantus", "altus", "tenor", "bassus")
+CANONICAL_COMPONENTS = ("pitch_permutation", "tone_lookup", "rhythm")
 
 
 class HistoricalPreviewError(ValueError):
-    """Raised when a research record is structurally unsafe to render."""
+    """Raised when a research record is structurally or evidentially unsafe to render."""
 
 
 def load_record(path: Path) -> dict[str, Any]:
@@ -39,9 +41,170 @@ def load_record(path: Path) -> dict[str, Any]:
     return data
 
 
+def _require_nonempty_string(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise HistoricalPreviewError(f"{label} must be a non-empty string")
+    return value
+
+
+def _unique_nonempty_strings(values: Any, label: str) -> list[str]:
+    if not isinstance(values, list) or len(values) < 2:
+        raise HistoricalPreviewError(f"{label} must contain at least two entries")
+    result = [_require_nonempty_string(value, label) for value in values]
+    if len(set(result)) != len(result):
+        raise HistoricalPreviewError(f"{label} must contain distinct entries")
+    return result
+
+
+def validate_canonical_provenance(data: dict[str, Any]) -> None:
+    """Require evidence, not a Boolean flag, before accepting canonical data.
+
+    The first HISTORICA policy is intentionally strict: canonical preview components
+    must be verified against at least two independently identified, directly inspected
+    primary witnesses. Every active cell must preserve two witness readings and must
+    use the source reading without an editorial correction. A later critical-edition
+    policy may add explicit editorial variants, but they may not enter this canonical
+    path silently.
+    """
+    provenance = data.get("canonical_provenance")
+    if not isinstance(provenance, dict):
+        raise HistoricalPreviewError(
+            "canonical=true requires canonical_provenance; the flag alone is not authority"
+        )
+
+    _require_nonempty_string(
+        provenance.get("protocol_version"), "canonical_provenance.protocol_version"
+    )
+    witnesses = provenance.get("witnesses")
+    if not isinstance(witnesses, list) or len(witnesses) < 2:
+        raise HistoricalPreviewError("canonical provenance requires at least two primary witnesses")
+
+    witness_by_id: dict[str, dict[str, Any]] = {}
+    independence_keys: set[str] = set()
+    for witness in witnesses:
+        if not isinstance(witness, dict):
+            raise HistoricalPreviewError("canonical witness entries must be objects")
+        witness_id = _require_nonempty_string(witness.get("id"), "witness.id")
+        independence_key = _require_nonempty_string(
+            witness.get("independence_key"), f"witness {witness_id} independence_key"
+        )
+        _require_nonempty_string(
+            witness.get("source_locator"), f"witness {witness_id} source_locator"
+        )
+        if witness.get("directly_inspected") is not True:
+            raise HistoricalPreviewError(
+                f"canonical witness {witness_id} must be directly_inspected=true"
+            )
+        if witness_id in witness_by_id:
+            raise HistoricalPreviewError(f"duplicate canonical witness id: {witness_id}")
+        if independence_key in independence_keys:
+            raise HistoricalPreviewError(
+                "canonical witnesses must have distinct independence_key values"
+            )
+        witness_by_id[witness_id] = witness
+        independence_keys.add(independence_key)
+
+    components = provenance.get("components")
+    if not isinstance(components, dict):
+        raise HistoricalPreviewError("canonical_provenance.components is required")
+
+    for component_name in CANONICAL_COMPONENTS:
+        component = components.get(component_name)
+        if not isinstance(component, dict):
+            raise HistoricalPreviewError(f"canonical component {component_name} is required")
+        if component.get("verification_status") != "verified":
+            raise HistoricalPreviewError(
+                f"canonical component {component_name} must be verified"
+            )
+
+        component_witness_ids = _unique_nonempty_strings(
+            component.get("witness_ids"),
+            f"canonical component {component_name} witness_ids",
+        )
+        unknown = [wid for wid in component_witness_ids if wid not in witness_by_id]
+        if unknown:
+            raise HistoricalPreviewError(
+                f"canonical component {component_name} references unknown witness ids: "
+                + ", ".join(unknown)
+            )
+
+        cells = component.get("cells")
+        if not isinstance(cells, list) or not cells:
+            raise HistoricalPreviewError(
+                f"canonical component {component_name} must contain verified cells"
+            )
+
+        seen_paths: set[str] = set()
+        for cell in cells:
+            if not isinstance(cell, dict):
+                raise HistoricalPreviewError(
+                    f"canonical component {component_name} cells must be objects"
+                )
+            path = _require_nonempty_string(
+                cell.get("path"), f"canonical component {component_name} cell.path"
+            )
+            if path in seen_paths:
+                raise HistoricalPreviewError(f"duplicate canonical cell path: {path}")
+            seen_paths.add(path)
+
+            if cell.get("status") != "verified":
+                raise HistoricalPreviewError(f"canonical cell {path} must be verified")
+            if cell.get("active_value_origin") != "source_reading":
+                raise HistoricalPreviewError(
+                    f"canonical cell {path} must use active_value_origin=source_reading"
+                )
+            if cell.get("editorial_correction_applied") is not False:
+                raise HistoricalPreviewError(
+                    f"canonical cell {path} may not silently apply an editorial correction"
+                )
+
+            readings = cell.get("witness_readings")
+            if not isinstance(readings, list) or len(readings) < 2:
+                raise HistoricalPreviewError(
+                    f"canonical cell {path} requires at least two witness readings"
+                )
+
+            reading_ids: set[str] = set()
+            for reading in readings:
+                if not isinstance(reading, dict):
+                    raise HistoricalPreviewError(
+                        f"canonical cell {path} witness readings must be objects"
+                    )
+                witness_id = _require_nonempty_string(
+                    reading.get("witness_id"), f"canonical cell {path} witness_id"
+                )
+                if witness_id not in witness_by_id:
+                    raise HistoricalPreviewError(
+                        f"canonical cell {path} references unknown witness {witness_id}"
+                    )
+                _require_nonempty_string(
+                    reading.get("source_locator"), f"canonical cell {path} source_locator"
+                )
+                if "source_reading" not in reading or reading["source_reading"] is None:
+                    raise HistoricalPreviewError(
+                        f"canonical cell {path} witness reading lacks source_reading"
+                    )
+                if witness_id in reading_ids:
+                    raise HistoricalPreviewError(
+                        f"canonical cell {path} repeats witness {witness_id}"
+                    )
+                reading_ids.add(witness_id)
+
+            if len(reading_ids) < 2:
+                raise HistoricalPreviewError(
+                    f"canonical cell {path} requires two distinct primary witnesses"
+                )
+            if not reading_ids.issubset(set(component_witness_ids)):
+                raise HistoricalPreviewError(
+                    f"canonical cell {path} uses a witness outside its component witness_ids"
+                )
+
+
 def validate_record(data: dict[str, Any], *, allow_staging: bool) -> None:
     canonical = data.get("canonical") is True
-    if not canonical and not allow_staging:
+    if canonical:
+        validate_canonical_provenance(data)
+    elif not allow_staging:
         raise HistoricalPreviewError(
             "record is noncanonical research staging; pass --allow-staging explicitly"
         )
@@ -79,7 +242,10 @@ def validate_record(data: dict[str, Any], *, allow_staging: bool) -> None:
             raise HistoricalPreviewError(f"{voice}: degrees/source_letters required")
         if len(degrees) != size or len(letters) != size:
             raise HistoricalPreviewError(f"{voice}: event count must equal syllable count")
-        if any(not isinstance(d, int) or isinstance(d, bool) or not 1 <= d <= 8 for d in degrees):
+        if any(
+            not isinstance(d, int) or isinstance(d, bool) or not 1 <= d <= 8
+            for d in degrees
+        ):
             raise HistoricalPreviewError(f"{voice}: scale degrees must be integers 1..8")
         if any(not isinstance(letter, str) or not letter for letter in letters):
             raise HistoricalPreviewError(f"{voice}: source letters must be non-empty strings")
@@ -109,7 +275,6 @@ def render_symbolic(data: dict[str, Any]) -> dict[str, Any]:
     """Return a compact deterministic event model without making pitch-height claims."""
     selection = data["historical_selection"]
     events = data["events_by_syllable"]
-
     offset = 0
     rendered_events: list[dict[str, Any]] = []
     for source_event in events:
@@ -121,16 +286,14 @@ def render_symbolic(data: dict[str, Any]) -> dict[str, Any]:
             }
             for voice in VOICE_ORDER
         }
-        rendered_events.append(
-            {
-                "index": source_event["index"],
-                "syllable": source_event["syllable"],
-                "offset_minim_units": offset,
-                "duration_minim_units": duration,
-                "duration_symbol": source_event["duration_symbol"],
-                "voices": voices,
-            }
-        )
+        rendered_events.append({
+            "index": source_event["index"],
+            "syllable": source_event["syllable"],
+            "offset_minim_units": offset,
+            "duration_minim_units": duration,
+            "duration_symbol": source_event["duration_symbol"],
+            "voices": voices,
+        })
         offset += duration
 
     return {
