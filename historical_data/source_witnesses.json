@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "status": "research-navigation-ledger",
   "canonical_data": false,
   "purpose": "Exact locators for the public-domain witnesses used to independently transcribe ARCA HISTORICA data. This file contains source navigation metadata, not musical values.",
@@ -82,14 +82,18 @@
       "google_id": "97xCAAAAcAAJ",
       "rights": "Public Domain Mark 1.0",
       "direct_inspection": {
-        "checkpoint": "M0.7 follow-up research session",
+        "checkpoint": "M0.7 follow-up research session / M0.8.1 rhythm follow-up",
         "directly_inspected": true,
-        "printed_pages": ["83 — Syntagma I, Pinax IV", "51 — Mensa Tonographica"],
-        "note": "Direct visual findings recorded from the research-session handoff; this ledger does not claim a new independent re-reading by the committing assistant."
+        "printed_pages": [
+          "83 — Syntagma I, Pinax IV",
+          "51 — Mensa Tonographica"
+        ],
+        "note": "Direct visual findings were recorded from the public-domain scan. OCR is navigation/corroboration only and is not musical-data authority."
       },
       "roles": [
         "independent primary visual witness for S1/P4/Stropha-I/Vperm01",
-        "independent primary visual witness for printed-p.51 Tone-II column"
+        "independent primary visual witness for printed-p.51 Tone-II column",
+        "independent primary visual witness for Pinax-IV duple Rperm03"
       ]
     },
     {
@@ -104,14 +108,44 @@
       "scan_ppi": 600,
       "rights": "Public Domain Mark 1.0",
       "direct_inspection": {
-        "checkpoint": "M0.7 follow-up research session",
+        "checkpoint": "M0.7 follow-up research session / M0.8.1 rhythm follow-up",
         "directly_inspected": true,
-        "printed_pages": ["83 — Syntagma I, Pinax IV", "51 — Mensa Tonographica"],
-        "note": "Direct visual findings recorded from the research-session handoff; OCR was used only as corroboration after visual inspection."
+        "printed_pages": [
+          "83 — Syntagma I, Pinax IV",
+          "51 — Mensa Tonographica"
+        ],
+        "note": "Direct visual findings were recorded from the public-domain scan; OCR was used only after visual inspection as corroboration."
       },
       "roles": [
         "independent primary visual witness for S1/P4/Stropha-I/Vperm01",
-        "independent primary visual witness for printed-p.51 Tone-II column"
+        "independent primary visual witness for printed-p.51 Tone-II column",
+        "independent primary visual witness for Pinax-IV duple Rperm03"
+      ]
+    },
+    {
+      "id": "BNF_GALLICA_RES_F_142_T2_1650",
+      "independence_key": "BNF-RES-F-142",
+      "institution": "Bibliothèque nationale de France, département Musique / Gallica",
+      "work": "Athanasius Kircher, Musurgia universalis, Tomus II",
+      "year": 1650,
+      "call_number": "RES F-142",
+      "ark": "ark:/12148/bpt6k12802862",
+      "record": "https://gallica.bnf.fr/ark:/12148/bpt6k12802862",
+      "rights": "Public-domain 1650 source; Gallica/BnF digitization used as primary visual witness",
+      "access_note": "The direct scan image was inspected through a Source Library access surrogate that preserves BnF/Gallica provenance; Source Library OCR/translation was not used as canonical musical authority.",
+      "direct_inspection": {
+        "checkpoint": "M0.8.1 rhythm follow-up",
+        "directly_inspected": true,
+        "printed_pages": [
+          "83 — Syntagma I, Pinax IV"
+        ],
+        "surrogate_scan_page": 95,
+        "note": "Third independent primary visual witness. Used to verify a clearly legible alternate duple Rperm rather than force a reading of the ambiguous augmentation punctus in Rperm01."
+      },
+      "roles": [
+        "third independent primary visual witness for S1/P4/Stropha-I/Vperm01",
+        "independent primary visual witness for Pinax-IV duple Rperm03",
+        "independent check confirming Rperm01 first-sign augmentation punctus remains visually ambiguous at available rendering"
       ]
     }
   ]

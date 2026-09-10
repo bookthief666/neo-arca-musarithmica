@@ -1,0 +1,179 @@
+{
+  "record": "syntagma1_pinax04_rhythm_duple_rperm03_printed_p83",
+  "schema_version": "0.1",
+  "canonical": true,
+  "verification_status": "verified",
+  "provenance_class": "H0-V",
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "historical_scope": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page": "83",
+    "syntagma": 1,
+    "pinax": 4,
+    "field": "Notae Temporis",
+    "mensural_family": "duple / tempus imperfectum family",
+    "rperm": 3,
+    "event_count": 6,
+    "title": "PINAX IV. Iambica Euripedaea penultima longa."
+  },
+  "glyph_sequence_normalized": [
+    "minim",
+    "minim",
+    "minim",
+    "minim",
+    "semibreve",
+    "semibreve"
+  ],
+  "relative_minim_units": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    2
+  ],
+  "total_relative_minim_units": 8,
+  "verification": {
+    "method": "Independent direct visual comparison of three separate 1650 public-domain digitizations. Rperm03 was selected because its six signs are materially clearer than the unresolved augmentation punctus in Rperm01.",
+    "primary_witness_ids": [
+      "BSB_MUNICH_2_MUS_TH_264_2_1650",
+      "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650",
+      "BNF_GALLICA_RES_F_142_T2_1650"
+    ],
+    "independence_keys": [
+      "BSB-2-MUS.TH.264-2",
+      "EPFL-PLUME-1455",
+      "BNF-RES-F-142"
+    ],
+    "primary_witness_count": 3,
+    "all_cells_verified": true,
+    "editorial_corrections_applied": false,
+    "independence_note": "Canonical status rests on agreement of directly inspected primary images. Machine OCR and modern transcriptions were not used as data authority."
+  },
+  "normalization": {
+    "unit": "relative minim",
+    "rules": {
+      "minim": 1,
+      "semibreve": 2
+    },
+    "status": "derived-from-verified-glyph-identity",
+    "claims": [
+      "The integers encode only the relative mensural ratio minim=1 and semibreve=2.",
+      "No modern BPM is asserted.",
+      "No MIDI quarter-note duration is asserted."
+    ]
+  },
+  "cell_provenance": {
+    "witnesses": [
+      "BSB_MUNICH_2_MUS_TH_264_2_1650",
+      "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650",
+      "BNF_GALLICA_RES_F_142_T2_1650"
+    ],
+    "cells": [
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N01",
+        "status": "verified",
+        "source_glyph_class": "minim",
+        "normalized_relative_minim_units": 1,
+        "active_value": "minim",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 1", "source_reading": "minim"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 1", "source_reading": "minim"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 1", "source_reading": "minim"}
+        ]
+      },
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N02",
+        "status": "verified",
+        "source_glyph_class": "minim",
+        "normalized_relative_minim_units": 1,
+        "active_value": "minim",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 2", "source_reading": "minim"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 2", "source_reading": "minim"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 2", "source_reading": "minim"}
+        ]
+      },
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N03",
+        "status": "verified",
+        "source_glyph_class": "minim",
+        "normalized_relative_minim_units": 1,
+        "active_value": "minim",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 3", "source_reading": "minim"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 3", "source_reading": "minim"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 3", "source_reading": "minim"}
+        ]
+      },
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N04",
+        "status": "verified",
+        "source_glyph_class": "minim",
+        "normalized_relative_minim_units": 1,
+        "active_value": "minim",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 4", "source_reading": "minim"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 4", "source_reading": "minim"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 4", "source_reading": "minim"}
+        ]
+      },
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N05",
+        "status": "verified",
+        "source_glyph_class": "semibreve",
+        "normalized_relative_minim_units": 2,
+        "active_value": "semibreve",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 5", "source_reading": "semibreve"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 5", "source_reading": "semibreve"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 5", "source_reading": "semibreve"}
+        ]
+      },
+      {
+        "path": "S1.P4.NOTAE_TEMPORIS.DUPLE.RPERM03.N06",
+        "status": "verified",
+        "source_glyph_class": "semibreve",
+        "normalized_relative_minim_units": 2,
+        "active_value": "semibreve",
+        "active_value_origin": "source_reading",
+        "editorial_correction_applied": false,
+        "witness_readings": [
+          {"witness_id": "BSB_MUNICH_2_MUS_TH_264_2_1650", "source_locator": "Internet Archive bub_gb_97xCAAAAcAAJ, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 6", "source_reading": "semibreve"},
+          {"witness_id": "IA_EPFL_CHEPFL_LIPR_AXC19_02_1650", "source_locator": "Internet Archive chepfl-lipr-AXC19_02, printed p.83, Pinax IV, Notae Temporis, duple Rperm03, sign 6", "source_reading": "semibreve"},
+          {"witness_id": "BNF_GALLICA_RES_F_142_T2_1650", "source_locator": "BnF/Gallica ark:/12148/bpt6k12802862, printed p.83, Pinax IV, Notae Temporis, duple Rperm03 (surrogate scan page 95), sign 6", "source_reading": "semibreve"}
+        ]
+      }
+    ]
+  },
+  "secondary_cross_check": {
+    "performed_after_primary_reading": true,
+    "witness": "Andrew A. Cashner, modern Arca implementation/documentation",
+    "reading": ["Mn", "Mn", "Mn", "Mn", "Sb", "Sb"],
+    "result": "agrees with the independently read primary row",
+    "authority": "secondary-cross-check-only; no modern transcription was copied into canonical authority"
+  },
+  "relationship_to_rperm01": {
+    "rperm01_record": "historical_data/syntagma1_pinax04/rhythm_duple_rperm01_ambiguity.json",
+    "rperm01_status": "ambiguous",
+    "note": "Rperm01 remains unresolved and is not superseded. Choosing a different, directly legible historical row avoids manufacturing certainty about its first augmentation punctus."
+  },
+  "limits": [
+    "This record verifies one six-sign duple rhythm series from Pinax IV.",
+    "It does not assign modern tempo, BPM, beat-unit semantics, or MIDI timing.",
+    "It does not resolve the first-sign augmentation punctus in Rperm01."
+  ]
+}
