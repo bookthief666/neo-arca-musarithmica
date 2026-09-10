@@ -1,0 +1,60 @@
+{
+  "dataset": "syntagma1_pinax04",
+  "status": "provisional-pass-a-staging",
+  "canonical": false,
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page_or_folio": "83",
+    "primary_repository": "Internet Archive / UNC Music Library",
+    "primary_identifier": "athanasiikircherkirc",
+    "primary_url": "https://archive.org/details/athanasiikircherkirc",
+    "primary_ocr_locator": "djvu text around lines 67489-67874",
+    "visual_witness": "1650 Pinax IV facsimile reproduced as Figure 2 in Andrew A. Cashner (2024)",
+    "visual_witness_use": "inspection/cross-check only; not redistributable dataset authority"
+  },
+  "table": {
+    "syntagma": 1,
+    "pinax": 4,
+    "title_source_reading": "PINAX IV. Iambica Euripedaea penultima longa.",
+    "texture": "simple/syllabic four-voice counterpoint",
+    "syllables_per_line": 6,
+    "stropha_count": 4,
+    "voice_order_top_to_bottom": [
+      "cantus",
+      "altus",
+      "tenor",
+      "bassus"
+    ]
+  },
+  "pass_a": {
+    "method": "independent visual reading from the reproduced 1650 facsimile, checked only for page/title location against the Internet Archive primary OCR; no modern transcription consulted while entering this block",
+    "scope": "Stropha I, first visible musarithm block only",
+    "cells": {
+      "S1.P4.STROPHA1.VPERM01.CANTUS": [5, 5, 3, 2, 3, 3],
+      "S1.P4.STROPHA1.VPERM01.ALTUS": [8, 7, 5, 7, 7, 7],
+      "S1.P4.STROPHA1.VPERM01.TENOR": [3, 2, 3, 4, 5, 5],
+      "S1.P4.STROPHA1.VPERM01.BASSUS": [8, 5, 8, 7, 3, 3]
+    },
+    "confidence": {
+      "S1.P4.STROPHA1.VPERM01.CANTUS": "probable",
+      "S1.P4.STROPHA1.VPERM01.ALTUS": "probable",
+      "S1.P4.STROPHA1.VPERM01.TENOR": "probable",
+      "S1.P4.STROPHA1.VPERM01.BASSUS": "probable"
+    }
+  },
+  "verification": {
+    "pass_b_complete": false,
+    "second_primary_facsimile_checked": false,
+    "eligible_for_arca_historica": false,
+    "promotion_rule": "No cell becomes canonical historical engine data until an independent Pass B agrees against a public-domain primary facsimile at useful resolution."
+  },
+  "notes": [
+    "Internet Archive OCR confirms the Pinax IV page/title locus and the surrounding operating instructions but is too noisy to serve as numerical authority.",
+    "The first block is intentionally tiny: the goal is to establish a real transcription pipeline before scaling to the full pinax.",
+    "No secondary transcription values are accepted into canonical data here."
+  ]
+}
