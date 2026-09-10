@@ -1,0 +1,79 @@
+{
+  "dataset": "worked_example_pinax04_ave_maris_stella_tone02_pitch_chain",
+  "status": "primary-text-worked-example-staging",
+  "canonical": false,
+  "historical_layer": "ARCA_HISTORICA_RESEARCH",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "proposition": "Dato metro Iambico Euripedaeo, & dato tono quolibet, supra illud quamlibet harmoniam componere",
+    "primary_repository": "Internet Archive / UNC Music Library",
+    "primary_identifier": "athanasiikircherkirc",
+    "primary_ocr_locator": "lines approximately 67347-67465",
+    "pinax": "Syntagma I / Pinax IV (Iambica Euripedaea penultima longa)",
+    "text": "Ave maris stella",
+    "tone": 2
+  },
+  "phrase": {
+    "stropha": 1,
+    "syllable_count": 6,
+    "voice_order": ["cantus", "altus", "tenor", "bassus"],
+    "voices": {
+      "cantus": {
+        "degrees": [1, 2, 3, 4, 2, 3],
+        "primary_prose_degree_reading": "123423",
+        "primary_prose_letter_resolution": ["G", "A", "B", "C", "A", "B"],
+        "status": "strong-primary-text"
+      },
+      "altus": {
+        "degrees": [5, 7, 8, 8, 7, 8],
+        "primary_prose_degree_reading": "578878",
+        "primary_prose_letter_resolution": ["D", "F", "G", "G", "F", "G"],
+        "status": "strong-primary-text"
+      },
+      "tenor": {
+        "degrees": [3, 2, 1, 1, 5, 5],
+        "primary_prose_degree_reading_ocr": "3211??",
+        "primary_prose_letter_resolution": ["B", "A", "G", "G", "D", "D"],
+        "normalized_degree_reading": "321155",
+        "normalization_basis": "The same sentence explicitly resolves the six degrees to B A G G D D; the Tone-II lookup in the example makes the last two D values degree 5. The normalized digits are therefore recovered from Kircher's own prose checksum rather than from a modern transcription.",
+        "status": "primary-text-reconstructed-from-internal-checksum"
+      },
+      "bassus": {
+        "degrees": [8, 7, 6, 4, 5, 8],
+        "primary_prose_degree_reading": "876458",
+        "primary_prose_letter_resolution": ["G", "F", "E", "C", "D", "G"],
+        "status": "strong-primary-text"
+      }
+    }
+  },
+  "tone02_letter_lookup_recovered_from_same_worked_example": {
+    "1": "G",
+    "2": "A",
+    "3": "B",
+    "4": "C",
+    "5": "D",
+    "6": "E",
+    "7": "F",
+    "8": "G"
+  },
+  "accidental_policy": {
+    "status": "pending-visual-witness",
+    "note": "The primary prose checksum names pitch letters but the OCR cannot be trusted to preserve every printed flat/sharp or signature mark. Do not convert this record into exact MIDI pitch classes until the Tone-II system/signature is visually verified from the Mensa Tonographica/Iconismus witness."
+  },
+  "rhythm": {
+    "status": "not-selected-in-prose",
+    "note": "Kircher explicitly instructs the operator at this point to choose any suitable metrometric series from the foot of the columns and apply the same series to all four voices. This worked passage therefore verifies the pitch lookup chain but does not identify one unique Rperm."
+  },
+  "verification": {
+    "primary_text_contains_degrees": true,
+    "primary_text_contains_resolved_letters": true,
+    "internal_degree_to_letter_checksum_passes": true,
+    "independent_facsimile_pass_b_complete": false,
+    "eligible_for_canonical_arca_historica": false,
+    "next_gate": "Verify the printed Tone-II accidental/signature system and one Pinax-IV Notae Temporis series from an independent public-domain page image."
+  },
+  "importance": "This is the strongest project-owned historical pitch-chain record so far because Kircher's 1650 prose gives both the musarithmic numbers and the note-letter result, allowing the lookup operation to be checked internally without borrowing a modern transcription."
+}
