@@ -15,9 +15,11 @@ and FastAPI runs them on its worker threadpool rather than blocking the event lo
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any, Dict
 
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -60,30 +62,112 @@ app.add_middleware(
 )
 
 
+#: How much of an oversized "input" field a validation-error diagnostic echoes back.
+#: Comfortably above any legitimate field value (the longest is `text` at 600 chars) so
+#: normal errors are never truncated; only a deliberately oversized adversarial input is.
+_MAX_ECHOED_STRING_LENGTH = 1000
+
+
+def _json_safe(value: object) -> object:
+    """Recursively replace non-finite floats (NaN/+-Infinity) with a string.
+
+    ``JSONResponse`` renders with ``allow_nan=False`` (Starlette's default, matching the
+    JSON spec proper), so any raw ``nan``/``inf``/``-inf`` reaching it raises a bare
+    ``ValueError`` from inside the response-rendering path itself -- an unhandled 500
+    triggered by nothing worse than an adversarial-but-well-formed request (a literal
+    ``NaN``/``Infinity`` token in the request body, which Python's own ``json.loads``
+    accepts by default, ends up echoed back inside a validation error's ``"input"``
+    field). Diagnostics payloads are built from a mix of request echoes and internal
+    dataclasses, so this is applied at the one point they all funnel through --
+    :func:`_error` -- rather than trusted to stay finite at every call site.
+    """
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return repr(value)  # "nan", "inf", "-inf" -- still informative, always safe
+        return value
+    if isinstance(value, BaseException):
+        # Pydantic's own error list embeds the original exception object verbatim under
+        # `ctx.error` for a `field_validator` that raised `ValueError` (e.g. the tonic or
+        # seed-length checks in models.py) -- never JSON-serialisable on its own.
+        return str(value)
+    if isinstance(value, str) and len(value) > _MAX_ECHOED_STRING_LENGTH:
+        # Pydantic's validation errors echo the offending input verbatim under "input";
+        # for a deliberately oversized field (the whole point of the length checks above)
+        # that would otherwise reflect kilobytes of attacker-supplied text back in the
+        # response for no diagnostic benefit.
+        return value[:_MAX_ECHOED_STRING_LENGTH] + f"...(truncated from {len(value)})"
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    return value
+
+
 def _error(status_code: int, error: str, message: str,
            diagnostics: Dict[str, Any] | None = None) -> JSONResponse:
     payload = ErrorResponse(
-        error=error, message=message, diagnostics=diagnostics or {}
+        error=error, message=message, diagnostics=_json_safe(diagnostics or {})
     )
     return JSONResponse(status_code=status_code, content=payload.model_dump())
 
 
+@app.exception_handler(RequestValidationError)
+def _handle_validation_error(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Replaces FastAPI's default ``{"detail": [...]}`` shape with the same
+    ``ErrorResponse`` envelope every other failure path uses, so a consumer never has to
+    special-case "was this a Pydantic validation failure or something else". The raw
+    Pydantic error list -- which can itself carry a non-finite ``"input"`` value, e.g. a
+    literal ``Infinity`` sent for a numeric field -- is sanitised by :func:`_error` before
+    it is ever handed to the JSON renderer.
+    """
+    return _error(
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        "invalid_request",
+        "the request did not match the expected shape; see diagnostics.errors",
+        {"errors": exc.errors()},
+    )
+
+
 @app.exception_handler(TheoryError)
 def _handle_theory_error(request: Request, exc: TheoryError) -> JSONResponse:
-    return _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "invalid_musical_input", str(exc))
+    return _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "invalid_musical_input", str(exc))
 
 
 @app.exception_handler(MeterError)
 def _handle_meter_error(request: Request, exc: MeterError) -> JSONResponse:
-    return _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "invalid_meter", str(exc))
+    return _error(status.HTTP_422_UNPROCESSABLE_CONTENT, "invalid_meter", str(exc))
 
 
 @app.exception_handler(GenerationError)
 def _handle_generation_error(request: Request, exc: GenerationError) -> JSONResponse:
-    logger.warning("generation failed: %s", exc, extra={"diagnostics": exc.diagnostics})
+    """Two different failures share ``GenerationError``, and they are not the same
+    category (see ``kircher_engine.GENERATION_ERROR_KINDS``): a bounded search that
+    exhausted its budget is a property of *this request* -- a different seed, density,
+    mode or measure count can succeed where this one didn't, so the client can usefully
+    retry, and that is a 422. A relaxed search returning a defect the active law does not
+    license is an implementation fault in the engine's own repair/relaxation logic;
+    retrying the identical request cannot fix it, so that stays a 500.
+    """
+    if exc.kind == "search_exhausted":
+        logger.info(
+            "search exhausted (request-specific, client may retry): %s", exc,
+            extra={"diagnostics": exc.diagnostics},
+        )
+        return _error(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "unrealizable_request",
+            str(exc),
+            exc.diagnostics,
+        )
+    logger.error(
+        "generation defect (internal fault): %s", exc,
+        extra={"diagnostics": exc.diagnostics},
+    )
     return _error(
         status.HTTP_500_INTERNAL_SERVER_ERROR,
-        "generation_failed",
+        "generation_defect",
         str(exc),
         exc.diagnostics,
     )
@@ -93,6 +177,24 @@ def _handle_generation_error(request: Request, exc: GenerationError) -> JSONResp
 def _handle_midi_error(request: Request, exc: MidiExportError) -> JSONResponse:
     logger.error("midi export failed: %s", exc)
     return _error(status.HTTP_500_INTERNAL_SERVER_ERROR, "midi_export_failed", str(exc))
+
+
+@app.exception_handler(Exception)
+def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    """The fallback for anything not one of the specific cases above -- a genuine
+    implementation gap, not a category of failure this service knows how to name yet.
+    Logged with the full traceback server-side; the client gets the same structured
+    envelope as every other failure, with no traceback or internal detail leaked. Every
+    more specific handler above is still tried first (Starlette dispatches by walking the
+    exception's MRO), so this only ever catches what nothing else claimed.
+    """
+    logger.exception(
+        "unhandled exception while serving %s %s", request.method, request.url.path
+    )
+    return _error(
+        status.HTTP_500_INTERNAL_SERVER_ERROR, "internal_error",
+        "an unexpected internal error occurred",
+    )
 
 
 @app.get("/health", response_model=HealthResponse, tags=["engine"])
@@ -115,8 +217,26 @@ def health() -> HealthResponse:
     response_model=ComposeResponse,
     tags=["arca"],
     responses={
-        422: {"model": ErrorResponse, "description": "The request could not be realised."},
-        500: {"model": ErrorResponse, "description": "The generative search failed."},
+        422: {
+            "model": ErrorResponse,
+            "description": (
+                "The request is malformed (`invalid_request`, `invalid_musical_input`, "
+                "`invalid_meter`), or it is well-formed but this particular combination "
+                "of parameters could not be realised within the search budget "
+                "(`unrealizable_request`) -- retrying with a different seed, density, "
+                "mode or measure count may succeed where this one didn't."
+            ),
+        },
+        500: {
+            "model": ErrorResponse,
+            "description": (
+                "An internal fault, not a property of the request: the engine's own "
+                "repair/relaxation logic let an unlicensed defect through "
+                "(`generation_defect`), MIDI serialisation failed (`midi_export_failed`), "
+                "or an unanticipated error occurred (`internal_error`). Retrying the "
+                "identical request will not help; see `docs/API.md`, \"Error taxonomy\"."
+            ),
+        },
     },
 )
 def compose(request: ComposeRequest) -> ComposeResponse:

@@ -31,6 +31,26 @@ MODE_NAMES = tuple(m.value for m in ModeName)
 #: Reported in responses; kept here so this module stays decoupled from the engine.
 ENGINE_NAME = "neo-arca-musarithmica"
 
+#: The public bound on a string ``seed``, enforced at this API boundary before the value
+#: ever reaches ``determinism.coerce_seed``/``_parse_decimal_seed`` (which calls
+#: ``int(text)`` on anything that looks like a bare decimal integer). A legitimate replay
+#: seed -- ``provenance.seed`` resubmitted verbatim -- is a decimal string for a uint64
+#: value, at most 20 digits (``2**64 - 1`` == ``18446744073709551615``); 128 characters
+#: is deliberately generous well beyond that, so nothing a real client does can hit it,
+#: while staying two orders of magnitude below Python's own integer-string conversion
+#: ceiling (``sys.int_info.default_max_str_digits``, 4300 as of 3.11-3.13) that
+#: ``int(text)`` would otherwise hit uncontrolled on a large-enough digit string --
+#: exactly the defect an independent B9 audit found: a >4300-digit numeric seed string
+#: reached `int()` and raised an unhandled ``ValueError``, surfacing through `/compose`
+#: as a bare 500 instead of a clean 422. Chosen deliberately as option (A) from the B10
+#: brief: the numeric-seed grammar keeps accepting arbitrarily large integers/decimal
+#: strings (still masked into the uint64 seed space exactly as before -- this does not
+#: change what any *previously accepted* seed resolves to), bounded by a generous textual
+#: length cap applied before ``int()`` rather than by narrowing the grammar to uint64
+#: only (option B), which would have made some previously-accepted large decimal strings
+#: newly invalid. A non-numeric (textual) seed is bounded by the same limit.
+MAX_SEED_STRING_LENGTH = 128
+
 
 # --------------------------------------------------------------------------------------
 # Request
@@ -70,20 +90,25 @@ class ComposeRequest(BaseModel):
                     "for JavaScript's benefit) exactly replayable by resubmitting it "
                     "unchanged. Any other string (e.g. \"musurgia universalis\") is "
                     "hashed stably as a textual seed instead. Omit to derive a seed from "
-                    "the request itself.",
+                    f"the request itself. A string seed is capped at "
+                    f"{MAX_SEED_STRING_LENGTH} characters -- far more than the <=20 "
+                    "digits a real replayed seed ever needs -- rejected with a 422 "
+                    "rather than passed to Python's own integer parser uncontrolled.",
     )
     mode: Optional[str] = Field(
-        None, description=f"One of: {', '.join(MODE_NAMES)}. Overrides the semantics."
+        None, max_length=32,
+        description=f"One of: {', '.join(MODE_NAMES)}. Overrides the semantics.",
     )
     tonic: Optional[str] = Field(
-        None, description="The final, e.g. 'D', 'Bb', 'F#'. Overrides the semantics."
+        None, max_length=16,
+        description="The final, e.g. 'D', 'Bb', 'F#'. Overrides the semantics.",
     )
     tempo: Optional[int] = Field(
         None, ge=30, le=240, description="Beats per minute. Overrides the semantics."
     )
     measures: int = Field(8, ge=1, le=64, description="Length of the composition.")
     meter: Optional[str] = Field(
-        None, description=f"One of: {', '.join(SUPPORTED_METERS)}."
+        None, max_length=16, description=f"One of: {', '.join(SUPPORTED_METERS)}.",
     )
     phrase_measures: Optional[int] = Field(
         None, ge=1, le=16, description="Measures per phrase. Overrides the semantics."
@@ -104,6 +129,17 @@ class ComposeRequest(BaseModel):
         # ``True`` into the integer 1 and silently accept it as a seed.
         if isinstance(value, bool):
             raise ValueError("seed must be an integer or a string, not a boolean")
+        if isinstance(value, str) and len(value) > MAX_SEED_STRING_LENGTH:
+            # Enforced here, before `determinism.coerce_seed` ever sees the string: a
+            # bare-digit string of this length would otherwise reach `int(text)` inside
+            # `_parse_decimal_seed` uncontrolled, which Python itself refuses above its
+            # own integer-string conversion limit (4300 digits) with an unhandled
+            # ValueError -- exactly the defect this bound closes. See
+            # MAX_SEED_STRING_LENGTH's docstring for why 128 was chosen.
+            raise ValueError(
+                f"seed string must be at most {MAX_SEED_STRING_LENGTH} characters "
+                f"(got {len(value)})"
+            )
         return value
 
     @field_validator("text")
@@ -641,5 +677,5 @@ __all__ = [
     "SemanticAnalysisModel", "NoteEventModel", "VoiceLineModel", "PhraseModel",
     "HarmonicSlotModel", "ScoreModel", "RuleViolationModel", "ValidationModel",
     "SearchModel", "ProvenanceModel", "ConfigurationModel", "EngineModel",
-    "build_compose_response", "MODE_NAMES", "ENGINE_NAME",
+    "build_compose_response", "MODE_NAMES", "ENGINE_NAME", "MAX_SEED_STRING_LENGTH",
 ]

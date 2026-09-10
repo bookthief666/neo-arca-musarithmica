@@ -394,6 +394,32 @@ def _orthodox_harmonic_invariants_hold(composition) -> Tuple[bool, List[str]]:
 # ------------------------------------------------------------------------------------
 
 
+#: The precise reason a case's outcome was not "ok", named instead of left to be
+#: inferred from `problems` text -- an independent B10 audit found the previous schema
+#: called every `not outcome.ok` case an "unexpected exception" in the summary report,
+#: which is not true of e.g. a case whose *own independent invariant check* found a
+#: problem in an otherwise cleanly-returned composition. See StressReport's fields
+#: (`unexpected_generation_errors`, `unexpected_exceptions`, `invariant_failures`,
+#: `expectation_mismatches`) for where each of these is counted.
+#:
+#: ``unexpected_generation_error``
+#:     The engine raised ``GenerationError`` on a case whose ``expect`` was "success".
+#: ``unexpected_exception``
+#:     The engine raised something other than ``GenerationError`` -- a genuinely
+#:     unanticipated Python exception, on any case.
+#: ``expectation_mismatch``
+#:     A case whose ``expect`` was "generation_error" generated successfully instead --
+#:     the *opposite* anomaly from the one above, and not the same thing as either.
+#: ``invariant_failure``
+#:     Generation succeeded and raised nothing, but this harness's own check (validation
+#:     defects, or the independent event-level re-derivation) found a problem in the
+#:     result.
+FAILURE_KINDS = (
+    "unexpected_generation_error", "unexpected_exception", "expectation_mismatch",
+    "invariant_failure",
+)
+
+
 @dataclass
 class CaseOutcome:
     case: MatrixCase
@@ -402,6 +428,7 @@ class CaseOutcome:
     composition: Optional[object] = None
     error: Optional[BaseException] = None
     problems: Tuple[str, ...] = ()
+    failure_kind: Optional[str] = None  # one of FAILURE_KINDS, or None when ok
 
 
 def run_case(case: MatrixCase) -> CaseOutcome:
@@ -416,18 +443,21 @@ def run_case(case: MatrixCase) -> CaseOutcome:
         return CaseOutcome(
             case, False, elapsed, error=error,
             problems=(f"unexpected GenerationError: {error}",),
+            failure_kind="unexpected_generation_error",
         )
     except Exception as error:  # pragma: no cover - genuinely unexpected
         elapsed = (time.perf_counter() - started) * 1000.0
         return CaseOutcome(
             case, False, elapsed, error=error,
             problems=(f"unexpected {type(error).__name__}: {error}",),
+            failure_kind="unexpected_exception",
         )
     elapsed = (time.perf_counter() - started) * 1000.0
     if case.expect == "generation_error":
         return CaseOutcome(
             case, False, elapsed, composition=composition,
             problems=("expected GenerationError but generation succeeded",),
+            failure_kind="expectation_mismatch",
         )
     problems: List[str] = []
     if composition.validation.defects:
@@ -441,8 +471,11 @@ def run_case(case: MatrixCase) -> CaseOutcome:
     if not composition.config.heretical:
         _, harmonic_problems = _orthodox_harmonic_invariants_hold(composition)
         problems.extend(harmonic_problems)
-    return CaseOutcome(case, not problems, elapsed, composition=composition,
-                        problems=tuple(problems))
+    return CaseOutcome(
+        case, not problems, elapsed, composition=composition,
+        problems=tuple(problems),
+        failure_kind="invariant_failure" if problems else None,
+    )
 
 
 # ------------------------------------------------------------------------------------
@@ -511,37 +544,49 @@ def run_determinism_checks(
 
 
 def probe_long_seed_robustness() -> Dict[str, object]:
-    """``determinism._parse_decimal_seed`` calls ``int(text)`` on any all-digit string,
-    and ``ComposeRequest`` places no length limit on it. Python (3.11+) refuses to
-    convert an integer literal above a configured digit count (4300 by default) at all,
-    which raises a bare ``ValueError`` rather than a clean validation error. This does
-    not touch the seed *semantics* B8.2 closed -- it is a request-validation gap on the
-    string's length, independent of what the digits mean -- so B9 only records it here
-    rather than redesigning coerce_seed(); see the B10 deferral this produces.
+    """B9 found: ``determinism._parse_decimal_seed`` calls ``int(text)`` on any all-digit
+    string with no length cap, and Python (3.11+) refuses to convert an integer literal
+    above a configured digit count (4300 by default) at all, raising a bare
+    ``ValueError``. Through ``ComposeRequest`` (no length limit at the time) that reached
+    the client as an unhandled 500 instead of a clean 422.
+
+    B10 fixed this **at the public API boundary**: ``ComposeRequest.seed`` now rejects
+    any string over ``models.MAX_SEED_STRING_LENGTH`` (128 characters) before it is ever
+    parsed -- see that constant's docstring for why 128 was chosen, and
+    ``tests/test_seed_boundary.py`` for the dedicated regression coverage. This probe
+    checks both halves of that fix are still true: the internal `coerce_seed` function
+    itself is deliberately left unbounded (a B10 brief instruction -- fix the boundary,
+    not the seed semantics), while the public `ComposeRequest` model now rejects the
+    same oversized input cleanly.
     """
     digits = "7" * 5000
+    internal: Dict[str, object] = {}
     try:
         coerce_seed(digits)
+        internal = {"outcome": "parsed_without_error"}
     except ValueError as exc:
-        return {
-            "digit_length": len(digits), "outcome": "unhandled_value_error",
-            "detail": str(exc),
-            "defer_to": "B10",
-            "note": (
-                "coerce_seed()/_parse_decimal_seed() calls int(text) with no length "
-                "cap; ComposeRequest.seed has no max length either, so this reaches the "
-                "API as an unhandled 500 rather than a 422. Not fixed here -- see B9 "
-                "section 11: fixing it cleanly needs a validated length limit on the "
-                "seed field, which is request-validation hygiene, not a determinism "
-                "change, and is out of B9's scope."
-            ),
-        }
+        internal = {"outcome": "unhandled_value_error", "detail": str(exc)}
     except Exception as exc:  # pragma: no cover - would itself be news
-        return {
-            "digit_length": len(digits), "outcome": "unexpected_error",
-            "detail": f"{type(exc).__name__}: {exc}", "defer_to": "B10",
+        internal = {"outcome": "unexpected_error", "detail": f"{type(exc).__name__}: {exc}"}
+
+    from models import ComposeRequest
+    try:
+        ComposeRequest(text="x", seed=digits)
+        boundary = {"outcome": "accepted_without_error", "fixed": False}
+    except ValueError as exc:
+        boundary = {"outcome": "rejected_cleanly", "fixed": True, "detail": str(exc)}
+    except Exception as exc:  # pragma: no cover - would itself be news
+        boundary = {
+            "outcome": "unexpected_error", "fixed": False,
+            "detail": f"{type(exc).__name__}: {exc}",
         }
-    return {"digit_length": len(digits), "outcome": "parsed_without_error"}
+
+    return {
+        "digit_length": len(digits),
+        "internal_coerce_seed": internal,  # deliberately still unbounded -- see docstring
+        "public_api_boundary": boundary,   # this is what B10 fixed
+        "outcome": boundary["outcome"],    # top-level summary for the terminal printout
+    }
 
 
 # ------------------------------------------------------------------------------------
@@ -562,6 +607,14 @@ def _percentile(sorted_values: Sequence[float], pct: float) -> float:
 
 @dataclass
 class StressReport:
+    """See ``FAILURE_KINDS`` for exactly what each failure count means. B10 replaced
+    the B9 schema's `generation_failures` (which actually counted *expected*
+    GenerationErrors, not failures) and its single `unexpected_exceptions` bucket
+    (which conflated raised exceptions with independently-detected invariant problems)
+    with four disjoint, precisely-named counts that always sum to
+    `total_configurations - successes`.
+    """
+
     run_name: str
     engine_version: str
     started_at: str
@@ -569,35 +622,56 @@ class StressReport:
     environment: Dict[str, object]
     total_configurations: int
     successes: int
-    generation_failures: int
-    unexpected_exceptions: int
-    orthodox_count: int
-    heretical_count: int
-    counts_by_mode: Dict[str, int]
-    counts_by_meter: Dict[str, int]
-    counts_by_length_class: Dict[str, int]
-    counts_by_config_path: Dict[str, int]
-    relaxed_count: int
-    relaxation_level_histogram: Dict[str, int]
-    solver_restart_total: int
-    node_budget_hit_count: int
-    repair_budget_exhausted_count: int
-    nodes_visited_total: int
-    nodes_visited_max: int
-    backtracks_total: int
-    backtracks_max: int
-    repair_passes_total: int
-    repair_passes_max: int
-    returned_defect_count: int
-    phrase_tritone_failure_count: int
-    intent_counts: Dict[str, int]
-    elapsed_ms_stats: Dict[str, float]
-    determinism_checks: Dict[str, object]
-    independent_invariant_checks: Dict[str, object]
-    worst_cases: List[Dict[str, object]]
-    failures: List[Dict[str, object]]
-    long_seed_probe: Dict[str, object]
-    exit_ok: bool
+    expected_generation_errors: int = 0
+    unexpected_generation_errors: int = 0
+    unexpected_exceptions: int = 0
+    invariant_failures: int = 0
+    expectation_mismatches: int = 0
+    orthodox_count: int = 0
+    heretical_count: int = 0
+    #: Counts keyed by the request's own EXPLICIT mode/meter field -- a semantic-derived
+    #: case (config_path="semantic") passes `mode=None`/`meter=None` and so contributes
+    #: to neither; see `resolved_counts_by_mode`/`resolved_counts_by_meter` for what the
+    #: engine actually produced in every case, semantic-derived included.
+    requested_explicit_counts_by_mode: Dict[str, int] = None
+    requested_explicit_counts_by_meter: Dict[str, int] = None
+    #: Counts keyed by `composition.config.mode`/`.meter` -- the value the engine
+    #: actually resolved to and generated with, for every successful composition
+    #: regardless of whether the request named it explicitly or left it to the
+    #: semantic analyzer. This is the honest accounting of what the 48 semantic-derived
+    #: cases actually exercised, which `requested_explicit_counts_by_*` cannot show.
+    resolved_counts_by_mode: Dict[str, int] = None
+    resolved_counts_by_meter: Dict[str, int] = None
+    counts_by_length_class: Dict[str, int] = None
+    counts_by_config_path: Dict[str, int] = None
+    relaxed_count: int = 0
+    relaxation_level_histogram: Dict[str, int] = None
+    solver_restart_total: int = 0
+    node_budget_hit_count: int = 0
+    repair_budget_exhausted_count: int = 0
+    nodes_visited_total: int = 0
+    nodes_visited_max: int = 0
+    backtracks_total: int = 0
+    backtracks_max: int = 0
+    repair_passes_total: int = 0
+    repair_passes_max: int = 0
+    returned_defect_count: int = 0
+    phrase_tritone_failure_count: int = 0
+    intent_counts: Dict[str, int] = None
+    #: Timing over every SUCCESSFUL composition only -- the headline performance
+    #: metric. Deliberately excludes the deliberately-starved expected-failure cases,
+    #: whose near-instant budget exhaustion is not a "fast composition" and would
+    #: skew the distribution if mixed in (the B10 audit's finding on this point).
+    elapsed_ms_stats_successful: Dict[str, float] = None
+    #: Timing over every matrix case, expected-failures included, labelled explicitly
+    #: as covering all cases so it is never mistaken for the headline metric above.
+    elapsed_ms_stats_all_cases: Dict[str, float] = None
+    determinism_checks: Dict[str, object] = None
+    independent_invariant_checks: Dict[str, object] = None
+    worst_cases: List[Dict[str, object]] = None
+    failures: List[Dict[str, object]] = None
+    long_seed_probe: Dict[str, object] = None
+    exit_ok: bool = False
 
     def as_dict(self) -> Dict[str, object]:
         return {
@@ -606,12 +680,17 @@ class StressReport:
             "environment": self.environment,
             "total_configurations": self.total_configurations,
             "successes": self.successes,
-            "generation_failures": self.generation_failures,
+            "expected_generation_errors": self.expected_generation_errors,
+            "unexpected_generation_errors": self.unexpected_generation_errors,
             "unexpected_exceptions": self.unexpected_exceptions,
+            "invariant_failures": self.invariant_failures,
+            "expectation_mismatches": self.expectation_mismatches,
             "orthodox_count": self.orthodox_count,
             "heretical_count": self.heretical_count,
-            "counts_by_mode": self.counts_by_mode,
-            "counts_by_meter": self.counts_by_meter,
+            "requested_explicit_counts_by_mode": self.requested_explicit_counts_by_mode,
+            "requested_explicit_counts_by_meter": self.requested_explicit_counts_by_meter,
+            "resolved_counts_by_mode": self.resolved_counts_by_mode,
+            "resolved_counts_by_meter": self.resolved_counts_by_meter,
             "counts_by_length_class": self.counts_by_length_class,
             "counts_by_config_path": self.counts_by_config_path,
             "relaxed_count": self.relaxed_count,
@@ -628,7 +707,8 @@ class StressReport:
             "returned_defect_count": self.returned_defect_count,
             "phrase_tritone_failure_count": self.phrase_tritone_failure_count,
             "intent_counts": self.intent_counts,
-            "elapsed_ms_stats": self.elapsed_ms_stats,
+            "elapsed_ms_stats_successful": self.elapsed_ms_stats_successful,
+            "elapsed_ms_stats_all_cases": self.elapsed_ms_stats_all_cases,
             "determinism_checks": self.determinism_checks,
             "independent_invariant_checks": self.independent_invariant_checks,
             "worst_cases": self.worst_cases,
@@ -652,13 +732,30 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
     outcomes = [run_case(case) for case in cases]
 
     successes = sum(1 for o in outcomes if o.ok and o.case.expect == "success")
-    generation_failures = sum(
+    expected_generation_errors = sum(
         1 for o in outcomes if o.ok and o.case.expect == "generation_error"
     )
     unexpected = [o for o in outcomes if not o.ok]
+    unexpected_generation_errors = sum(
+        1 for o in unexpected if o.failure_kind == "unexpected_generation_error"
+    )
+    unexpected_exceptions = sum(
+        1 for o in unexpected if o.failure_kind == "unexpected_exception"
+    )
+    invariant_failures = sum(
+        1 for o in unexpected if o.failure_kind == "invariant_failure"
+    )
+    expectation_mismatches = sum(
+        1 for o in unexpected if o.failure_kind == "expectation_mismatch"
+    )
+    assert (
+        successes + expected_generation_errors + len(unexpected) == len(cases)
+    ), "every case must land in exactly one of: success, expected failure, or unexpected"
 
-    counts_by_mode: Dict[str, int] = {}
-    counts_by_meter: Dict[str, int] = {}
+    requested_mode: Dict[str, int] = {}
+    requested_meter: Dict[str, int] = {}
+    resolved_mode: Dict[str, int] = {}
+    resolved_meter: Dict[str, int] = {}
     counts_by_length: Dict[str, int] = {}
     counts_by_path: Dict[str, int] = {}
     orthodox_count = heretical_count = 0
@@ -671,24 +768,31 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
     defect_total = 0
     phrase_tritone_failures = 0
     intent_counts: Dict[str, int] = {intent.value: 0 for intent in Intent}
-    elapsed_by_case: List[Tuple[str, float, MatrixCase, Optional[object]]] = []
+    elapsed_all: List[Tuple[str, float, MatrixCase, Optional[object]]] = []
+    elapsed_successful: List[Tuple[str, float, MatrixCase, Optional[object]]] = []
 
     for outcome in outcomes:
         case = outcome.case
         if case.mode:
-            counts_by_mode[case.mode] = counts_by_mode.get(case.mode, 0) + 1
+            requested_mode[case.mode] = requested_mode.get(case.mode, 0) + 1
         if case.meter:
-            counts_by_meter[case.meter] = counts_by_meter.get(case.meter, 0) + 1
+            requested_meter[case.meter] = requested_meter.get(case.meter, 0) + 1
         counts_by_length[case.length_class] = (
             counts_by_length.get(case.length_class, 0) + 1
         )
         counts_by_path[case.config_path] = counts_by_path.get(case.config_path, 0) + 1
-        elapsed_by_case.append((case.case_id, outcome.elapsed_ms, case,
-                                 outcome.composition))
+        elapsed_all.append((case.case_id, outcome.elapsed_ms, case,
+                             outcome.composition))
 
         comp = outcome.composition
         if comp is None:
             continue
+        if case.expect == "success" and outcome.ok:
+            elapsed_successful.append((case.case_id, outcome.elapsed_ms, case, comp))
+        resolved_mode[comp.config.mode.value] = (
+            resolved_mode.get(comp.config.mode.value, 0) + 1
+        )
+        resolved_meter[comp.config.meter] = resolved_meter.get(comp.config.meter, 0) + 1
         if comp.config.heretical:
             heretical_count += 1
         else:
@@ -715,27 +819,35 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
         for key, value in comp.validation.counts_by_intent().items():
             intent_counts[key] = intent_counts.get(key, 0) + value
 
-    elapsed_values = sorted(ms for _, ms, _, _ in elapsed_by_case)
-    elapsed_stats = {
-        "min": round(elapsed_values[0], 2) if elapsed_values else 0.0,
-        "median": round(statistics.median(elapsed_values), 2) if elapsed_values else 0.0,
-        "p95": round(_percentile(elapsed_values, 0.95), 2) if elapsed_values else 0.0,
-        "p99": round(_percentile(elapsed_values, 0.99), 2) if elapsed_values else 0.0,
-        "max": round(elapsed_values[-1], 2) if elapsed_values else 0.0,
-        "total": round(sum(elapsed_values), 2),
-        "sample_size": len(elapsed_values),
-    }
+    def _timing_stats(rows: Sequence[Tuple[str, float, MatrixCase, Optional[object]]]):
+        values = sorted(ms for _, ms, _, _ in rows)
+        if not values:
+            return {"min": 0.0, "median": 0.0, "p95": 0.0, "p99": 0.0, "max": 0.0,
+                    "total": 0.0, "sample_size": 0}
+        return {
+            "min": round(values[0], 2), "median": round(statistics.median(values), 2),
+            "p95": round(_percentile(values, 0.95), 2),
+            "p99": round(_percentile(values, 0.99), 2),
+            "max": round(values[-1], 2), "total": round(sum(values), 2),
+            "sample_size": len(values),
+        }
 
-    worst = sorted(elapsed_by_case, key=lambda t: t[1], reverse=True)[:20]
+    elapsed_stats_successful = _timing_stats(elapsed_successful)
+    elapsed_stats_all = _timing_stats(elapsed_all)
+
+    worst = sorted(elapsed_all, key=lambda t: t[1], reverse=True)[:20]
     worst_cases = []
     for case_id, ms, case, comp in worst:
         entry = {
             "case_id": case_id, "mode": case.mode, "meter": case.meter,
             "config_path": case.config_path, "measures": case.measures,
             "seed": case.seed, "elapsed_ms": round(ms, 2),
+            "expect": case.expect,
         }
         if comp is not None:
             entry.update({
+                "resolved_mode": comp.config.mode.value,
+                "resolved_meter": comp.config.meter,
                 "relaxation_level": comp.stats.relaxation_level,
                 "nodes_visited": comp.stats.nodes_visited,
                 "backtracks": comp.stats.backtracks,
@@ -748,6 +860,7 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
         case = outcome.case
         failures.append({
             "case_id": case.case_id,
+            "failure_kind": outcome.failure_kind,
             "config": case.as_dict(),
             "replay_command": case.replay_args(),
             "problems": list(outcome.problems),
@@ -782,11 +895,16 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
         started_at=started_at.isoformat(), finished_at=finished_at.isoformat(),
         environment=_environment(),
         total_configurations=len(cases), successes=successes,
-        generation_failures=generation_failures,
-        unexpected_exceptions=len(unexpected),
+        expected_generation_errors=expected_generation_errors,
+        unexpected_generation_errors=unexpected_generation_errors,
+        unexpected_exceptions=unexpected_exceptions,
+        invariant_failures=invariant_failures,
+        expectation_mismatches=expectation_mismatches,
         orthodox_count=orthodox_count, heretical_count=heretical_count,
-        counts_by_mode=dict(sorted(counts_by_mode.items())),
-        counts_by_meter=dict(sorted(counts_by_meter.items())),
+        requested_explicit_counts_by_mode=dict(sorted(requested_mode.items())),
+        requested_explicit_counts_by_meter=dict(sorted(requested_meter.items())),
+        resolved_counts_by_mode=dict(sorted(resolved_mode.items())),
+        resolved_counts_by_meter=dict(sorted(resolved_meter.items())),
         counts_by_length_class=dict(sorted(counts_by_length.items())),
         counts_by_config_path=dict(sorted(counts_by_path.items())),
         relaxed_count=relaxed_count,
@@ -800,7 +918,8 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
         returned_defect_count=defect_total,
         phrase_tritone_failure_count=phrase_tritone_failures,
         intent_counts=intent_counts,
-        elapsed_ms_stats=elapsed_stats,
+        elapsed_ms_stats_successful=elapsed_stats_successful,
+        elapsed_ms_stats_all_cases=elapsed_stats_all,
         determinism_checks={
             "performed": len(determinism_results),
             "passed": len(determinism_results) - len(determinism_failed),
@@ -828,12 +947,17 @@ def run_matrix(profile: str, determinism_sample: int = 30) -> StressReport:
 def print_summary(report: StressReport) -> None:
     r = report
     print(f"\n=== stress_matrix.py -- profile={r.run_name} engine={r.engine_version} ===")
-    print(f"configurations: {r.total_configurations}  "
-          f"successes: {r.successes}  expected-failures: {r.generation_failures}  "
-          f"unexpected: {r.unexpected_exceptions}")
+    print(f"configurations: {r.total_configurations}  successes: {r.successes}  "
+          f"expected generation errors: {r.expected_generation_errors}")
+    print(f"unexpected generation errors: {r.unexpected_generation_errors}  "
+          f"unexpected exceptions: {r.unexpected_exceptions}  "
+          f"invariant failures: {r.invariant_failures}  "
+          f"expectation mismatches: {r.expectation_mismatches}")
     print(f"orthodox: {r.orthodox_count}  heretical: {r.heretical_count}")
-    print(f"modes: {r.counts_by_mode}")
-    print(f"meters: {r.counts_by_meter}")
+    print(f"requested-explicit modes: {r.requested_explicit_counts_by_mode}")
+    print(f"resolved modes (incl. semantic-derived): {r.resolved_counts_by_mode}")
+    print(f"requested-explicit meters: {r.requested_explicit_counts_by_meter}")
+    print(f"resolved meters (incl. semantic-derived): {r.resolved_counts_by_meter}")
     print(f"length classes: {r.counts_by_length_class}")
     print(f"config paths: {r.counts_by_config_path}")
     print(f"relaxed: {r.relaxed_count}  relaxation histogram: "
@@ -847,19 +971,27 @@ def print_summary(report: StressReport) -> None:
     print(f"returned defects: {r.returned_defect_count}  "
           f"phrase-tritone failures: {r.phrase_tritone_failure_count}")
     print(f"intent counts: {r.intent_counts}")
-    e = r.elapsed_ms_stats
-    print(f"elapsed ms -- min={e['min']} median={e['median']} p95={e['p95']} "
+    e = r.elapsed_ms_stats_successful
+    print(f"elapsed ms (SUCCESSFUL COMPOSITIONS ONLY -- headline metric) -- "
+          f"min={e['min']} median={e['median']} p95={e['p95']} "
           f"p99={e['p99']} max={e['max']} total={e['total']} "
           f"(n={e['sample_size']})")
+    ea = r.elapsed_ms_stats_all_cases
+    print(f"elapsed ms (ALL matrix cases, expected-failures included) -- "
+          f"min={ea['min']} median={ea['median']} p95={ea['p95']} "
+          f"p99={ea['p99']} max={ea['max']} total={ea['total']} "
+          f"(n={ea['sample_size']})")
     d = r.determinism_checks
     print(f"determinism spot-checks: performed={d['performed']} passed={d['passed']} "
           f"failed={d['failed']} midi-compared={d['midi_compared']}")
     ii = r.independent_invariant_checks
     print(f"independent invariant checks (orthodox): performed={ii['performed']} "
           f"failed={ii['failed']}")
-    print(f"long-seed robustness probe: {r.long_seed_probe['outcome']}"
-          + (f" (deferred to {r.long_seed_probe['defer_to']})"
-             if "defer_to" in r.long_seed_probe else ""))
+    lsp = r.long_seed_probe
+    print(f"long-seed robustness probe: public API boundary={lsp['public_api_boundary']['outcome']} "
+          f"(fixed={lsp['public_api_boundary']['fixed']}); "
+          f"internal coerce_seed={lsp['internal_coerce_seed']['outcome']} "
+          f"(deliberately still unbounded)")
     if r.worst_cases:
         print("slowest case: " + json.dumps(r.worst_cases[0]))
     if r.failures:

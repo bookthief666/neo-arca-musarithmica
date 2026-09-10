@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, FrozenSet, List, Optional, Sequence, Tuple
 
 import constraints as law
@@ -41,7 +41,7 @@ from constraints import (
     Sonority, ValidationReport, get_profile, validate,
 )
 from determinism import (
-    Provenance, SeedStream, coerce_seed, fingerprint, runtime_versions, stable_hash,
+    Provenance, SeedStream, coerce_seed, fingerprint, runtime_versions,
 )
 from harmony import HarmonicPlan, HarmonicSlot, build_plan
 from rhythm import MIN_EVENT_QL, diminution_probability, meter_spec
@@ -66,6 +66,27 @@ ENGINE_NAME = "neo-arca-musarithmica"
 ENGINE_VERSION = "1.3.0"
 
 
+#: The two situations :class:`GenerationError` is raised for -- deliberately not the
+#: same category of failure, and the API layer (``main.py``) maps them to different HTTP
+#: statuses (see ``docs/API.md``, "Error taxonomy"):
+#:
+#: ``search_exhausted``
+#:     The search ran out of budget at every relaxation level before finding *any*
+#:     complete voicing. This is a bounded-search limitation of the *request*, not an
+#:     implementation fault -- a different seed, mode, density or measure count can
+#:     succeed where this one didn't. Mapped to 422: the client can retry with a changed
+#:     request.
+#: ``defect_found``
+#:     A relaxed search found a complete voicing, but it contains an error-severity
+#:     violation the active law does not license. The public contract is that a
+#:     *returned* composition never contains one (see the comment at the raise site
+#:     below), so this means the engine's own repair/relaxation logic let something
+#:     through it shouldn't have. Mapped to 500: retrying the identical request cannot
+#:     fix this, because the defect is in what the engine considers acceptable, not in
+#:     what was asked for.
+GENERATION_ERROR_KINDS = ("search_exhausted", "defect_found")
+
+
 class GenerationError(RuntimeError):
     """A controlled, diagnosable failure of the generative process.
 
@@ -75,11 +96,20 @@ class GenerationError(RuntimeError):
     violation the active law does not license.  The second case matters because
     relaxation loosens the *search*, and returning music that breaks the law it claims
     to follow would make the validation report worthless.
+
+    ``kind`` distinguishes the two for the API layer -- see
+    :data:`GENERATION_ERROR_KINDS`. It is also echoed into ``diagnostics["kind"]`` so it
+    survives JSON serialisation without a consumer needing the exception object itself.
     """
 
-    def __init__(self, message: str, diagnostics: Optional[Dict[str, object]] = None):
+    def __init__(
+        self, message: str, diagnostics: Optional[Dict[str, object]] = None, *,
+        kind: str = "defect_found",
+    ):
         super().__init__(message)
-        self.diagnostics: Dict[str, object] = diagnostics or {}
+        assert kind in GENERATION_ERROR_KINDS, f"unknown GenerationError kind: {kind!r}"
+        self.kind = kind
+        self.diagnostics: Dict[str, object] = {**(diagnostics or {}), "kind": kind}
 
 
 # --------------------------------------------------------------------------------------
@@ -1422,6 +1452,7 @@ class KircherEngine:
                     "search": stats.as_dict(),
                     "budget": self.budget.as_dict(),
                 },
+                kind="search_exhausted",
             )
 
         ledger = self._plan_intents(plan, profile)
@@ -1467,6 +1498,7 @@ class KircherEngine:
                     "budget": self.budget.as_dict(),
                     "defects": [v.as_dict() for v in report.defects],
                 },
+                kind="defect_found",
             )
 
         return Composition(

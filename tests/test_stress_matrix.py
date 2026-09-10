@@ -143,6 +143,7 @@ def test_expect_generation_error_case_actually_raises_and_is_not_a_failure():
     assert outcome.ok is True
     assert outcome.error is not None
     assert outcome.composition is None
+    assert outcome.failure_kind is None
 
 
 def test_a_case_expecting_success_that_raises_is_reported_as_unexpected():
@@ -157,17 +158,78 @@ def test_a_case_expecting_success_that_raises_is_reported_as_unexpected():
     assert outcome.ok is False
     assert outcome.error is not None
     assert "unexpected GenerationError" in outcome.problems[0]
+    assert outcome.failure_kind == "unexpected_generation_error"
 
 
 def test_a_success_case_reporting_generation_error_when_none_occurs_is_not_confused():
     """A case whose ``expect`` is 'generation_error' but that actually succeeds must be
-    reported as a failure, not silently accepted."""
+    reported as a failure, not silently accepted -- and classified as its own kind, not
+    lumped in with a genuinely unexpected exception (B10 section 7, finding A)."""
     cases = stress_matrix.build_matrix("smoke")
     starved = next(c for c in cases if c.expect == "generation_error")
     forced_success = stress_matrix.replace(starved, starved_budget=False)
     outcome = stress_matrix.run_case(forced_success)
     assert outcome.ok is False
     assert "expected GenerationError" in outcome.problems[0]
+    assert outcome.failure_kind == "expectation_mismatch"
+
+
+def test_an_unanticipated_exception_is_classified_distinctly_from_a_generation_error():
+    """A non-GenerationError exception must be its own failure_kind, not folded into
+    'unexpected_generation_error'."""
+    baseline = next(
+        c for c in stress_matrix.build_matrix("smoke") if c.case_id == "smoke-baseline"
+    )
+
+    class _Exploding:
+        def compose(self, **kwargs):
+            raise RuntimeError("something genuinely unanticipated")
+
+    broken = stress_matrix.replace(baseline)
+    import unittest.mock
+    with unittest.mock.patch.object(stress_matrix.MatrixCase, "engine",
+                                     return_value=_Exploding()):
+        outcome = stress_matrix.run_case(broken)
+    assert outcome.ok is False
+    assert outcome.failure_kind == "unexpected_exception"
+
+
+def test_an_invariant_failure_is_classified_distinctly_from_a_raised_exception():
+    """A case that raises nothing but fails this harness's own independent check must
+    be its own failure_kind -- not called an 'unexpected exception' (B10 finding A)."""
+    baseline = next(
+        c for c in stress_matrix.build_matrix("smoke") if c.case_id == "smoke-baseline"
+    )
+    composed = stress_matrix.run_case(baseline).composition
+    assert composed is not None
+
+    class _StubEngine:
+        def compose(self, **kwargs):
+            return composed
+
+    broken = stress_matrix.replace(baseline)
+    import unittest.mock
+    with unittest.mock.patch.object(stress_matrix.MatrixCase, "engine",
+                                     return_value=_StubEngine()), \
+         unittest.mock.patch.object(
+             stress_matrix, "_independent_invariants_hold",
+             return_value=(False, ["stubbed structural problem"]),
+         ):
+        outcome = stress_matrix.run_case(broken)
+    assert outcome.ok is False
+    assert outcome.failure_kind == "invariant_failure"
+
+
+def test_the_four_failure_kinds_and_success_partition_every_case():
+    """No case can land outside success/expected-failure/exactly-one failure kind --
+    the corrected schema's core invariant (B10 section 7, finding A)."""
+    report = stress_matrix.run_matrix("smoke", determinism_sample=2)
+    accounted = (
+        report.successes + report.expected_generation_errors
+        + report.unexpected_generation_errors + report.unexpected_exceptions
+        + report.invariant_failures + report.expectation_mismatches
+    )
+    assert accounted == report.total_configurations
 
 
 def test_failing_cases_preserve_enough_information_to_replay():
@@ -204,6 +266,57 @@ def test_heretical_voice_crossing_is_not_treated_as_a_defect():
 
 
 # --------------------------------------------------------------------------------------
+# B10 section 7, finding B: resolved vs requested-explicit mode/meter counts
+# --------------------------------------------------------------------------------------
+
+
+def test_resolved_counts_account_for_semantic_derived_cases_requested_counts_do_not():
+    """A semantic-derived case (config_path='semantic') sends mode=None/meter=None, so
+    it must contribute to `resolved_counts_by_mode/meter` (what the engine actually
+    produced) but not to `requested_explicit_counts_by_mode/meter` (what the request
+    named) -- the schema issue an independent B10 audit found: the old single
+    `counts_by_mode` silently missed every semantic-derived case."""
+    report = stress_matrix.run_matrix("smoke", determinism_sample=2)
+    semantic_cases = [
+        c for c in stress_matrix.build_matrix("smoke") if c.config_path == "semantic"
+    ]
+    assert semantic_cases
+    assert sum(report.requested_explicit_counts_by_mode.values()) < (
+        report.successes + report.expected_generation_errors
+    )
+    assert sum(report.resolved_counts_by_mode.values()) >= sum(
+        report.requested_explicit_counts_by_mode.values()
+    )
+    assert sum(report.resolved_counts_by_meter.values()) >= sum(
+        report.requested_explicit_counts_by_meter.values()
+    )
+
+
+def test_resolved_mode_counts_cover_every_successful_composition():
+    report = stress_matrix.run_matrix("smoke", determinism_sample=2)
+    assert sum(report.resolved_counts_by_mode.values()) == report.successes
+    assert sum(report.resolved_counts_by_meter.values()) == report.successes
+
+
+# --------------------------------------------------------------------------------------
+# B10 section 7, finding C: successful-only vs all-cases performance sample
+# --------------------------------------------------------------------------------------
+
+
+def test_successful_only_timing_excludes_expected_failure_cases():
+    """The headline performance metric must not include the deliberately-starved
+    expected-failure cases, whose near-instant budget exhaustion is not a genuine
+    'fast composition' and would understate typical timing if mixed in."""
+    report = stress_matrix.run_matrix("smoke", determinism_sample=2)
+    assert (
+        report.elapsed_ms_stats_successful["sample_size"]
+        == report.successes
+        < report.elapsed_ms_stats_all_cases["sample_size"]
+        == report.total_configurations
+    )
+
+
+# --------------------------------------------------------------------------------------
 # Determinism subset selection
 # --------------------------------------------------------------------------------------
 
@@ -233,11 +346,17 @@ def test_deterministic_subset_respects_the_requested_target_count():
 # --------------------------------------------------------------------------------------
 
 
-def test_long_seed_probe_records_a_finding_for_b10():
+def test_long_seed_probe_confirms_the_b10_boundary_fix():
+    """B9 found an unhandled 500 on an oversized digit-only seed string; B10 fixed it
+    at the public API boundary (ComposeRequest.seed) while deliberately leaving the
+    internal coerce_seed() function itself unbounded. This probe must show both."""
     result = stress_matrix.probe_long_seed_robustness()
     assert result["digit_length"] > 4300  # past Python's int-string conversion limit
-    assert result["outcome"] in (
-        "unhandled_value_error", "unexpected_error", "parsed_without_error"
-    )
-    if result["outcome"] != "parsed_without_error":
-        assert result["defer_to"] == "B10"
+
+    boundary = result["public_api_boundary"]
+    assert boundary["fixed"] is True
+    assert boundary["outcome"] == "rejected_cleanly"
+
+    internal = result["internal_coerce_seed"]
+    assert internal["outcome"] in ("unhandled_value_error", "unexpected_error",
+                                    "parsed_without_error")

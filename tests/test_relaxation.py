@@ -168,7 +168,8 @@ def test_the_refusal_reaches_the_api_as_a_structured_error(client, monkeypatch):
     })
     assert response.status_code == 500
     body = response.json()
-    assert body["error"] == "generation_failed"
+    assert body["error"] == "generation_defect"
+    assert body["diagnostics"]["kind"] == "defect_found"
     assert body["diagnostics"]["defects"]
 
 
