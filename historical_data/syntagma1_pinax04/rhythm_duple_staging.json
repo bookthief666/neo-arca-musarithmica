@@ -1,0 +1,65 @@
+{
+  "dataset": "syntagma1_pinax04_notae_temporis_duple",
+  "status": "provisional-visual-staging",
+  "canonical": false,
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "printed_page_or_folio": "83",
+    "table": "Syntagma I, Pinax IV — Iambica Euripedaea penultima longa",
+    "primary_repository_target": "ETH-Bibliothek Zurich / e-rara, Rar 610, Tomus II",
+    "primary_target_scan": "printed p.83 = scan [92]",
+    "visual_witness_used_for_this_staging_read": "1650 Pinax IV facsimile reproduced as Figure 2, p.7, in Andrew A. Cashner (2024)",
+    "visual_witness_role": "historical image inspection only; not the canonical data authority",
+    "unc_ocr": "https://archive.org/stream/athanasiikircherkirc/athanasiikircherkirc_djvu.txt",
+    "unc_ocr_locator": "Notae Temporis begins around lines 67782-67874; OCR is not reliable enough to identify note glyphs"
+  },
+  "scope": {
+    "stropha_column": 1,
+    "mensural_family": "duple / tempus imperfectum family",
+    "row": 1,
+    "syllable_count": 6
+  },
+  "visual_reading": {
+    "glyph_sequence_normalized": [
+      "semibreve_dotted",
+      "minim",
+      "minim",
+      "minim",
+      "semibreve",
+      "semibreve"
+    ],
+    "relative_minim_units": [3, 1, 1, 1, 2, 2],
+    "total_relative_minim_units": 10,
+    "confidence": "probable",
+    "reading_notes": [
+      "The first sign is read as a dotted semibreve, followed by three stemmed minims and two semibreves.",
+      "Relative units encode mensural duration ratios only: minim=1, semibreve=2, dotted semibreve=3. They do not assert a modern BPM or MIDI quarter-note value.",
+      "The visual read is clear enough for a research preview but does not satisfy the project's strict independent-second-primary-witness promotion rule."
+    ]
+  },
+  "primary_text_context": {
+    "instruction": "In the Ave maris stella demonstration Kircher directs the operator to take any suitable series of notae metrometrae found at the foot of the columns and apply that one and the same series to all four voices.",
+    "s1_behavior": "Syntagma I is note-against-note/simple counterpoint; one six-value rhythm series therefore governs the six syllabic events in all four voices."
+  },
+  "secondary_cross_check": {
+    "performed_after_project_visual_interpretation": true,
+    "witness": "Andrew A. Cashner's modern implementation/documentation",
+    "result": "agrees with the normalized first duple row: dotted semibreve, minim, minim, minim, semibreve, semibreve",
+    "authority": "cross-check only; the modern transcription is not copied into canonical historical data"
+  },
+  "independence_disclosure": {
+    "strict_blind_pass": false,
+    "reason": "The research session had previously encountered modern transcription excerpts while studying the system. This record therefore does not claim a blind independent Pass A even though the glyph sequence was re-read directly from the historical image.",
+    "consequence": "Status remains provisional until a second public-domain 1650 facsimile page is inspected directly."
+  },
+  "verification": {
+    "primary_image_direct_read_complete": true,
+    "second_primary_facsimile_checked": false,
+    "eligible_for_arca_historica": false,
+    "promotion_target": "ETH/e-rara Tomus II scan [92] or another independent 1650 copy at useful resolution"
+  }
+}
