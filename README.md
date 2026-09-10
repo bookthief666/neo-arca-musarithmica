@@ -1,4 +1,4 @@
-# NEO-ARCA MUSARITHMICA — Phase 1: THE GHOST
+# NEO-ARCA MUSARITHMICA
 
 > «A seventeenth-century combinatorial music engine excavated from an impossible
 > technological timeline.»
@@ -10,10 +10,10 @@ it resembled a computer; it was that it treated composition as something that co
 **encoded, categorised, permuted, constrained, recombined and executed** through a formal
 symbolic system.
 
-This repository replaces the wooden cabinet with a deterministic generative engine.
-Phase 1 builds only **THE GHOST**: the Python composition backend. THE SKIN & EYE
-(React / Three.js) and THE VOICE (Tone.js) are later phases, and the API is shaped for
-them.
+The repository contains the frozen Phase-1 **GHOST** composition backend, the verified
+M0.9 **ARCA HISTORICA** kernel, and (on the M1.0 feature branch) the first operable
+**ARCA MECHANICA** physical interface. These systems retain separate provenance and
+execution boundaries.
 
 ---
 
@@ -52,6 +52,22 @@ including transitive dependencies — use `requirements.lock.txt` instead:
 does not guarantee about byte-identical output across environments.
 
 Interactive documentation is at <http://127.0.0.1:8000/docs>.
+
+### M1.0 Arca Mechanica
+
+The first physical historical slice runs through Vite's narrow local bridge to the
+Python M0.9 kernel; it does not call the Ghost:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Open <http://127.0.0.1:4173>. See
+[`docs/M1_0_ARCA_MECHANICA_VERTICAL_SLICE.md`](docs/M1_0_ARCA_MECHANICA_VERTICAL_SLICE.md)
+for the physical state model, exact historical records, provenance boundary, and
+deliberate limits.
 
 For a broader correctness/performance sweep than the unit suite exercises, see
 `scripts/stress_matrix.py --profile smoke` (development, seconds) or `--profile full`

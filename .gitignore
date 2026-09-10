@@ -7,6 +7,14 @@ venv/
 *.mid
 .DS_Store
 
+# M1 Arca Mechanica frontend outputs
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+frontend/*.tsbuildinfo
+.sites-runtime/
+
 # Stress-matrix runs (scripts/stress_matrix.py): the rolling "latest" output is
 # regenerated on every run and would otherwise be a noisy diff on every commit.
 # A versioned report (artifacts/stress/stress-engine-<version>.json) is meant to be
