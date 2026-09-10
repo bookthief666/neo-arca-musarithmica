@@ -31,11 +31,15 @@ function rhythmRow(content: unknown) {
 }
 
 export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
-  const drag = useRef<{ y: number; offset: number } | null>(null)
+  const drag = useRef<{ y: number; offset: number; lastOffset: number } | null>(null)
   const activeBand = source.bands[rod.vertical_offset]
 
   return (
-    <div className={`column-rod column-rod--${source.kind}`} data-offset={rod.vertical_offset}>
+    <div
+      className={`column-rod column-rod--${source.kind}`}
+      data-offset={rod.vertical_offset}
+      data-band-status={activeBand.status}
+    >
       <div className="rod-cap">
         <span>{source.kind === 'pitch' ? 'COLVMNA' : 'NOTÆ'}</span>
         <small>EX. {rod.copy_index}</small>
@@ -65,17 +69,22 @@ export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
           }
         }}
         onPointerDown={(event) => {
-          drag.current = { y: event.clientY, offset: rod.vertical_offset }
+          drag.current = { y: event.clientY, offset: rod.vertical_offset, lastOffset: rod.vertical_offset }
           event.currentTarget.setPointerCapture(event.pointerId)
         }}
         onPointerMove={(event) => {
           if (!drag.current) return
           const delta = Math.round((event.clientY - drag.current.y) / 34)
-          onMove(drag.current.offset + delta)
+          const nextOffset = Math.max(0, Math.min(9, drag.current.offset + delta))
+          if (nextOffset === drag.current.lastOffset) return
+          drag.current.lastOffset = nextOffset
+          onMove(nextOffset)
         }}
         onPointerUp={(event) => {
           drag.current = null
-          event.currentTarget.releasePointerCapture(event.pointerId)
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId)
+          }
         }}
         onPointerCancel={() => { drag.current = null }}
       >

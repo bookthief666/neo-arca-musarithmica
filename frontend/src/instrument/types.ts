@@ -11,6 +11,21 @@ export type InstrumentPhase =
   | 'revealed'
   | 'error'
 
+export type InstrumentView = 'arca' | 'cabinet' | 'cell' | 'working' | 'tone' | 'revelation'
+
+export type InstrumentAffordance =
+  | 'open_arca'
+  | 'focus_bank_i'
+  | 'open_cell_iv'
+  | 'deploy_rods'
+  | 'place_held_rod'
+  | 'align_rods'
+  | 'engage_tone_ii'
+  | 'read_transverse'
+  | 'await_execution'
+  | 'inspect_revelation'
+  | 'recover'
+
 export type RodLocation = 'cell' | 'hand' | 'workspace'
 
 export type VoiceName = 'cantus' | 'altus' | 'tenor' | 'bassus'
@@ -167,12 +182,14 @@ export type InstrumentAction =
   | { type: 'FOCUS_BANK'; bank: 1 | 2 | 3 }
   | { type: 'FOCUS_CELL'; cell: number }
   | { type: 'RETRIEVE_ROD'; template: RodTemplate }
+  | { type: 'DEPLOY_ROD'; template: RodTemplate }
   | { type: 'PLACE_HELD_ROD' }
   | { type: 'MOVE_ROD'; instanceId: string; offset: number }
   | { type: 'ENGAGE_TONE' }
   | { type: 'EXECUTE' }
   | { type: 'EXECUTION_SUCCESS'; execution: HistoricalExecution }
   | { type: 'EXECUTION_ERROR'; message: string }
+  | { type: 'RETURN_TO_WORKING' }
   | { type: 'TOGGLE_PROVENANCE' }
   | { type: 'SET_REDUCED_MOTION'; value: boolean }
 

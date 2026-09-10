@@ -1,13 +1,21 @@
-import type { HistoricalManifest, InstrumentState, RodTemplate } from '../instrument/types'
+import type {
+  HistoricalManifest,
+  InstrumentAffordance,
+  InstrumentState,
+  InstrumentView,
+  RodTemplate,
+} from '../instrument/types'
 
 interface ArcaCabinetProps {
   manifest: HistoricalManifest
   state: InstrumentState
+  view: InstrumentView
+  nextAffordance: InstrumentAffordance
   onOpen: () => void
   onClose: () => void
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
-  onRetrieveRod: (template: RodTemplate) => void
+  onDeployRod: (template: RodTemplate) => void
   onEngageTone: () => void
 }
 
@@ -16,11 +24,13 @@ const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'
 export function ArcaCabinet({
   manifest,
   state,
+  view,
+  nextAffordance,
   onOpen,
   onClose,
   onFocusBank,
   onFocusCell,
-  onRetrieveRod,
+  onDeployRod,
   onEngageTone,
 }: ArcaCabinetProps) {
   const isOpen = state.phase !== 'dormant'
@@ -35,7 +45,7 @@ export function ArcaCabinet({
             <span className="closed-arca__rule" aria-hidden="true" />
             <p className="closed-arca__folio">ROMÆ · MDCL</p>
           </div>
-          <button type="button" className="cabinet-clasp" onClick={onOpen}>
+          <button type="button" className="cabinet-clasp is-cued" onClick={onOpen}>
             <span aria-hidden="true">◊</span>
             <span>Open the Arca</span>
           </button>
@@ -45,10 +55,15 @@ export function ArcaCabinet({
     )
   }
 
+  const toneCued = nextAffordance === 'engage_tone_ii'
+  const bankCued = nextAffordance === 'focus_bank_i'
+  const cellCued = nextAffordance === 'open_cell_iv'
+  const rodsCued = nextAffordance === 'deploy_rods'
+
   return (
     <section className="arca-stage" aria-label="Open Arca Musarithmica">
-      <div className="arca-object" data-bank={state.focusedBank ?? 'none'}>
-        <div className="arca-lid">
+      <div className="arca-object" data-bank={state.focusedBank ?? 'none'} data-view={view}>
+        <div className={`arca-lid ${toneCued ? 'is-cued-surface' : ''}`}>
           <div className="lid-frame">
             <header className="mensa-heading">
               <span>MENSA TONOGRAPHICA</span>
@@ -63,7 +78,7 @@ export function ArcaCabinet({
               </div>
               <button
                 type="button"
-                className="tone-rule__row"
+                className={`tone-rule__row ${toneCued ? 'is-cued' : ''}`}
                 aria-label={`Engage Tone II ${manifest.tone.name}`}
                 aria-pressed={state.toneEngaged}
                 disabled={state.phase !== 'historical_alignment_ready' && !state.toneEngaged}
@@ -79,7 +94,11 @@ export function ArcaCabinet({
               </div>
             </div>
             <p className="mensa-status">
-              {state.toneEngaged ? 'Tone II engaged · degree becomes symbolic pitch' : 'Align the verified rule before consulting Tone II'}
+              {state.toneEngaged
+                ? 'Tone II engaged · degree becomes symbolic pitch'
+                : toneCued
+                  ? 'The transverse alignment has awakened Tone II.'
+                  : 'The Mensa remains quiet until a verified alignment is formed.'}
             </p>
           </div>
         </div>
@@ -88,26 +107,16 @@ export function ArcaCabinet({
           <div className="bank-labels" role="group" aria-label="Three principal internal banks">
             <button
               type="button"
-              className="bank-tab bank-tab--one"
+              className={`bank-tab bank-tab--one ${bankCued ? 'is-cued' : ''}`}
               aria-pressed={state.focusedBank === 1}
               onClick={() => onFocusBank(1)}
             >
               <span>I</span> DODECAMORIVM <small>SYNTAGMA I · XII CELLS</small>
             </button>
-            <button
-              type="button"
-              className="bank-tab"
-              aria-pressed={state.focusedBank === 2}
-              onClick={() => onFocusBank(2)}
-            >
+            <button type="button" className="bank-tab" disabled aria-label="Bank II Hexamorium, sealed in M1.0">
               <span>II</span> HEXAMORIVM <small>SCHEMATIC · SEALED</small>
             </button>
-            <button
-              type="button"
-              className="bank-tab"
-              aria-pressed={state.focusedBank === 3}
-              onClick={() => onFocusBank(3)}
-            >
+            <button type="button" className="bank-tab" disabled aria-label="Bank III Fragmenta, incomplete corpus">
               <span>III</span> FRAGMENTA <small>INCOMPLETE CORPUS</small>
             </button>
           </div>
@@ -120,7 +129,7 @@ export function ArcaCabinet({
                 return (
                   <button
                     type="button"
-                    className={`receptacle ${active ? 'receptacle--active' : 'receptacle--sealed'}`}
+                    className={`receptacle ${active ? 'receptacle--active' : 'receptacle--sealed'} ${active && cellCued ? 'is-cued' : ''}`}
                     key={label}
                     disabled={!active || state.focusedBank !== 1}
                     aria-pressed={state.focusedCell === cell}
@@ -134,13 +143,13 @@ export function ArcaCabinet({
               })}
             </div>
 
-            <div className="secondary-banks" aria-hidden={state.focusedBank === 1}>
+            <div className="secondary-banks" aria-hidden="true">
               <div className="sealed-bank"><span>II</span>{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</div>
               <div className="sealed-bank sealed-bank--fragment"><span>III</span>{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</div>
             </div>
 
             {state.focusedCell === 4 && (
-              <aside className="cell-drawer" aria-label="Cell IV rod receptacle">
+              <aside className={`cell-drawer ${view === 'cell' ? 'is-focused' : ''}`} aria-label="Cell IV rod receptacle">
                 <header>
                   <p>CELLVLA IV · PINAX IV</p>
                   <span>Iambica Euripedaea · penultima longa</span>
@@ -150,13 +159,13 @@ export function ArcaCabinet({
                     <button
                       type="button"
                       key={template.template_id}
-                      className="stored-rod"
-                      disabled={retrievedTemplates.has(template.template_id) || state.heldRodId !== null}
-                      onClick={() => onRetrieveRod(template)}
+                      className={`stored-rod ${rodsCued && !retrievedTemplates.has(template.template_id) ? 'is-cued' : ''}`}
+                      disabled={retrievedTemplates.has(template.template_id)}
+                      onClick={() => onDeployRod(template)}
                       aria-label={
                         retrievedTemplates.has(template.template_id)
-                          ? `${template.label} already retrieved`
-                          : `Retrieve ${template.label}`
+                          ? `${template.label} already deployed`
+                          : `Deploy ${template.label} to the transverse rule`
                       }
                     >
                       <span>{template.copy_index}</span>
@@ -164,7 +173,7 @@ export function ArcaCabinet({
                     </button>
                   ))}
                 </div>
-                <p>{retrievedTemplates.size}/3 carriers removed</p>
+                <p>{retrievedTemplates.size}/3 carriers deployed</p>
               </aside>
             )}
           </div>

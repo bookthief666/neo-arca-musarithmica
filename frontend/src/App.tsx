@@ -7,6 +7,8 @@ import { executeHistoricalAlignment, loadHistoricalManifest } from './instrument
 import {
   createAlignmentRequest,
   createInitialState,
+  deriveInstrumentView,
+  getNextAffordance,
   instrumentReducer,
   isAlignmentReady,
 } from './instrument/model'
@@ -44,6 +46,8 @@ export default function App() {
     () => isAlignmentReady(state, manifest ?? undefined),
     [manifest, state],
   )
+  const view = deriveInstrumentView(state)
+  const nextAffordance = getNextAffordance(state, manifest ?? undefined)
 
   const execute = async () => {
     if (!manifest || !alignmentReady || !state.toneEngaged) return
@@ -74,7 +78,13 @@ export default function App() {
   }
 
   return (
-    <main className="instrument-shell" data-phase={state.phase} data-reduced-motion={state.reducedMotion}>
+    <main
+      className="instrument-shell"
+      data-phase={state.phase}
+      data-view={view}
+      data-next-affordance={nextAffordance}
+      data-reduced-motion={state.reducedMotion}
+    >
       <header className="instrument-masthead">
         <div>
           <p>ARCA MECHANICA · PRIMVM INSTRVMENTVM</p>
@@ -86,31 +96,44 @@ export default function App() {
         </div>
       </header>
 
-      <ArcaCabinet
-        manifest={manifest}
-        state={state}
-        onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-        onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-        onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-        onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-        onRetrieveRod={(template) => dispatch({ type: 'RETRIEVE_ROD', template })}
-        onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-      />
+      <p className="visually-hidden" aria-live="polite">Current instrument state: {nextAffordance.replaceAll('_', ' ')}.</p>
 
-      {state.phase !== 'dormant' && (
-        <WorkingRule
+      <div className="mechanica-composition">
+        <ArcaCabinet
           manifest={manifest}
           state={state}
-          alignmentReady={alignmentReady}
-          executionReady={alignmentReady && state.toneEngaged}
-          onPlaceHeld={() => dispatch({ type: 'PLACE_HELD_ROD' })}
-          onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-          onExecute={execute}
+          view={view}
+          nextAffordance={nextAffordance}
+          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
+          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
+          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
+          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
+          onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
+          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
         />
-      )}
 
-      {state.error && <p className="instrument-error" role="alert">{state.error}</p>}
-      {state.execution && <VoiceManifestation execution={state.execution} />}
+        {view === 'working' && (
+          <WorkingRule
+            manifest={manifest}
+            state={state}
+            alignmentReady={alignmentReady}
+            executionReady={alignmentReady && state.toneEngaged}
+            nextAffordance={nextAffordance}
+            onPlaceHeld={() => dispatch({ type: 'PLACE_HELD_ROD' })}
+            onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
+            onExecute={execute}
+          />
+        )}
+
+        {state.error && <p className="instrument-error" role="alert">{state.error}</p>}
+
+        {view === 'revelation' && state.execution && (
+          <VoiceManifestation
+            execution={state.execution}
+            onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
+          />
+        )}
+      </div>
 
       <ProvenanceLeaf
         manifest={manifest}
@@ -119,11 +142,13 @@ export default function App() {
         onToggle={() => dispatch({ type: 'TOGGLE_PROVENANCE' })}
       />
 
-      <footer className="instrument-footer">
-        <p>HISTORICA DATA · H0</p>
-        <p>PHYSICAL BODY · H1</p>
-        <p>COMPUTATION · M0.9 KERNEL</p>
-      </footer>
+      {state.phase === 'dormant' && (
+        <footer className="instrument-footer">
+          <p>HISTORICA DATA · H0</p>
+          <p>PHYSICAL BODY · H1</p>
+          <p>COMPUTATION · M0.9 KERNEL</p>
+        </footer>
+      )}
     </main>
   )
 }

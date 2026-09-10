@@ -2,7 +2,12 @@ import type { HistoricalExecution, VoiceName } from '../instrument/types'
 
 const voiceOrder: VoiceName[] = ['cantus', 'altus', 'tenor', 'bassus']
 
-export function VoiceManifestation({ execution }: { execution: HistoricalExecution }) {
+interface VoiceManifestationProps {
+  execution: HistoricalExecution
+  onReturn: () => void
+}
+
+export function VoiceManifestation({ execution, onReturn }: VoiceManifestationProps) {
   const fragment = execution.fragment
   return (
     <section className="voice-manifestation" aria-labelledby="voices-title" aria-live="polite">
@@ -39,9 +44,12 @@ export function VoiceManifestation({ execution }: { execution: HistoricalExecuti
           ))}
         </div>
       </div>
-      <p className="voice-nonclaim">
-        Symbolic pitch classes only. No octave, register, MIDI note, BPM, or modern beat meaning has been inferred.
-      </p>
+      <div className="voice-revelation__footer">
+        <p className="voice-nonclaim">
+          Symbolic pitch classes only. No octave, register, MIDI note, BPM, or modern beat meaning has been inferred.
+        </p>
+        <button type="button" className="return-to-rule" onClick={onReturn}>Return to the rods</button>
+      </div>
     </section>
   )
 }

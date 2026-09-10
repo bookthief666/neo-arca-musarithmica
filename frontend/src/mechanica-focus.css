@@ -1,0 +1,515 @@
+/* M1.0.1A mechanical-comprehension layer.
+   These rules intentionally sit after styles.css so they can reshape the Fold
+   composition without erasing the accepted M1.0 material palette. */
+
+.mechanica-composition {
+  position: relative;
+  width: min(100%, 1020px);
+  margin: 0 auto;
+}
+
+.instrument-shell[data-view='cell'] .arca-lid,
+.instrument-shell[data-view='working'] .arca-lid {
+  opacity: 0.72;
+  transform: rotateX(-4deg) scale(0.985);
+}
+
+.instrument-shell[data-view='tone'] .arca-lid {
+  z-index: 7;
+  opacity: 1;
+  transform: rotateX(-1deg) scale(1.015);
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.34));
+}
+
+.instrument-shell[data-view='tone'] .arca-body {
+  opacity: 0.35;
+  transform: scale(0.985);
+  pointer-events: none;
+}
+
+.instrument-shell[data-view='revelation'] .arca-stage {
+  opacity: 0.5;
+  transform: scale(0.975);
+  transform-origin: top center;
+}
+
+.arca-lid,
+.arca-body,
+.cell-drawer,
+.working-rule,
+.voice-manifestation {
+  transition:
+    opacity 220ms ease,
+    transform 260ms cubic-bezier(.2, .75, .2, 1),
+    box-shadow 260ms ease;
+}
+
+.bank-tab:disabled {
+  cursor: default;
+  opacity: 0.42;
+  filter: saturate(0.55);
+}
+
+.cell-drawer.is-focused {
+  box-shadow:
+    0 14px 24px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.05),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.24);
+}
+
+.stored-rod {
+  position: relative;
+  transform: translateY(0);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.stored-rod:not(:disabled):active {
+  transform: translateY(-7px);
+}
+
+.stored-rod:not(:disabled)::after {
+  content: '';
+  position: absolute;
+  inset: 5px 7px;
+  border: 1px solid rgba(56, 34, 20, 0.28);
+  pointer-events: none;
+}
+
+.is-cued:not(:disabled),
+.is-cued-surface {
+  box-shadow:
+    0 0 0 1px rgba(211, 174, 102, 0.38),
+    0 0 18px rgba(211, 174, 102, 0.16),
+    inset 0 0 14px rgba(245, 222, 167, 0.08);
+}
+
+.receptacle.is-cued:not(:disabled)::before,
+.stored-rod.is-cued:not(:disabled)::before,
+.tone-rule__row.is-cued:not(:disabled)::before,
+.read-lever.is-cued:not(:disabled)::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(235, 205, 139, 0.46);
+  pointer-events: none;
+}
+
+.tone-rule__row,
+.read-lever,
+.receptacle,
+.stored-rod {
+  position: relative;
+}
+
+.working-rule {
+  margin: 0.7rem auto 0;
+  border-top-width: 5px;
+  transform-origin: top center;
+}
+
+.working-rule::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -1.05rem;
+  left: 7%;
+  right: 7%;
+  height: 1rem;
+  border: 1px solid #2c190f;
+  border-bottom: 0;
+  background: linear-gradient(90deg, #3a2115, #6a4329 48%, #321c12);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.working-rule__heading {
+  border-bottom: 1px solid rgba(49, 29, 17, 0.25);
+}
+
+.rule-bed {
+  min-height: 360px;
+}
+
+.read-band {
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.read-band.is-complete {
+  border-color: rgba(121, 69, 23, 0.96);
+  background: rgba(218, 166, 70, 0.2);
+  box-shadow:
+    0 0 22px rgba(198, 137, 45, 0.24),
+    inset 0 0 14px rgba(255, 235, 178, 0.3);
+}
+
+.rod-array {
+  transition: filter 180ms ease;
+}
+
+.rod-array.is-broken .column-rod[data-band-status='untranscribed'] {
+  filter: saturate(0.72) brightness(0.92);
+}
+
+.rod-array.is-concordant .column-rod[data-band-status='verified'] {
+  box-shadow:
+    0 10px 13px rgba(46, 26, 13, 0.42),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 15px rgba(197, 139, 52, 0.14);
+}
+
+.rod-window {
+  overscroll-behavior: contain;
+}
+
+.rod-steps button {
+  min-width: 2.65rem;
+  min-height: 2.65rem;
+}
+
+.voice-manifestation {
+  margin: 0.7rem auto 0;
+  transform-origin: top center;
+}
+
+.voice-revelation__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem 1rem;
+}
+
+.voice-revelation__footer .voice-nonclaim {
+  margin: 0;
+}
+
+.return-to-rule {
+  flex: 0 0 auto;
+  min-height: 2.7rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #735236;
+  color: #eadab8;
+  background: #4a2d1e;
+  cursor: pointer;
+}
+
+.provenance-leaf {
+  position: fixed;
+  z-index: 40;
+  right: max(0.7rem, env(safe-area-inset-right));
+  bottom: max(0.7rem, env(safe-area-inset-bottom));
+  width: auto;
+  max-width: calc(100vw - 1.4rem);
+  margin: 0;
+}
+
+.provenance-tab {
+  min-height: 2.8rem;
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.38);
+}
+
+.provenance-copy {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  width: min(34rem, calc(100vw - 1.4rem));
+  max-height: min(68vh, 38rem);
+  overflow: auto;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.52);
+}
+
+.instrument-shell:not([data-view='arca']) .instrument-footer {
+  display: none;
+}
+
+.instrument-shell[data-reduced-motion='true'] .arca-lid,
+.instrument-shell[data-reduced-motion='true'] .arca-body,
+.instrument-shell[data-reduced-motion='true'] .cell-drawer,
+.instrument-shell[data-reduced-motion='true'] .working-rule,
+.instrument-shell[data-reduced-motion='true'] .voice-manifestation,
+.instrument-shell[data-reduced-motion='true'] .stored-rod,
+.instrument-shell[data-reduced-motion='true'] .read-band,
+.instrument-shell[data-reduced-motion='true'] .rod-array,
+.instrument-shell[data-reduced-motion='true'] .rod-strip {
+  transition-duration: 0.001ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arca-lid,
+  .arca-body,
+  .cell-drawer,
+  .working-rule,
+  .voice-manifestation,
+  .stored-rod,
+  .read-band,
+  .rod-array,
+  .rod-strip {
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .instrument-shell {
+    padding-inline: 0.45rem;
+    overflow: visible;
+  }
+
+  .instrument-masthead {
+    align-items: center;
+    padding-bottom: 0.65rem;
+  }
+
+  .instrument-masthead p,
+  .eyebrow {
+    font-size: 0.72rem;
+  }
+
+  .instrument-masthead h1 {
+    font-size: 1.45rem;
+  }
+
+  .authority-mark > p {
+    display: none;
+  }
+
+  .arca-stage {
+    padding-top: 0.7rem;
+  }
+
+  .arca-object {
+    width: 100%;
+  }
+
+  .arca-lid {
+    width: 100%;
+    padding: 0.45rem;
+    border-width: 6px;
+  }
+
+  .lid-frame {
+    padding: 0.55rem;
+  }
+
+  .mensa-heading {
+    font-size: 1rem;
+  }
+
+  .mensa-heading small {
+    font-size: 0.72rem;
+  }
+
+  .tone-rule {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .tone-rule__head,
+  .tone-rule__row,
+  .tone-rule__ghost {
+    min-width: 34rem;
+  }
+
+  .tone-rule__head span,
+  .tone-rule__row span {
+    font-size: 0.9rem;
+  }
+
+  .mensa-status {
+    font-size: 0.88rem;
+    text-align: left;
+  }
+
+  .arca-body {
+    min-height: 0;
+    padding: 0.55rem;
+    border-width: 7px;
+    border-top-width: 9px;
+  }
+
+  .bank-labels {
+    grid-template-columns: 1.8fr 0.75fr 0.75fr;
+    gap: 0.3rem;
+  }
+
+  .bank-tab {
+    min-height: 3.1rem;
+    padding: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .bank-tab small {
+    display: none;
+  }
+
+  .bank-tab > span {
+    margin-right: 0.2rem;
+  }
+
+  .bank-bed {
+    min-height: 0;
+    margin-top: 0.45rem;
+    padding: 0.45rem;
+  }
+
+  .dodecamorium,
+  .dodecamorium.is-focused {
+    width: 100%;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.3rem;
+  }
+
+  .secondary-banks {
+    display: none;
+  }
+
+  .receptacle {
+    min-height: 3.2rem;
+  }
+
+  .receptacle__status {
+    font-size: 0.68rem;
+  }
+
+  .cell-drawer {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: 0;
+    margin-top: 0.5rem;
+    padding: 0.55rem;
+  }
+
+  .cell-drawer header p {
+    font-size: 0.96rem;
+  }
+
+  .cell-drawer header span,
+  .cell-drawer > p {
+    font-size: 0.78rem;
+  }
+
+  .stored-rods {
+    gap: 0.55rem;
+  }
+
+  .stored-rod {
+    min-height: 5.7rem;
+  }
+
+  .arca-front {
+    margin-top: 0.5rem;
+  }
+
+  .front-staff {
+    font-size: 0.72rem;
+    grid-template-columns: 3.6rem repeat(4, 1fr);
+  }
+
+  .working-rule {
+    width: 100%;
+    margin-top: 0.45rem;
+    border-width: 5px;
+  }
+
+  .working-rule::before {
+    top: -0.75rem;
+    height: 0.75rem;
+  }
+
+  .working-rule__heading,
+  .working-rule__footer,
+  .voice-manifestation > header {
+    align-items: flex-start;
+    padding: 0.65rem 0.7rem;
+    gap: 0.65rem;
+  }
+
+  .working-rule h2,
+  .voice-manifestation h2 {
+    font-size: 1.35rem;
+  }
+
+  .rule-status {
+    max-width: 45%;
+    font-size: 0.72rem;
+    text-align: right;
+  }
+
+  .rule-bed {
+    min-height: 342px;
+  }
+
+  .rod-array {
+    justify-content: stretch;
+    gap: 0.35rem;
+    padding: 0.7rem 0.35rem;
+  }
+
+  .column-rod {
+    flex: 1 1 0;
+    width: auto;
+    max-width: none;
+  }
+
+  .rod-window {
+    height: 286px;
+  }
+
+  .rod-cap {
+    font-size: 0.74rem;
+  }
+
+  .rod-cap small {
+    font-size: 0.7rem;
+  }
+
+  .rod-pitch-grid span,
+  .rod-rhythm-grid {
+    font-size: 0.72rem;
+  }
+
+  .working-rule__footer {
+    flex-direction: column;
+  }
+
+  .working-rule__footer p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  .read-lever {
+    width: 100%;
+    min-height: 3rem;
+  }
+
+  .instrument-shell[data-view='tone'] .arca-body {
+    max-height: 8rem;
+    overflow: hidden;
+  }
+
+  .instrument-shell[data-view='revelation'] .arca-stage {
+    max-height: 12rem;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+  }
+
+  .voice-manifestation {
+    margin-top: -0.3rem;
+  }
+
+  .voice-revelation__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .return-to-rule {
+    width: 100%;
+  }
+
+  .provenance-tab {
+    font-size: 0.82rem;
+  }
+}
