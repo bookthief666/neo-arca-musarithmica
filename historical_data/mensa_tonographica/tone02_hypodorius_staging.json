@@ -1,0 +1,86 @@
+{
+  "dataset": "mensa_tonographica_tone02_hypodorius",
+  "status": "primary-text-staging-visual-verification-pending",
+  "canonical": false,
+  "transcription_protocol": "docs/HISTORICAL_DATA_TRANSCRIPTION_SPEC.md",
+  "source": {
+    "work": "Athanasius Kircher, Musurgia universalis",
+    "edition": "Rome, 1650",
+    "volume": 2,
+    "book": 8,
+    "primary_repository": "Internet Archive / UNC Music Library",
+    "primary_identifier": "athanasiikircherkirc",
+    "primary_ocr": "https://archive.org/stream/athanasiikircherkirc/athanasiikircherkirc_djvu.txt",
+    "locators": [
+      "Book VIII pp.51-52 / OCR around lines 67345-67464: Proposition II, Ave maris stella, Tone II worked example",
+      "Pinax IV table begins around OCR lines 67489-67874"
+    ],
+    "independent_visual_targets": [
+      "ETH/e-rara Tomus II printed p.51 = scan [60]",
+      "ETH/e-rara Tomus II printed p.52 = scan [61]",
+      "corrected Iconismus XIV witness likely unnumbered scan [194] between printed pp.184-185"
+    ]
+  },
+  "tone": {
+    "number": 2,
+    "name": "Hypodorius",
+    "system": "mollis",
+    "final": "G",
+    "degree_to_source_letter": {
+      "1": "G",
+      "2": "A",
+      "3": "B",
+      "4": "C",
+      "5": "D",
+      "6": "E",
+      "7": "F",
+      "8": "G"
+    },
+    "signature_interpretation": {
+      "B": "B-flat under the mollis signature",
+      "F": "F-natural by default; may be sharpened locally as musica ficta/cadential leading tone where the source/example requires it"
+    }
+  },
+  "primary_text_evidence": {
+    "tone_selection": "Kircher explicitly selects the second tone for the Ave maris stella demonstration and immediately states that the tone is mollis.",
+    "worked_mappings": [
+      {
+        "voice": "cantus",
+        "degrees": [1, 2, 3, 4, 2, 3],
+        "source_letters": ["G", "A", "B", "C", "A", "B"],
+        "status": "directly legible in OCR"
+      },
+      {
+        "voice": "altus",
+        "degrees": [5, 7, 8, 8, 7, 8],
+        "source_letters": ["D", "F", "G", "G", "F", "G"],
+        "status": "degree string partly damaged in OCR; letter result directly legible and degree identities constrained by the same tone column"
+      },
+      {
+        "voice": "tenor",
+        "degrees": [3, 2, 1, 1, 5, 5],
+        "source_letters": ["B", "A", "G", "G", "D", "D"],
+        "status": "final degree digits partly damaged in OCR; D-D output directly legible and therefore reconstructs 5-5 under the same lookup"
+      },
+      {
+        "voice": "bassus",
+        "degrees": [8, 7, 6, 4, 5, 8],
+        "source_letters": ["G", "F", "E", "C", "D", "G"],
+        "status": "directly legible in OCR"
+      }
+    ]
+  },
+  "verification": {
+    "primary_text_internal_cross_check_complete": true,
+    "second_primary_facsimile_visual_check_complete": false,
+    "corrected_iconismus_witness_checked": false,
+    "eligible_for_arca_historica": false,
+    "confidence": "probable",
+    "blocking_detail": "The lookup is strongly constrained by Kircher's own worked number-to-letter example, but the printed tone table/signature must still be visually checked against an independent public-domain facsimile before promotion to verified historical data."
+  },
+  "notes": [
+    "Keep source letter B distinct from the modern pitch-class interpretation B-flat: the source's mollis signature carries the inflection.",
+    "Do not globally sharpen degree 7. The worked repertoire may introduce F-sharp contextually as musica ficta; that is a separate realization rule from the underlying tone-table letter lookup.",
+    "Pinax IV is documented as compatible with Tone II, so this record can legitimately participate in the Pinax-IV research preview."
+  ]
+}
