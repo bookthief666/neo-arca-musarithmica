@@ -7,8 +7,8 @@ interface ColumnRodProps {
   onMove: (offset: number) => void
 }
 
-/** Canonical drag sensitivity: one registered band per band-height of travel,
- *  so a dragged rod tracks the reader's finger exactly 1:1. */
+/** Canonical drag sensitivity. MUST equal `--rod-band-h` in styles.css so a
+ *  dragged rod tracks the reader's finger exactly one band per band-height. */
 export const BAND_DRAG_PIXELS = 46
 const BAND_COUNT = 10
 const VOICE_ORDER: VoiceName[] = ['cantus', 'altus', 'tenor', 'bassus']
@@ -50,6 +50,16 @@ function RhythmFace({ content }: { content: unknown }) {
   )
 }
 
+/**
+ * A virga: a narrow physical carrier that slides vertically in the carriage.
+ *
+ * Visually it is wood, brass and printed vellum. Semantically it stays a
+ * slider — the head is decoration, the travelling strip is the value, and the
+ * aperture is where the transverse rule crosses it. When the band standing in
+ * the aperture is untranscribed the aperture renders as a BREAK: the brass
+ * channel physically stops at this rod, which is what tells the reader the
+ * transverse reading cannot pass. Nothing about that signal is colour-only.
+ */
 export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
   const drag = useRef<{ y: number; offset: number; lastOffset: number } | null>(null)
   const activeBand = source.bands[rod.vertical_offset]
@@ -63,14 +73,18 @@ export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
       data-band-status={activeBand.status}
       data-copy={rod.copy_index}
     >
-      {/* Brass head: the part a hand actually grips. */}
+      {/* Brass head: the turned grip a hand actually takes hold of. */}
       <div className="rod-head" aria-hidden="true">
+        <span className="rod-head__cap" />
         <span className="rod-head__knurl" />
         <span className="rod-head__mark">{source.kind === 'pitch' ? 'COLVMNA' : 'NOTÆ'}</span>
         <span className="rod-head__copy">EX. {rod.copy_index}</span>
       </div>
 
       <div className="rod-shaft">
+        <span className="rod-shaft__rail rod-shaft__rail--left" aria-hidden="true" />
+        <span className="rod-shaft__rail rod-shaft__rail--right" aria-hidden="true" />
+
         <button
           type="button"
           role="slider"
@@ -130,17 +144,25 @@ export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
                 {band.status === 'verified' ? (
                   source.kind === 'pitch' ? <PitchFace content={band.content} /> : <RhythmFace content={band.content} />
                 ) : (
-                  <span className="seal-mark">NON TRANSCRIPTVM</span>
+                  <span className="seal-mark">
+                    <i className="seal-mark__wax" aria-hidden="true" />
+                    <em>NON TRANSCRIPTVM</em>
+                  </span>
                 )}
               </div>
             ))}
           </div>
 
-          {/* The reading aperture: where the transverse rule crosses this rod. */}
-          <span className="rod-notch" aria-hidden="true">
-            <span className="rod-notch__brass" />
-            <span className="rod-notch__break" />
+          {/* The reading aperture: where the transverse rule crosses this rod.
+              Verified → the brass channel continues through. Untranscribed →
+              the channel stops dead and the reading is physically broken. */}
+          <span className="rod-aperture" data-status={activeBand.status} aria-hidden="true">
+            <i className="rod-aperture__edge rod-aperture__edge--top" />
+            <i className="rod-aperture__edge rod-aperture__edge--bottom" />
+            <i className="rod-aperture__break" />
           </span>
+
+          <span className="rod-window__glass" aria-hidden="true" />
         </button>
 
         {/* Ten machined detents down the rod's own edge. */}

@@ -1,35 +1,77 @@
 /*
- * ARCA HISTORICA / RELIQUARY REALM
+ * ARCA HISTORICA / RELIQUARY REALM — semantic material tokens.
  *
- * Semantic presentation tokens only. These values deliberately reproduce the
- * current M1.0.1B material system so the architecture checkpoint does not
- * masquerade as the later Concept-I visual redesign.
+ * The realm owns MATERIAL, LIGHT and MOTION. It owns no geometry and no
+ * behaviour. styles.css builds the cabinet out of these; nothing below this
+ * comment knows what a bank, a rod or a Mensa is.
+ *
+ * Material hierarchy (disciplined, never mixed):
+ *   WOOD    structure — it carries things
+ *   VOID    receptacles and mechanical depth — things come out of it
+ *   VELLUM  historical information
+ *   BRASS   operable mechanism
+ *   INK     scholarly text
+ *   LIGHT   activation and verified continuity
  */
 [data-realm='historica'] {
-  --realm-wood-deep: #28160e;
-  --realm-wood-mid: #5b3420;
-  --realm-wood-warm: #7a4b2e;
-  --realm-wood-edge: #160d09;
-  --realm-void: #0b0705;
-  --realm-brass: #b8974e;
-  --realm-brass-lit: #ecd08a;
-  --realm-brass-dark: #6d5526;
-  --realm-vellum: #d9c7a4;
-  --realm-vellum-light: #eadcbc;
-  --realm-vellum-bright: #f2e7cc;
-  --realm-vellum-shadow: #ad926b;
-  --realm-ink: #24170f;
-  --realm-ink-soft: #4a3728;
-  --realm-ink-muted: #6d5941;
-  --realm-authority-h0: #d8b66d;
-  --realm-seal: #7d2f1d;
-  --realm-shadow: rgba(0, 0, 0, 0.62);
+  /* -- WOOD: quartered walnut, raked from upper left ------------------- */
+  --realm-wood-lit: #8a5733;
+  --realm-wood-warm: #70452a;
+  --realm-wood-mid: #53311d;
+  --realm-wood-deep: #351e11;
+  --realm-wood-shadow: #22120a;
+  --realm-wood-edge: #150b06;
+  --realm-wood-grain: rgba(0, 0, 0, 0.16);
+  --realm-wood-fleck: rgba(240, 196, 138, 0.05);
 
+  /* -- VOID: the inside of a receptacle, wool-felt lined ---------------- */
+  --realm-void: #0a0604;
+  --realm-void-felt: #17100c;
+  --realm-void-lip: rgba(255, 214, 154, 0.16);
+
+  /* -- BRASS: cast, turned, and lightly tarnished ----------------------- */
+  --realm-brass: #b2924c;
+  --realm-brass-lit: #f0d795;
+  --realm-brass-pale: #d8bd7c;
+  --realm-brass-dark: #6a5223;
+  --realm-brass-deep: #3d2f13;
+
+  /* -- VELLUM: printed sheet, laid and toned ---------------------------- */
+  --realm-vellum: #d8c6a3;
+  --realm-vellum-light: #e8dabb;
+  --realm-vellum-bright: #f4ead1;
+  --realm-vellum-shadow: #a98d66;
+  --realm-vellum-rule: rgba(60, 42, 26, 0.26);
+
+  /* -- INK -------------------------------------------------------------- */
+  --realm-ink: #211509;
+  --realm-ink-soft: #46341f;
+  --realm-ink-muted: #6f5b3f;
+  --realm-ink-red: #7d2f1d;
+
+  /* -- LIGHT: activation, verified continuity --------------------------- */
+  --realm-authority-h0: #dfbc73;
+  --realm-lamp: rgba(255, 219, 153, 0.5);
+  --realm-lamp-soft: rgba(255, 214, 146, 0.2);
+  --realm-seal: #7d2f1d;
+  --realm-shadow: rgba(0, 0, 0, 0.66);
+
+  /* -- TYPE: bundled-free stacks. No externally hosted font is fetched. -- */
+  --realm-face-display: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Book Antiqua', Georgia, 'Times New Roman', serif;
+  --realm-face-text: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Times New Roman', serif;
+  --realm-face-engraved: ui-monospace, 'SF Mono', 'DejaVu Sans Mono', Menlo,
+    Consolas, monospace;
+
+  /* -- MOTION: measured, mechanical, deliberate ------------------------- */
   --realm-motion-mechanical: cubic-bezier(0.32, 0.08, 0.24, 1);
+  --realm-motion-settle: cubic-bezier(0.2, 0.9, 0.3, 1);
   --realm-motion-reading: 260ms var(--realm-motion-mechanical);
   --realm-motion-reveal: 430ms var(--realm-motion-mechanical);
+  --realm-motion-drawer: 560ms var(--realm-motion-mechanical);
 
-  /* Compatibility aliases consumed by the existing M1.0.1B components. */
+  /* -- Compatibility aliases consumed by component CSS ------------------ */
   --ink: var(--realm-ink);
   --ink-soft: var(--realm-ink-soft);
   --muted-ink: var(--realm-ink-muted);
@@ -37,15 +79,24 @@
   --paper-light: var(--realm-vellum-light);
   --paper-bright: var(--realm-vellum-bright);
   --paper-shadow: var(--realm-vellum-shadow);
+  --wood-lit: var(--realm-wood-lit);
   --wood-dark: var(--realm-wood-deep);
   --wood: var(--realm-wood-mid);
   --wood-warm: var(--realm-wood-warm);
   --wood-edge: var(--realm-wood-edge);
   --void: var(--realm-void);
+  --felt: var(--realm-void-felt);
   --brass: var(--realm-brass);
   --brass-bright: var(--realm-brass-lit);
+  --brass-pale: var(--realm-brass-pale);
   --brass-dark: var(--realm-brass-dark);
+  --brass-deep: var(--realm-brass-deep);
   --light: var(--realm-authority-h0);
+  --lamp: var(--realm-lamp);
   --seal-red: var(--realm-seal);
   --ease-mech: var(--realm-motion-mechanical);
+  --ease-settle: var(--realm-motion-settle);
+  --face-display: var(--realm-face-display);
+  --face-text: var(--realm-face-text);
+  --face-engraved: var(--realm-face-engraved);
 }

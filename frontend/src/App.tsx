@@ -3,6 +3,7 @@ import { ArcaCabinet } from './components/ArcaCabinet'
 import { ProvenanceLeaf } from './components/ProvenanceLeaf'
 import { VoiceManifestation } from './components/VoiceManifestation'
 import { WorkingRule } from './components/WorkingRule'
+import { Scholium } from './components/Scholium'
 import { executeHistoricalAlignment, loadHistoricalManifest } from './instrument/client'
 import {
   createAlignmentRequest,
@@ -128,6 +129,9 @@ export default function App() {
   const nextAffordance = getNextAffordance(state, manifest ?? undefined)
   const realm = getRealmDefinition(DEFAULT_REALM_ID)
   const realmGuidance = getRealmGuidance(realm.id, nextAffordance, GUIDANCE_MODE)
+  // Presentation-only. The realm derived this from the canonical affordance;
+  // each part of the machine renders it beside the mechanism it describes.
+  const scholium = realmGuidance?.text ?? null
 
   const deployRod = useCallback((template: RodTemplate, origin: DOMRect | null) => {
     if (origin && !state.reducedMotion) {
@@ -171,8 +175,10 @@ export default function App() {
   }
 
   // The carriage stays present once rods exist: semantic focus moves to the
-  // Mensa, but the mechanism the reader just aligned must not be erased.
-  const carriageMounted = view === 'working' || view === 'tone'
+  // Mensa and then to the folio, but the mechanism the reader just aligned must
+  // not be erased — the revelation is printed BY this carriage, so it emerges
+  // from underneath the rods that produced it rather than replacing them.
+  const carriageMounted = view === 'working' || view === 'tone' || view === 'revelation'
 
   return (
     <main
@@ -185,65 +191,83 @@ export default function App() {
       data-guidance-mode={GUIDANCE_MODE}
       data-realm-guidance={realmGuidance?.affordance ?? 'none'}
     >
-      <header className="instrument-masthead">
-        <p className="instrument-masthead__line">
-          <span className="instrument-masthead__title">Neo-Arca Musarithmica</span>
-          <span className="instrument-masthead__sub">ARCA MECHANICA · PRIMVM INSTRVMENTVM</span>
-        </p>
-        <span className="authority-mark" aria-label="Historical authority: Pinax IV fragment, PRINT_1650, verified">
-          <b>H0</b>
-          <small>PINAX IV<br />PRINT_1650</small>
-        </span>
-      </header>
-
       <p className="visually-hidden" aria-live="polite">
         Current instrument state: {nextAffordance.replaceAll('_', ' ')}.
       </p>
 
       <div className="arca-machine" data-view={view} data-phase={state.phase}>
-        <ArcaCabinet
-          manifest={manifest}
-          state={state}
-          view={view}
-          nextAffordance={nextAffordance}
-          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-          onDeployRod={deployRod}
-          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-        />
+        {/* Two continuous stiles and a cornice: every part below hangs inside
+            the SAME carcass, which is what stops the instrument reading as a
+            stack of independently styled panels. */}
+        <span className="carcass-stile carcass-stile--left" aria-hidden="true" />
+        <span className="carcass-stile carcass-stile--right" aria-hidden="true" />
 
-        {carriageMounted && (
-          <WorkingRule
-            ref={railRef}
+        <header className="instrument-masthead">
+          <p className="instrument-masthead__line">
+            <span className="instrument-masthead__title">Neo-Arca Musarithmica</span>
+            <span className="instrument-masthead__sub">ARCA MECHANICA · PRIMVM INSTRVMENTVM</span>
+          </p>
+          <span className="authority-mark" aria-label="Historical authority: Pinax IV fragment, PRINT_1650, verified">
+            <b>H0</b>
+            <small>PINAX IV<br />PRINT_1650</small>
+          </span>
+        </header>
+
+        <div className="arca-machine__column">
+          <ArcaCabinet
             manifest={manifest}
             state={state}
             view={view}
-            alignmentReady={alignmentReady}
-            executionReady={alignmentReady && state.toneEngaged}
             nextAffordance={nextAffordance}
-            onPlaceHeld={() => dispatch({ type: 'PLACE_HELD_ROD' })}
-            onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-            onExecute={execute}
+            scholium={scholium}
+            onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
+            onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
+            onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
+            onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
+            onDeployRod={deployRod}
+            onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
           />
-        )}
 
-        {state.error && <p className="instrument-error" role="alert">{state.error}</p>}
+          {carriageMounted && (
+            <WorkingRule
+              ref={railRef}
+              manifest={manifest}
+              state={state}
+              view={view}
+              alignmentReady={alignmentReady}
+              executionReady={alignmentReady && state.toneEngaged}
+              nextAffordance={nextAffordance}
+              scholium={scholium}
+              onPlaceHeld={() => dispatch({ type: 'PLACE_HELD_ROD' })}
+              onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
+              onExecute={execute}
+            />
+          )}
 
-        {view === 'revelation' && state.execution && (
-          <VoiceManifestation
+          {state.error && (
+            <p className="instrument-error" role="alert">
+              {state.error}
+              {scholium && nextAffordance === 'recover' && <em>{scholium}</em>}
+            </p>
+          )}
+
+          {view === 'revelation' && state.execution && (
+            <VoiceManifestation
+              execution={state.execution}
+              onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
+            />
+          )}
+        </div>
+
+        <div className="machine-plinth">
+          {view === 'revelation' && <Scholium text={scholium} place="cornice" />}
+          <ProvenanceLeaf
+            manifest={manifest}
             execution={state.execution}
-            onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
+            open={state.provenanceOpen}
+            onToggle={() => dispatch({ type: 'TOGGLE_PROVENANCE' })}
           />
-        )}
-
-        <ProvenanceLeaf
-          manifest={manifest}
-          execution={state.execution}
-          open={state.provenanceOpen}
-          onToggle={() => dispatch({ type: 'TOGGLE_PROVENANCE' })}
-        />
+        </div>
       </div>
 
       {transfer && (
