@@ -1,0 +1,51 @@
+/*
+ * ARCA HISTORICA / RELIQUARY REALM
+ *
+ * Semantic presentation tokens only. These values deliberately reproduce the
+ * current M1.0.1B material system so the architecture checkpoint does not
+ * masquerade as the later Concept-I visual redesign.
+ */
+[data-realm='historica'] {
+  --realm-wood-deep: #28160e;
+  --realm-wood-mid: #5b3420;
+  --realm-wood-warm: #7a4b2e;
+  --realm-wood-edge: #160d09;
+  --realm-void: #0b0705;
+  --realm-brass: #b8974e;
+  --realm-brass-lit: #ecd08a;
+  --realm-brass-dark: #6d5526;
+  --realm-vellum: #d9c7a4;
+  --realm-vellum-light: #eadcbc;
+  --realm-vellum-bright: #f2e7cc;
+  --realm-vellum-shadow: #ad926b;
+  --realm-ink: #24170f;
+  --realm-ink-soft: #4a3728;
+  --realm-ink-muted: #6d5941;
+  --realm-authority-h0: #d8b66d;
+  --realm-seal: #7d2f1d;
+  --realm-shadow: rgba(0, 0, 0, 0.62);
+
+  --realm-motion-mechanical: cubic-bezier(0.32, 0.08, 0.24, 1);
+  --realm-motion-reading: 260ms var(--realm-motion-mechanical);
+  --realm-motion-reveal: 430ms var(--realm-motion-mechanical);
+
+  /* Compatibility aliases consumed by the existing M1.0.1B components. */
+  --ink: var(--realm-ink);
+  --ink-soft: var(--realm-ink-soft);
+  --muted-ink: var(--realm-ink-muted);
+  --paper: var(--realm-vellum);
+  --paper-light: var(--realm-vellum-light);
+  --paper-bright: var(--realm-vellum-bright);
+  --paper-shadow: var(--realm-vellum-shadow);
+  --wood-dark: var(--realm-wood-deep);
+  --wood: var(--realm-wood-mid);
+  --wood-warm: var(--realm-wood-warm);
+  --wood-edge: var(--realm-wood-edge);
+  --void: var(--realm-void);
+  --brass: var(--realm-brass);
+  --brass-bright: var(--realm-brass-lit);
+  --brass-dark: var(--realm-brass-dark);
+  --light: var(--realm-authority-h0);
+  --seal-red: var(--realm-seal);
+  --ease-mech: var(--realm-motion-mechanical);
+}
