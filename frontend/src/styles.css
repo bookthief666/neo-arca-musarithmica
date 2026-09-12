@@ -1,744 +1,1145 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
+/* ===========================================================================
+   ARCA MECHANICA — ONE MACHINE
+   ---------------------------------------------------------------------------
+   Material hierarchy, strictly observed:
+     WOOD   cabinet body, lid, carriage        (structure — it carries things)
+     VOID   recesses, sockets, the cell well   (depth — things come out of it)
+     PAPER  mensa plate, rod bands, revelation (historical record)
+     BRASS  rule, rod heads, detents, clasps   (the operable mechanism)
+     INK    text on paper
+   Nothing in this file is a "card". The lid, the interior and the carriage are
+   parts of a single body sharing one frame, one light source and one shadow.
+   =========================================================================== */
+
 :root {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   color: #24170f;
   background: #17100c;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+
   --ink: #24170f;
-  --muted-ink: #715d47;
+  --ink-soft: #4a3728;
+  --muted-ink: #6d5941;
   --paper: #d9c7a4;
   --paper-light: #eadcbc;
+  --paper-bright: #f2e7cc;
   --paper-shadow: #ad926b;
   --wood-dark: #28160e;
   --wood: #5b3420;
   --wood-warm: #7a4b2e;
   --wood-edge: #160d09;
-  --metal: #806d43;
+  --void: #0b0705;
+  --brass: #b8974e;
+  --brass-bright: #ecd08a;
+  --brass-dark: #6d5526;
   --light: #d8b66d;
+  --seal-red: #7d2f1d;
+
   --voice-cantus: #9d402c;
   --voice-altus: #956f22;
   --voice-tenor: #42615a;
   --voice-bassus: #493f5d;
+
+  /* Rod geometry. --rod-band-h MUST equal the 34px canonical drag step so a
+     finger drag moves the strip exactly one band per band-height of travel. */
+  --rod-band-h: 46px;
+  --rod-head-h: 30px;
+  --rod-window-h: 230px;
+  --rod-read-y: 92px;
+  --bed-pad: 14px;
+
+  --ease-mech: cubic-bezier(0.32, 0.08, 0.24, 1);
 }
 
 * { box-sizing: border-box; }
 
-html {
-  min-width: 320px;
-  min-height: 100%;
-  background: #17100c;
-}
+html { min-width: 320px; min-height: 100%; background: #17100c; }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(129, 78, 43, 0.2), transparent 42%),
-    repeating-linear-gradient(92deg, transparent 0 31px, rgba(255, 255, 255, 0.009) 32px, transparent 33px 68px),
-    linear-gradient(160deg, #21150f, #100b08 64%, #180f0b);
+    radial-gradient(ellipse at 50% 6%, rgba(150, 96, 52, 0.22), transparent 46%),
+    linear-gradient(168deg, #22160f, #0f0a07 62%, #180f0b);
 }
 
-button { font: inherit; }
-
-button:focus-visible,
-[tabindex]:focus-visible {
-  outline: 3px solid #f1d795;
-  outline-offset: 4px;
-}
-
+button { font: inherit; color: inherit; }
 button:disabled { cursor: not-allowed; }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+button:focus-visible,
+[tabindex]:focus-visible,
+[role='slider']:focus-visible {
+  outline: 3px solid #f6dda6;
+  outline-offset: 3px;
+  z-index: 40;
 }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.loading-folio {
+  min-height: 100vh; display: grid; place-content: center; gap: 0.8rem;
+  color: var(--paper); font-size: 1.05rem; padding: 2rem; text-align: center;
+}
+.loading-folio pre { color: #e2a08c; font-size: 0.8rem; white-space: pre-wrap; }
+
+/* ---------------------------------------------------------------- shell --- */
 
 .instrument-shell {
-  width: min(100%, 1180px);
+  width: min(100%, 1120px);
   margin: 0 auto;
   min-height: 100vh;
-  padding: max(1rem, env(safe-area-inset-top)) clamp(0.8rem, 3vw, 2.5rem) max(2rem, env(safe-area-inset-bottom));
-  overflow: hidden;
+  padding: max(0.6rem, env(safe-area-inset-top)) clamp(0.6rem, 2.4vw, 1.6rem)
+           max(1.4rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
 }
 
+/* A thin brass nameplate, not a website header. */
 .instrument-masthead {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  color: #cbb48a;
-  padding: 0 0.25rem 1rem;
-  border-bottom: 1px solid rgba(203, 180, 138, 0.25);
+  display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+  padding: 0.3rem 0.1rem 0.5rem;
+  border-bottom: 1px solid rgba(184, 151, 78, 0.28);
 }
-
-.instrument-masthead p,
-.eyebrow {
-  margin: 0;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+.instrument-masthead__line { margin: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.instrument-masthead__line { min-width: 0; }
+.instrument-masthead__title {
+  font-size: clamp(1rem, 4vw, 1.5rem); font-weight: 700; letter-spacing: 0.01em;
+  color: var(--paper-bright); line-height: 1.05; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
-
-.instrument-masthead h1 {
-  margin: 0.1rem 0 0;
-  color: #ead9b8;
-  font-size: clamp(1.5rem, 4vw, 2.4rem);
-  line-height: 1;
-  font-weight: 600;
+.instrument-masthead__sub {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; letter-spacing: 0.11em; color: #9c7f54;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
 .authority-mark {
+  display: flex; align-items: center; gap: 0.4rem; flex: none;
+  padding: 0.24rem 0.5rem 0.24rem 0.28rem;
+  border: 1px solid rgba(184, 151, 78, 0.4); border-radius: 3px;
+  background: linear-gradient(180deg, rgba(120, 84, 40, 0.3), rgba(40, 22, 14, 0.5));
+}
+.authority-mark b {
+  display: grid; place-content: center; width: 24px; height: 24px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, var(--brass-bright), var(--brass-dark));
+  color: #2a1c08; font-size: 0.7rem; font-weight: 700;
+}
+.authority-mark small {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; letter-spacing: 0.1em; color: #b99a68; line-height: 1.25;
+}
+
+/* =================================================================== MACHINE */
+/* One body. The lid, interior and carriage are sections of this object, and
+   only this object has an outer frame, a rim light and a cast shadow.        */
+
+.arca-machine {
+  position: relative;
+  border-radius: 6px;
+  padding: clamp(7px, 2vw, 12px);
+  background:
+    linear-gradient(180deg, #4a2a19 0%, #38200f 8%, #2e1a0f 52%, #24150c 100%),
+    repeating-linear-gradient(88deg, rgba(0,0,0,0.14) 0 3px, rgba(255,255,255,0.014) 3px 7px);
+  border: 1px solid #150c07;
+  box-shadow:
+    inset 0 1px 0 rgba(233, 186, 122, 0.26),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.6),
+    0 18px 40px rgba(0, 0, 0, 0.62),
+    0 2px 0 #150c07;
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  text-align: right;
+  flex-direction: column;
+  gap: 0;
 }
 
-.authority-mark > span {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border: 1px solid #b99b60;
-  border-radius: 50%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem;
-}
-
-.authority-mark p { font-size: 0.95rem; letter-spacing: 0.03em; }
-.authority-mark small { font-size: 0.75rem; color: #9b8665; }
-
-.resting-stage {
-  min-height: clamp(520px, 75vh, 760px);
-  display: grid;
-  place-content: center;
-  perspective: 1000px;
-}
+/* ------------------------------------------------------------ closed arca -- */
 
 .closed-arca {
-  position: relative;
-  width: clamp(260px, 44vw, 420px);
-  aspect-ratio: 1 / 0.64;
-  transform: rotateX(56deg) rotateZ(-3deg);
-  transform-style: preserve-3d;
-  filter: drop-shadow(0 34px 28px rgba(0, 0, 0, 0.6));
+  display: grid; justify-items: center; align-content: center;
+  gap: clamp(2rem, 8vw, 3.4rem);
+  padding: clamp(2.2rem, 9vw, 4rem) 0.5rem clamp(1.6rem, 6vw, 3rem);
+  min-height: min(62vh, 560px);
 }
 
+.closed-arca__body {
+  position: relative;
+  width: min(420px, 92%);
+  aspect-ratio: 7 / 5;
+  transform: perspective(1100px) rotateX(17deg);
+  transform-style: preserve-3d;
+}
 .closed-arca__lid {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  border: 10px solid var(--wood-dark);
+  position: absolute; inset: 0;
+  display: grid; align-content: center; justify-items: center; gap: 0.5rem;
+  padding: 1rem;
   border-radius: 4px;
   background:
-    linear-gradient(95deg, rgba(255,255,255,0.05), transparent 35%, rgba(0,0,0,0.18)),
-    repeating-linear-gradient(3deg, var(--wood) 0 9px, #623a23 10px, var(--wood) 12px 24px);
+    linear-gradient(158deg, #6d4126, #3d2213 58%, #2c180d),
+    repeating-linear-gradient(92deg, rgba(0,0,0,0.2) 0 4px, rgba(255,255,255,0.02) 4px 9px);
+  border: 1px solid #170d08;
   box-shadow:
-    inset 0 0 0 2px #8b5835,
-    inset 0 0 38px rgba(0,0,0,0.58),
-    0 18px 0 var(--wood-edge),
-    0 21px 0 #0c0705;
+    inset 0 2px 0 rgba(240, 196, 130, 0.28),
+    inset 0 0 0 7px rgba(20, 11, 6, 0.34),
+    inset 0 0 0 8px rgba(184, 151, 78, 0.24);
 }
-
 .engraved-title {
-  margin: 0;
-  color: rgba(23, 12, 8, 0.8);
-  font-size: clamp(1.3rem, 3vw, 2rem);
-  letter-spacing: 0.08em;
-  text-shadow: 0 1px rgba(255,255,255,0.15);
+  margin: 0; text-align: center; line-height: 1.12;
+  font-size: clamp(1.05rem, 5.4vw, 1.5rem); font-weight: 700; letter-spacing: 0.15em;
+  color: #d9b57a;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.85), 0 -1px 0 rgba(255, 214, 150, 0.18);
 }
-
-.closed-arca__folio { margin: 0.45rem 0 0; font-size: 0.75rem; letter-spacing: 0.2em; }
-.closed-arca__rule { height: 1px; width: 70%; background: rgba(28, 13, 7, 0.5); margin: 0.45rem auto; }
+.closed-arca__rule { width: 56%; height: 2px; background: linear-gradient(90deg, transparent, var(--brass), transparent); }
+.closed-arca__folio {
+  margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.62rem; letter-spacing: 0.22em; color: #a4835a;
+}
+/* Physical thickness: a front face and a side face, so it is a box not a card. */
+.closed-arca__front {
+  position: absolute; left: 0; right: 0; top: 100%; height: 54px;
+  background:
+    linear-gradient(180deg, #4b2a18, #2a170d 60%, #1a0e08),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 4px, rgba(255,255,255,0.02) 4px 9px);
+  border: 1px solid #150c07; border-top: none; border-radius: 0 0 5px 5px;
+  transform-origin: top center; transform: rotateX(-74deg);
+  box-shadow: inset 0 2px 0 rgba(233, 186, 122, 0.22), 0 16px 30px rgba(0,0,0,0.7);
+  display: grid; place-content: center;
+}
+.closed-arca__keyhole {
+  width: 40px; height: 15px; border-radius: 3px;
+  background: radial-gradient(circle at 50% 34%, var(--brass-bright), var(--brass-dark) 72%);
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.85), 0 1px 0 rgba(255, 233, 186, 0.28);
+}
+.closed-arca__side {
+  position: absolute; top: 0; bottom: 0; left: 100%; width: 34px;
+  background: linear-gradient(90deg, #3d2213, #180d07);
+  transform-origin: center left; transform: rotateY(72deg);
+  border-radius: 0 5px 5px 0;
+  box-shadow: inset 1px 0 0 rgba(233, 186, 122, 0.16);
+}
 
 .cabinet-clasp {
-  position: absolute;
-  z-index: 3;
-  left: 50%;
-  bottom: -2rem;
-  transform: translateX(-50%) translateZ(20px);
-  display: grid;
-  place-items: center;
-  min-width: 8rem;
-  min-height: 3.3rem;
-  padding: 0.35rem 1rem;
-  border: 1px solid #ad9461;
-  border-radius: 2px 2px 7px 7px;
-  color: #f0ddb4;
-  background: linear-gradient(#77623b, #3e301c);
-  box-shadow: inset 0 0 0 2px rgba(25,15,8,0.45), 0 5px 12px rgba(0,0,0,0.5);
-  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  min-height: 52px; padding: 0.6rem 1.4rem;
+  border-radius: 3px; cursor: pointer;
+  border: 1px solid #4a3a17;
+  background: linear-gradient(180deg, #d9b975, #9d7e3c 52%, #6f5526);
+  color: #2b1d08; font-size: 1rem; font-weight: 700; letter-spacing: 0.05em;
+  box-shadow: inset 0 1px 0 rgba(255, 243, 210, 0.7), 0 6px 16px rgba(0,0,0,0.5);
 }
-
-.cabinet-clasp span:first-child { font-size: 1.2rem; line-height: 0.8; }
-.cabinet-clasp span:last-child { font-size: 0.9rem; letter-spacing: 0.05em; }
-.resting-note { color: #ad9874; text-align: center; margin: -2rem 0 0; font-style: italic; font-size: 1rem; }
-
-.arca-stage {
-  padding: clamp(1.4rem, 4vw, 3rem) 0 0;
-  perspective: 1400px;
+.cabinet-clasp__hasp {
+  width: 15px; height: 19px; border-radius: 3px 3px 1px 1px;
+  border: 2px solid #4b3a16; border-bottom-width: 6px;
+  background: linear-gradient(180deg, #f0dba6, #9a7c3c);
 }
+.cabinet-clasp:hover { filter: brightness(1.07); }
+.cabinet-clasp:active { transform: translateY(1px); }
 
-.arca-object {
-  width: min(100%, 880px);
-  margin: 0 auto;
-  filter: drop-shadow(0 32px 32px rgba(0,0,0,0.55));
-  transform-style: preserve-3d;
-}
+/* ------------------------------------------------------------------- lid --- */
+/* The Mensa Tonographica is printed on the inside of the raised lid.          */
 
-.arca-lid {
+.machine-lid {
   position: relative;
-  z-index: 1;
-  width: 94%;
-  margin: 0 auto -0.4rem;
-  padding: 0.75rem;
-  border: 9px solid var(--wood-dark);
-  border-radius: 5px 5px 2px 2px;
-  background: linear-gradient(100deg, var(--wood-warm), #3d2417 78%);
-  transform: rotateX(-4deg);
-  transform-origin: bottom center;
-  box-shadow: inset 0 0 0 2px #8b5b39, inset 0 0 25px rgba(0,0,0,0.5);
+  border-radius: 4px 4px 2px 2px;
+  padding: 3px;
+  background: linear-gradient(180deg, #56301c, #351d10 70%, #2a170d);
+  box-shadow: inset 0 1px 0 rgba(240, 196, 130, 0.22), 0 5px 12px rgba(0,0,0,0.45);
+  transform-origin: top center;
+  transition: filter 260ms var(--ease-mech), transform 320ms var(--ease-mech);
 }
-
-.lid-frame {
-  padding: clamp(0.7rem, 2vw, 1.2rem);
-  border: 2px solid #6c4c2e;
+.machine-lid__inner {
+  border-radius: 3px;
+  padding: clamp(0.5rem, 2.4vw, 0.9rem);
   background:
-    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12), transparent 24%),
-    repeating-linear-gradient(0deg, transparent 0 24px, rgba(59,38,22,0.035) 25px),
-    var(--paper);
-  box-shadow: inset 0 0 24px rgba(68, 42, 22, 0.27);
+    linear-gradient(172deg, var(--paper-bright), var(--paper) 70%, var(--paper-shadow)),
+    repeating-linear-gradient(0deg, rgba(120, 90, 50, 0.05) 0 2px, transparent 2px 5px);
+  border: 1px solid #9a7c52;
+  box-shadow: inset 0 0 22px rgba(120, 86, 48, 0.3);
 }
 
 .mensa-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding-bottom: 0.45rem;
-  border-bottom: 2px double rgba(36,23,15,0.6);
-  letter-spacing: 0.12em;
-  font-weight: 700;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  border-bottom: 1.5px solid rgba(60, 40, 22, 0.5); padding-bottom: 0.3rem; margin-bottom: 0.5rem;
+}
+.mensa-heading span {
+  font-size: clamp(0.82rem, 3.3vw, 1.02rem); font-weight: 700;
+  letter-spacing: 0.12em; color: var(--ink);
+}
+.mensa-heading small {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.54rem; letter-spacing: 0.08em; color: var(--muted-ink); text-align: right;
 }
 
-.mensa-heading small { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted-ink); }
-.tone-rule { margin-top: 0.55rem; border: 1px solid rgba(36,23,15,0.55); }
+.mensa-plate__caption {
+  margin: 0 0 0.4rem; font-size: 0.82rem; color: var(--ink-soft); letter-spacing: 0.03em;
+}
+.mensa-plate__caption b { color: var(--ink); letter-spacing: 0.1em; }
 
-.tone-rule__head,
-.tone-rule__row,
-.tone-rule__ghost {
-  display: grid;
-  grid-template-columns: minmax(8rem, 1.8fr) repeat(8, minmax(2rem, 1fr));
-  min-width: 0;
+/* All eight degrees are always visible. They wrap; they never scroll away. */
+.mensa-degrees {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+  border: 1px solid rgba(60, 40, 22, 0.4);
+  background: rgba(60, 40, 22, 0.4);
+}
+.mensa-degree {
+  display: grid; gap: 1px; justify-items: center; padding: 0.32rem 0.15rem;
+  background: linear-gradient(180deg, rgba(255,252,242,0.62), rgba(226, 210, 176, 0.5));
+}
+.mensa-degree__n {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.56rem; letter-spacing: 0.06em; color: var(--muted-ink);
+}
+.mensa-degree__p { font-size: clamp(1rem, 4.4vw, 1.28rem); font-weight: 700; color: var(--ink); line-height: 1; }
+
+.mensa-engage {
+  margin-top: 0.55rem; width: 100%; min-height: 46px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem;
+  padding: 0.5rem 0.9rem; border-radius: 3px; cursor: pointer;
+  border: 1px solid #57431a;
+  background: linear-gradient(180deg, #d3b370, #9b7c3b 55%, #6d5325);
+  color: #2b1d08; font-size: 0.92rem; font-weight: 700; letter-spacing: 0.06em;
+  box-shadow: inset 0 1px 0 rgba(255, 243, 210, 0.62), 0 3px 8px rgba(0,0,0,0.35);
+  transition: filter 180ms var(--ease-mech), transform 140ms var(--ease-mech);
+}
+.mensa-engage__lever {
+  width: 12px; height: 22px; border-radius: 2px; flex: none;
+  background: linear-gradient(180deg, #f3e0b0, #8a6c31);
+  border: 1px solid #4b3a16;
+  transition: transform 200ms var(--ease-mech);
+}
+.mensa-engage:disabled {
+  background: linear-gradient(180deg, #9c9081, #7d7264);
+  border-color: #5d5348; color: #40382d; opacity: 0.62; box-shadow: none;
+}
+.mensa-engage[aria-pressed='true'] .mensa-engage__lever { transform: rotate(28deg) translateY(2px); }
+.mensa-engage:not(:disabled):hover { filter: brightness(1.07); }
+.mensa-engage:not(:disabled):active { transform: translateY(1px); }
+
+.mensa-status {
+  margin: 0.45rem 0 0; font-size: 0.78rem; line-height: 1.35;
+  color: var(--ink-soft); font-style: italic;
 }
 
-.tone-rule__head span,
-.tone-rule__row span,
-.tone-rule__ghost span {
-  display: grid;
-  place-items: center;
-  min-height: 2.25rem;
-  padding: 0.2rem;
-  border-right: 1px solid rgba(36,23,15,0.35);
-  font-size: 0.92rem;
-}
+/* -------------------------------------------------------------- interior --- */
+/* The inside of the box: darker than the lid, because light falls into it.    */
 
-.tone-rule__head { background: rgba(55,34,20,0.08); font-family: 'IBM Plex Mono', monospace; }
-.tone-rule__head span { min-height: 1.7rem; font-size: 0.75rem; }
-.tone-rule__row { width: 100%; border: 0; border-top: 1px solid rgba(36,23,15,0.45); color: var(--ink); background: transparent; cursor: pointer; }
-.tone-rule__row:not(:disabled):hover { background: rgba(118,85,38,0.12); }
-.tone-rule__row[aria-pressed='true'] { background: rgba(154,107,36,0.24); box-shadow: inset 0 0 18px rgba(224,187,105,0.35); }
-.tone-rule__row:disabled { opacity: 0.52; }
-.tone-rule__ghost { border-top: 1px solid rgba(36,23,15,0.28); opacity: 0.28; }
-.tone-rule__ghost span { min-height: 1.35rem; }
-.mensa-status { margin: 0.55rem 0 0; text-align: right; font-style: italic; color: var(--muted-ink); font-size: 0.9rem; }
-
-.arca-body {
-  position: relative;
-  z-index: 2;
-  min-height: 430px;
-  padding: clamp(0.8rem, 2vw, 1.25rem);
-  border: 12px solid var(--wood-dark);
-  border-top-width: 16px;
-  border-radius: 3px 3px 7px 7px;
+.machine-interior {
+  margin-top: 4px;
+  border-radius: 2px;
+  padding: clamp(0.45rem, 2vw, 0.8rem);
   background:
-    linear-gradient(100deg, rgba(255,255,255,0.05), transparent 40%, rgba(0,0,0,0.2)),
-    repeating-linear-gradient(3deg, #633a23 0 10px, var(--wood) 11px 25px);
-  box-shadow: inset 0 0 0 2px #8b5835, inset 0 0 45px rgba(0,0,0,0.5), 0 16px 0 #160d09;
+    linear-gradient(180deg, #1d1009, #150c07 60%, #100904),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 6px);
+  border: 1px solid #0d0705;
+  box-shadow: inset 0 6px 14px rgba(0,0,0,0.8), inset 0 -1px 0 rgba(200, 150, 90, 0.1);
 }
 
-.bank-labels {
+/* Banks read as three structural divisions of the interior, not as tabs:
+   a brass-numbered spine running down the left of each division. */
+.bank-spine { display: grid; gap: 4px; margin-bottom: 0.55rem; }
+.bank-division {
   display: grid;
-  grid-template-columns: 2.15fr 1fr 1fr;
-  gap: 0.45rem;
-}
-
-.bank-tab {
-  min-height: 3.3rem;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid #24160d;
-  color: #20130d;
-  background: linear-gradient(#c7ab77, #a58252);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.13), 0 3px 0 #392218;
+  grid-template-columns: 30px 1fr;
+  grid-template-areas: 'numeral name' 'numeral note';
+  align-items: center;
+  gap: 0 0.55rem;
+  padding: 0.42rem 0.6rem 0.42rem 0;
   text-align: left;
-  font-size: 0.88rem;
-  letter-spacing: 0.07em;
-  cursor: pointer;
+  border: 1px solid #2c1a10;
+  border-left: 3px solid var(--brass-dark);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(70, 42, 24, 0.5), rgba(30, 17, 10, 0.6));
+  color: #a98a5e;
+}
+.bank-division__numeral {
+  grid-area: numeral; justify-self: center;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.88rem; font-weight: 500; color: var(--brass);
+}
+.bank-division__name { grid-area: name; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.09em; }
+.bank-division small {
+  grid-area: note; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.52rem; letter-spacing: 0.09em; opacity: 0.75;
+}
+.bank-division--one { cursor: pointer; }
+.bank-division--one:hover { filter: brightness(1.12); }
+.bank-division--one[aria-pressed='true'] {
+  border-left-color: var(--brass-bright);
+  background: linear-gradient(180deg, rgba(126, 84, 40, 0.75), rgba(56, 32, 17, 0.8));
+  color: var(--paper-light);
+  box-shadow: inset 0 1px 0 rgba(240, 200, 140, 0.3);
+}
+.bank-division--sealed {
+  opacity: 0.44; border-left-color: #3a2c16;
+  background: repeating-linear-gradient(48deg, rgba(28,16,9,0.8) 0 5px, rgba(44,26,15,0.8) 5px 10px);
 }
 
-.bank-tab > span { display: inline-grid; place-items: center; width: 1.45rem; height: 1.45rem; margin-right: 0.35rem; border: 1px solid currentColor; }
-.bank-tab small { display: block; margin: 0.25rem 0 0 1.85rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; opacity: 0.67; }
-.bank-tab[aria-pressed='true'] { background: linear-gradient(#e0c58c, #b99359); box-shadow: inset 0 0 10px rgba(255,235,184,0.42), 0 3px 0 #392218; }
-
-.bank-bed {
-  position: relative;
-  min-height: 285px;
-  margin-top: 0.7rem;
-  padding: clamp(0.55rem, 2vw, 0.9rem);
-  border: 2px solid #24160f;
-  background: linear-gradient(135deg, #1d100b, #3b2115 65%, #1b0f0a);
-  box-shadow: inset 0 0 34px rgba(0,0,0,0.75);
-}
-
+/* Twelve recessed sockets. Sealed ones are filled; Cell IV is a real opening. */
+.cell-bed { position: relative; }
 .dodecamorium {
-  width: 52%;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.45rem;
-  opacity: 0.68;
-  transition: opacity 280ms ease, width 280ms ease;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  padding: 5px; border-radius: 2px;
+  background: linear-gradient(180deg, #0d0704, #16100a);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.85);
+  opacity: 0.55; transition: opacity 240ms var(--ease-mech);
+}
+.dodecamorium.is-focused { opacity: 1; }
+.socket {
+  display: grid; gap: 1px; justify-items: center; align-content: center;
+  min-height: 44px; padding: 0.3rem 0.1rem;
+  border-radius: 2px; border: 1px solid #0a0503;
+  background: linear-gradient(180deg, #2a1810, #1a0f08);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.75), inset 0 -1px 0 rgba(190, 140, 80, 0.12);
+  color: #8a7150; cursor: pointer;
+}
+.socket__numeral { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.74rem; }
+.socket__status { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.46rem; letter-spacing: 0.07em; opacity: 0.75; }
+.socket--sealed {
+  background:
+    repeating-linear-gradient(45deg, rgba(24,14,8,0.9) 0 4px, rgba(38,22,13,0.9) 4px 8px);
+  color: #5d4c36;
+}
+.socket--active {
+  border-color: #4d3a18; color: var(--brass-bright);
+  background: linear-gradient(180deg, #3c2412, #241407);
+}
+.socket--active:not(:disabled):hover { filter: brightness(1.2); }
+.socket--active.is-open {
+  /* an actually open socket: the lid is off and the well is dark */
+  background: radial-gradient(ellipse at 50% 18%, #1a0f07, var(--void) 72%);
+  box-shadow: inset 0 5px 12px rgba(0,0,0,0.95), 0 0 0 1px rgba(184,151,78,0.5);
+  color: var(--brass-bright);
 }
 
-.dodecamorium.is-focused { width: 66%; opacity: 1; }
+/* ------------------------------------------------------- Cell IV receptacle */
+/* A well you can see into, with carriers standing in it whose heads stick up
+   above the lip — so "these lift out" is stated by the form, not by prose.    */
 
 .receptacle {
-  position: relative;
-  min-height: 3.65rem;
-  padding: 0.35rem;
-  border: 1px solid #8b6844;
-  color: #d1b88e;
-  background: linear-gradient(90deg, #321d13, #482b1b);
-  box-shadow: inset 0 0 9px rgba(0,0,0,0.75), 0 2px 0 #0c0705;
-}
-
-.receptacle--active:not(:disabled) { cursor: pointer; }
-.receptacle--active:not(:disabled)::after { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(218,184,112,0.32); }
-.receptacle--active[aria-pressed='true'] { color: #f0d7a2; background: linear-gradient(90deg, #57331d, #74492b); }
-.receptacle--sealed { opacity: 0.45; }
-.receptacle__number { display: block; font-size: 1rem; }
-.receptacle__status { display: block; margin-top: 0.2rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; }
-
-.secondary-banks {
-  position: absolute;
-  inset: 0.9rem 0.9rem auto auto;
-  width: 30%;
-  display: grid;
-  gap: 0.65rem;
-}
-
-.sealed-bank {
-  display: grid;
-  grid-template-columns: auto repeat(3, 1fr);
-  gap: 0.3rem;
-  align-items: center;
-  min-height: 5rem;
-  padding: 0.45rem;
-  border: 1px solid #67452c;
-  color: #9e835e;
-  background: rgba(21,12,8,0.55);
-}
-
-.sealed-bank i { display: block; height: 2.5rem; border: 1px solid #4c3221; background: #29170f; }
-.sealed-bank--fragment i:nth-of-type(2), .sealed-bank--fragment i:nth-of-type(3) { opacity: 0.22; border-style: dashed; }
-
-.cell-drawer {
-  position: absolute;
-  z-index: 4;
-  right: 0.9rem;
-  bottom: 0.9rem;
-  width: 31%;
-  min-height: 8.4rem;
-  padding: 0.65rem;
-  border: 1px solid #91704b;
-  color: #ddc79d;
-  background: linear-gradient(135deg, #4a2a19, #23140e 70%);
-  box-shadow: 0 10px 16px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.04);
-}
-
-.cell-drawer header p { margin: 0; font-size: 0.9rem; letter-spacing: 0.08em; }
-.cell-drawer header span { color: #9e8564; font-style: italic; font-size: 0.82rem; }
-.stored-rods { display: flex; gap: 0.45rem; margin-top: 0.7rem; }
-.stored-rod { flex: 1; min-width: 2.5rem; min-height: 4.8rem; border: 1px solid #3b2718; color: #312016; background: linear-gradient(90deg, #c9b187, #e2cfaa 48%, #a98f65); box-shadow: inset 0 0 6px rgba(67,39,19,0.4), 0 3px 0 #1b100b; cursor: pointer; }
-.stored-rod:disabled { opacity: 0.25; }
-.stored-rod span { display: block; font-size: 1rem; }
-.stored-rod small { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; }
-.cell-drawer > p { margin: 0.55rem 0 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: #a38d6d; }
-
-.arca-front {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 1rem;
-  min-height: 4.2rem;
-  margin-top: 0.75rem;
-  padding: 0.55rem 0.7rem;
-  border: 2px solid #24150e;
-  background: linear-gradient(#8a5735, #4e2b1b);
-  box-shadow: inset 0 0 13px rgba(0,0,0,0.5);
-}
-
-.front-staff {
-  display: grid;
-  grid-template-columns: 4rem repeat(4, 1fr);
-  gap: 0.18rem 0.45rem;
-  color: #ddc49a;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-}
-.front-staff i { align-self: center; height: 1px; background: rgba(224,199,157,0.42); }
-.close-clasp { min-height: 2.5rem; padding: 0.35rem 0.8rem; border: 1px solid #9b7f4c; color: #dbc591; background: #493920; cursor: pointer; }
-
-.working-rule {
-  position: relative;
-  width: min(100%, 980px);
-  margin: 3rem auto 0;
-  color: var(--ink);
-  border: 8px solid #2c190f;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,0.05), transparent 28%, rgba(69,38,17,0.08)),
-    var(--paper-shadow);
-  box-shadow: inset 0 0 0 2px #765033, 0 25px 35px rgba(0,0,0,0.5);
-}
-
-.working-rule__heading,
-.working-rule__footer,
-.voice-manifestation > header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-}
-
-.working-rule h2,
-.voice-manifestation h2 { margin: 0.1rem 0 0; font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 600; }
-.rule-status { margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.08em; }
-.rule-status.is-ready { color: #70400f; font-weight: 600; }
-
-.rule-bed {
-  position: relative;
-  min-height: 420px;
+  position: relative; margin-top: 0.5rem;
+  border-radius: 3px;
+  border: 1px solid #0a0503;
+  background: linear-gradient(180deg, #120a06, var(--void));
+  box-shadow: inset 0 10px 22px rgba(0,0,0,0.92), 0 -1px 0 rgba(196, 148, 88, 0.16);
   overflow: hidden;
-  border-top: 1px solid rgba(36,23,15,0.45);
-  border-bottom: 1px solid rgba(36,23,15,0.45);
+}
+/* The sliding cover retracts to the left when the cell opens. */
+.receptacle__cover {
+  position: absolute; inset: 0; z-index: 3; transform-origin: left center;
   background:
-    repeating-linear-gradient(0deg, transparent 0 47px, rgba(55,34,20,0.11) 48px),
-    linear-gradient(90deg, rgba(67,39,18,0.1), transparent 18%, transparent 82%, rgba(67,39,18,0.1)),
-    var(--paper);
+    linear-gradient(180deg, #4d2c19, #2e1a0e),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0 4px, rgba(255,255,255,0.02) 4px 9px);
+  border-right: 2px solid var(--brass-dark);
+  transform: scaleX(1);
+  transition: transform 420ms var(--ease-mech);
+}
+/* The cover retracts when the CELL is open and stays retracted while the
+   reader works — semantic focus moving to the rail must never slide the lid
+   back over carriers that have not been lifted out yet. */
+.receptacle.is-open .receptacle__cover { transform: scaleX(0); pointer-events: none; }
+
+.receptacle__well { padding: 0.55rem 0.5rem 0.5rem; }
+.receptacle__plate {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.3rem; margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(184, 151, 78, 0.28); padding-bottom: 0.32rem;
+}
+.receptacle__plate p { margin: 0; font-size: 0.84rem; font-weight: 700; letter-spacing: 0.1em; color: var(--brass-bright); }
+.receptacle__plate span { font-size: 0.72rem; font-style: italic; color: #9b7f57; }
+
+.carrier-slots {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+  align-items: end;
+}
+.carrier-slot { position: relative; min-height: 104px; display: flex; align-items: flex-end; }
+
+/* The empty socket a lifted carrier leaves behind. */
+.carrier-slot__void {
+  display: block; width: 100%; height: 74px; border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.92) 0 18%, rgba(26, 15, 8, 0.7) 60%, rgba(46, 28, 15, 0.55) 100%),
+    radial-gradient(ellipse at 50% 4%, #150c06, var(--void) 68%);
+  box-shadow:
+    inset 0 9px 16px rgba(0,0,0,0.98),
+    inset 0 -2px 0 rgba(196, 148, 88, 0.16),
+    inset 2px 0 4px rgba(0,0,0,0.8), inset -2px 0 4px rgba(0,0,0,0.8);
+  border-top: 1px solid rgba(0,0,0,0.9);
+  position: relative;
+}
+.carrier-slot__void i {
+  position: absolute; inset: 6px 10px auto; height: 3px; border-radius: 2px;
+  background: rgba(184, 151, 78, 0.16);
 }
 
-.read-band {
-  position: absolute;
-  z-index: 7;
-  top: 191px;
-  left: 0;
-  right: 0;
-  height: 50px;
-  pointer-events: none;
-  border-top: 2px solid rgba(114,64,22,0.82);
-  border-bottom: 2px solid rgba(114,64,22,0.82);
-  background: rgba(221,170,76,0.13);
-  box-shadow: 0 0 19px rgba(199,139,49,0.18), inset 0 0 11px rgba(255,234,176,0.22);
+/* A carrier: narrow, vertical, standing in the well, head above the lip. */
+.carrier {
+  position: relative; width: 100%; min-height: 104px; padding: 0;
+  display: grid; grid-template-rows: 20px 1fr auto; gap: 0; cursor: pointer;
+  background: none; border: none;
+  transition: transform 220ms var(--ease-mech), filter 220ms var(--ease-mech);
+}
+.carrier__head {
+  position: relative; height: 20px; border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(180deg, var(--brass-bright), var(--brass) 55%, var(--brass-dark));
+  border: 1px solid #4b3a16;
+  box-shadow: 0 3px 7px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 248, 222, 0.8);
+  display: grid; place-content: center;
+}
+.carrier__knurl {
+  display: block; width: 62%; height: 7px; border-radius: 1px;
+  background: repeating-linear-gradient(90deg, rgba(60,42,12,0.75) 0 2px, rgba(245, 226, 176, 0.55) 2px 4px);
+}
+.carrier__shaft {
+  display: grid; align-content: start; gap: 4px; padding: 6px 5px;
+  background:
+    linear-gradient(180deg, var(--paper-light), var(--paper) 60%, var(--paper-shadow)),
+    linear-gradient(90deg, rgba(0,0,0,0.22), transparent 16%, transparent 84%, rgba(0,0,0,0.3));
+  border: 1px solid #6f5836; border-top: none;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+}
+.carrier__shaft i { display: block; height: 2px; background: rgba(60, 40, 22, 0.42); border-radius: 1px; }
+.carrier__shaft i:nth-child(even) { width: 76%; }
+.carrier__label {
+  display: grid; justify-items: center; gap: 0; padding: 3px 0 5px;
+  background: linear-gradient(180deg, #2b1a0f, #1a0f08);
+  border: 1px solid #0c0604; border-top: none; border-radius: 0 0 2px 2px;
+}
+.carrier__label b {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.58rem; letter-spacing: 0.09em; color: var(--brass-bright);
+}
+.carrier__label small { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.5rem; color: #9b7f57; }
+.carrier[data-kind='rhythm'] .carrier__shaft i:nth-child(odd) { width: 42%; }
+.carrier:hover { transform: translateY(-5px); filter: brightness(1.06); }
+.carrier:active { transform: translateY(-2px); }
+
+.receptacle__count {
+  margin: 0.5rem 0 0; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.62rem; letter-spacing: 0.1em; color: #9b7f57; text-align: right;
 }
 
-.read-band span {
-  position: absolute;
-  right: 0.45rem;
-  top: -1.35rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  color: #744419;
+/* ----------------------------------------------------------------- apron --- */
+
+.machine-apron {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  margin-top: 0.55rem; padding-top: 0.5rem;
+  border-top: 1px solid rgba(184, 151, 78, 0.18);
 }
+.machine-apron__grain {
+  flex: 1; height: 8px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, rgba(184,151,78,0.14) 0 2px, transparent 2px 9px);
+}
+.close-clasp {
+  min-height: 38px; padding: 0.35rem 0.9rem; border-radius: 2px; cursor: pointer;
+  border: 1px solid #3c2c14; background: linear-gradient(180deg, #4a3720, #2c1e10);
+  color: #c2a271; font-size: 0.78rem; letter-spacing: 0.06em;
+}
+.close-clasp:hover { filter: brightness(1.15); }
+
+/* ================================================================= CARRIAGE */
+/* The drawer the Arca pushes out of its own front. It shares the machine's
+   wood and hangs from visible runners — it is not a second panel.            */
+
+.machine-carriage {
+  position: relative;
+  margin: 0 clamp(-7px, -2vw, -12px);
+  margin-top: 0;
+  padding: 0 clamp(7px, 2vw, 12px) clamp(0.5rem, 2vw, 0.8rem);
+  background:
+    linear-gradient(180deg, #341d10 0%, #3f2514 6%, #2b180d 70%, #20120a 100%);
+  border-top: 1px solid rgba(184, 151, 78, 0.22);
+  border-radius: 0 0 5px 5px;
+  box-shadow: inset 0 9px 18px rgba(0,0,0,0.7);
+  transform-origin: top center;
+  transition: opacity 280ms var(--ease-mech), transform 280ms var(--ease-mech), filter 280ms var(--ease-mech);
+}
+/* Runners: the drawer is physically slung from the cabinet. */
+.carriage__runners { display: none; justify-content: space-between; padding: 0 8%; }
+.carriage__runners i {
+  display: block; width: 26%; height: 4px; border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, var(--brass-dark), rgba(109, 85, 38, 0.1));
+}
+/* At Tone focus the carriage recedes but is NEVER removed: the reader must be
+   able to see the alignment they just achieved. */
+.machine-carriage.is-deferred { filter: brightness(0.74) saturate(0.9); transform: scale(0.985); }
+
+.carriage__plate {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.3rem 0.6rem; padding: 0.4rem 0 0.45rem;
+}
+.carriage__plate h2,
+.carriage__plate-title {
+  margin: 0; font-size: clamp(0.95rem, 3.8vw, 1.16rem); font-weight: 700;
+  letter-spacing: 0.04em; color: var(--paper-light); font-style: italic;
+}
+.rule-status {
+  margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.6rem; letter-spacing: 0.11em; color: #c08d6d;
+  padding: 0.2rem 0.45rem; border: 1px solid rgba(192, 141, 109, 0.34); border-radius: 2px;
+}
+.rule-status.is-ready { color: #8fce9a; border-color: rgba(143, 206, 154, 0.4); }
+
+/* The bed the rods stand on. */
+.carriage__bed {
+  position: relative;
+  padding: var(--bed-pad) 0;
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg, #1b1009, #120a06),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 7px);
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.85);
+  min-height: 120px;
+}
+
+/* ------------------------------------------------- the transverse rule ----- */
+/* A real brass bar at the read height. It passes BEHIND the rods; each rod
+   contributes its own segment only when its seated band is verified. The line
+   therefore breaks, visibly, exactly where a sealed band sits.                */
+
+.transverse-rule {
+  position: absolute; z-index: 1;
+  left: 0; right: 0;
+  top: calc(var(--bed-pad) + var(--rod-head-h) + var(--rod-read-y));
+  height: var(--rod-band-h);
+  display: flex; align-items: center; pointer-events: none;
+}
+.transverse-rule__bar {
+  flex: 1; align-self: stretch;
+  background: rgba(20, 12, 6, 0.34);
+  box-shadow:
+    inset 0 4px 0 rgba(150, 120, 62, 0.85),
+    inset 0 -4px 0 rgba(150, 120, 62, 0.85);
+}
+.transverse-rule__cap {
+  width: 9px; align-self: stretch; border-radius: 2px; flex: none;
+  background: linear-gradient(180deg, var(--brass-bright), var(--brass-dark));
+  border: 1px solid #40310f;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+}
+.transverse-rule__legend {
+  position: absolute; right: 2px; top: -13px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.46rem; letter-spacing: 0.16em; color: rgba(200, 160, 100, 0.6);
+}
+.transverse-rule.is-continuous .transverse-rule__bar {
+  background: rgba(40, 28, 12, 0.2);
+  box-shadow:
+    inset 0 4px 0 var(--brass-bright),
+    inset 0 -4px 0 var(--brass-bright),
+    0 0 14px rgba(236, 208, 138, 0.4);
+}
+
+/* ------------------------------------------------------------ the rods ----- */
 
 .rod-array {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: clamp(0.5rem, 2vw, 1rem);
-  padding: 1rem 0.75rem;
+  position: relative; z-index: 2;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: clamp(6px, 2.2vw, 14px);
+  padding: 0 4px;
+  align-items: start;
+}
+.rod-gap { min-height: calc(var(--rod-head-h) + var(--rod-window-h)); display: grid; align-items: center; }
+.rod-gap span {
+  display: block; height: 70%; border-radius: 2px;
+  border: 1px dashed rgba(184, 151, 78, 0.26);
+  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.3) 0 5px, transparent 5px 10px);
 }
 
 .column-rod {
-  width: clamp(86px, 18vw, 154px);
-  min-width: 0;
-  border: 2px solid #3a2618;
-  background: linear-gradient(90deg, #9a7d53, #d6c09a 12%, #b4986f 88%, #775b39);
-  box-shadow: 0 9px 12px rgba(46,26,13,0.42), inset 0 0 0 2px rgba(255,255,255,0.2);
-}
-
-.rod-cap {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 2.1rem;
-  padding: 0.35rem;
-  border-bottom: 1px solid #5c432a;
-  background: linear-gradient(#6d5a36, #46371f);
-  color: #eadbb6;
-  font-size: 0.72rem;
-  letter-spacing: 0.07em;
-}
-.rod-cap small { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; }
-
-.rod-window {
   position: relative;
-  display: block;
-  width: 100%;
-  height: 332px;
+  display: grid; grid-template-rows: var(--rod-head-h) auto auto;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.62));
+}
+
+/* Brass head — the grip. */
+.rod-head {
+  position: relative; z-index: 3;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #4b3a16; border-bottom: none;
+  background: linear-gradient(180deg, var(--brass-bright) 0%, var(--brass) 45%, var(--brass-dark) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 230, 0.85), inset -2px 0 3px rgba(0,0,0,0.28);
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px;
+  padding: 0 4px;
   overflow: hidden;
-  padding: 0;
-  border: 0;
-  color: var(--ink);
-  background: linear-gradient(90deg, #bda77d, var(--paper-light) 50%, #b99e72);
-  cursor: ns-resize;
-  touch-action: none;
+}
+.rod-head__knurl {
+  position: absolute; inset: 3px auto 3px 4px; width: 14px;
+  background: repeating-linear-gradient(90deg, rgba(60,42,12,0.6) 0 2px, rgba(250, 234, 190, 0.5) 2px 4px);
+  border-radius: 1px;
+}
+.rod-head__mark {
+  grid-column: 1; justify-self: center; padding-left: 12px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.55rem; font-weight: 500; letter-spacing: 0.08em; color: #2e2008;
+}
+.rod-head__copy {
+  grid-column: 2; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.48rem; letter-spacing: 0.04em; color: #40300e;
 }
 
-.rod-strip { position: absolute; inset: 0; transition: transform 190ms cubic-bezier(.2,.8,.2,1); }
-.rod-band {
+/* Shaft: paper in a wooden channel, with a cylindrical light falloff. */
+.rod-shaft {
   position: relative;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  padding: 0.2rem 0.25rem 0.2rem 1.4rem;
-  border-bottom: 1px solid rgba(42,25,14,0.42);
-  background: rgba(233,218,183,0.33);
+  display: grid; grid-template-columns: 1fr 15px;
+  border: 1px solid #0c0604;
+  background: #15100a;
+  box-shadow: inset 0 0 0 1px rgba(184,151,78,0.14);
 }
-.rod-band__index { position: absolute; left: 0.25rem; top: 0.25rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: #766147; }
-.rod-band--verified { background: linear-gradient(90deg, rgba(255,250,224,0.34), rgba(229,204,143,0.5)); }
-.rod-band--sealed { background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(77,52,31,0.06) 8px 9px); }
-.seal-mark { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.05em; color: #8c7254; transform: rotate(-4deg); }
-
-.rod-pitch-grid { width: 100%; display: grid; gap: 0.08rem; font-family: 'IBM Plex Mono', monospace; }
-.rod-pitch-grid span { display: grid; grid-template-columns: 1rem 1fr; align-items: center; font-size: clamp(0.62rem, 1.4vw, 0.78rem); white-space: nowrap; }
-.rod-pitch-grid b { font-weight: 500; color: #7c4326; }
-.rod-rhythm-grid { display: grid; gap: 0.05rem; place-items: center; }
-.rod-rhythm-grid > span { font-size: clamp(0.82rem, 2vw, 1.1rem); white-space: nowrap; }
-.rod-rhythm-grid small { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; }
-
-.rod-steps { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid #4e3924; background: #6b5534; }
-.rod-steps button { min-height: 2.5rem; border: 0; color: #f1dfb9; background: transparent; cursor: pointer; }
-.rod-steps button:hover { background: rgba(255,255,255,0.09); }
-.rod-steps span { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: #ebd8ad; }
-
-.placement-field,
-.empty-rule {
-  position: absolute;
-  inset: 1rem;
-  display: grid;
-  place-content: center;
-  place-items: center;
-  gap: 0.9rem;
-  border: 1px dashed rgba(74,48,28,0.5);
-  color: #5d4934;
-  background: rgba(228,211,172,0.22);
-  text-align: center;
+.rod-window {
+  position: relative; display: block; width: 100%; height: var(--rod-window-h);
+  padding: 0; margin: 0; overflow: hidden; cursor: grab;
+  border: none; border-right: 1px solid rgba(0,0,0,0.55);
+  background: linear-gradient(90deg, rgba(0,0,0,0.34) 0%, transparent 14%, transparent 86%, rgba(0,0,0,0.4) 100%), var(--paper);
+  touch-action: none; /* rod drag must not scroll the page */
+  -webkit-user-select: none; user-select: none;
 }
-.placement-field { width: calc(100% - 2rem); font-size: 1rem; cursor: pointer; }
-.placement-field__rod { width: 3.2rem; height: 9rem; border: 1px solid #57422e; background: linear-gradient(90deg, #a58b62, #deca9f, #97794f); box-shadow: 0 9px 11px rgba(63,36,18,0.28); transform: rotate(7deg); }
-.empty-rule span { font-size: 2rem; letter-spacing: 0.3em; color: rgba(77,54,33,0.35); }
-.empty-rule p { margin: 0; }
+.rod-window:active { cursor: grabbing; }
 
-.working-rule__footer { min-height: 4.5rem; }
-.working-rule__footer p { max-width: 65ch; margin: 0; font-size: 0.95rem; }
+.rod-strip {
+  position: absolute; left: 0; right: 0; top: 0;
+  transform: translateY(calc(var(--rod-read-y) - var(--offset, 0) * var(--rod-band-h)));
+  transition: transform 260ms var(--ease-mech);
+  will-change: transform;
+}
+.rod-band {
+  position: relative; height: var(--rod-band-h); overflow: hidden;
+  display: grid; grid-template-columns: 17px 1fr; align-items: center;
+  border-bottom: 1px solid rgba(90, 66, 38, 0.34);
+  padding-right: 2px;
+}
+.rod-band__index {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; color: var(--muted-ink); text-align: center;
+  border-right: 1px solid rgba(90, 66, 38, 0.3); align-self: stretch;
+  display: grid; place-content: center;
+  background: rgba(160, 130, 88, 0.18);
+}
+.rod-band--verified { background: linear-gradient(180deg, rgba(255, 252, 240, 0.55), rgba(233, 219, 186, 0.35)); }
+/* Sealed bands are hatched AND labelled — never distinguished by colour alone. */
+.rod-band--sealed {
+  background:
+    repeating-linear-gradient(45deg, rgba(120, 96, 62, 0.26) 0 4px, rgba(190, 168, 130, 0.16) 4px 8px);
+}
+.seal-mark {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.46rem; letter-spacing: 0.05em; line-height: 1.2;
+  color: rgba(70, 52, 32, 0.8); text-align: center; padding-left: 2px;
+  /* Wraps to two lines visually while staying two words for a screen reader. */
+  max-width: 6.2em; margin: 0 auto;
+}
+
+/* The historical faces. Dense but legible; never overlapping. */
+.rod-face { display: grid; gap: 0; padding-left: 3px; overflow: hidden; }
+.rod-face__row {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; align-items: center;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; line-height: 1.02;
+}
+.rod-face--pitch .rod-face__row { grid-template-columns: 9px repeat(6, 1fr); }
+.rod-face__row b { font-size: 0.46rem; color: #8a6a3e; font-weight: 500; }
+.rod-face__row i { font-size: 0.62rem; font-style: normal; color: var(--ink); text-align: center; }
+.rod-face--rhythm { align-content: center; gap: 3px; }
+.rod-face--rhythm .rod-face__row--glyphs i { font-size: 0.74rem; color: var(--ink); }
+.rod-face--rhythm .rod-face__row--units i { font-size: 0.5rem; color: #7a5c34; }
+
+/* The reading lens. Everything the rule is NOT reading is pushed into shadow,
+   so the eye lands on the seated band without being told where to look. This
+   is the single strongest teacher of "the rule reads across, here". */
+.rod-window::before,
+.rod-window::after {
+  content: ''; position: absolute; left: 0; right: 0; z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(14, 8, 4, 0.5), rgba(14, 8, 4, 0.26));
+}
+.rod-window::before { top: 0; height: var(--rod-read-y); }
+.rod-notch { z-index: 6; }
+.rod-window::after {
+  top: calc(var(--rod-read-y) + var(--rod-band-h)); bottom: 0;
+  background: linear-gradient(180deg, rgba(14, 8, 4, 0.26), rgba(14, 8, 4, 0.55));
+}
+
+/* The reading aperture where the rule crosses this rod. */
+.rod-notch {
+  position: absolute; z-index: 5; left: 0; right: 0;
+  top: var(--rod-read-y); height: var(--rod-band-h);
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 246, 220, 0.5), inset 0 -1px 0 rgba(60, 40, 20, 0.4);
+}
+.rod-notch__brass,
+.rod-notch__break { position: absolute; left: -1px; right: -1px; top: 50%; height: 6px; transform: translateY(-50%); }
+.rod-notch__brass { opacity: 0; transition: opacity 200ms var(--ease-mech); }
+.rod-notch__break { opacity: 0; transition: opacity 200ms var(--ease-mech); }
+
+/* Verified band seated on the rule -> the brass runs straight through. */
+[data-band-status='verified'] .rod-notch {
+  outline: 1px solid rgba(236, 208, 138, 0.6); outline-offset: -1px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 230, 0.7),
+    inset 0 -1px 0 rgba(60, 40, 20, 0.45),
+    0 0 14px rgba(236, 208, 138, 0.22);
+}
+[data-band-status='verified'] .rod-notch__brass {
+  opacity: 1; top: 0; height: 100%; transform: none; background: none;
+  box-shadow:
+    inset 0 4px 0 var(--brass-bright),
+    inset 0 -4px 0 var(--brass-bright),
+    0 0 10px rgba(236, 208, 138, 0.3);
+}
+/* Sealed band seated on the rule -> the line is physically interrupted. */
+[data-band-status='untranscribed'] .rod-notch {
+  outline: 2px dashed rgba(224, 132, 100, 0.85); outline-offset: -2px;
+  background: rgba(70, 20, 10, 0.2);
+}
+[data-band-status='untranscribed'] .rod-notch__break {
+  opacity: 1; top: 0; height: 100%; transform: none;
+  background:
+    repeating-linear-gradient(45deg, rgba(186, 82, 54, 0.92) 0 4px, rgba(28, 11, 6, 0.94) 4px 8px);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.65);
+}
+
+/* Ten machined detents on the rod's own edge. */
+.rod-detents {
+  display: grid; grid-template-rows: repeat(10, 1fr);
+  background: linear-gradient(90deg, #120c07, #241809);
+  border-left: 1px solid rgba(0,0,0,0.6);
+  padding: 2px 0;
+}
+.rod-detents i {
+  display: block; margin: auto 3px auto 2px; height: 2px; border-radius: 1px;
+  background: rgba(184, 151, 78, 0.34);
+  position: relative;
+}
+.rod-detents i.is-seated {
+  height: 5px; background: var(--brass-bright);
+  box-shadow: 0 0 6px rgba(236, 208, 138, 0.7);
+}
+.rod-detents i.is-seated::after {
+  content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%);
+  border: 3px solid transparent; border-right-color: var(--brass-bright);
+}
+
+/* Foot: the stepper. Real touch targets. */
+.rod-foot {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch;
+  border: 1px solid #0c0604; border-top: none; border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, #2c1c10, #190f08);
+  overflow: hidden;
+}
+.rod-step {
+  min-height: 38px; border: none; cursor: pointer; padding: 0;
+  background: linear-gradient(180deg, rgba(196, 152, 88, 0.22), rgba(80, 54, 26, 0.3));
+  color: var(--brass-bright); font-size: 0.7rem;
+}
+.rod-step:hover:not(:disabled) { background: linear-gradient(180deg, rgba(236, 208, 138, 0.4), rgba(120, 84, 38, 0.4)); }
+.rod-step:disabled { opacity: 0.3; }
+.rod-step:first-child { border-right: 1px solid rgba(0,0,0,0.5); }
+.rod-step:last-child { border-left: 1px solid rgba(0,0,0,0.5); }
+.rod-foot__read {
+  display: grid; place-content: center; min-width: 30px; padding: 0 4px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.72rem; color: var(--paper-light);
+}
+
+/* Empty rail / held-rod placement. */
+.empty-rail { display: grid; gap: 0.5rem; justify-items: center; padding: 1.6rem 1rem; }
+.empty-rail__slots { display: flex; gap: 12px; }
+.empty-rail__slots i {
+  display: block; width: 46px; height: 58px; border-radius: 2px;
+  border: 1px dashed rgba(184, 151, 78, 0.3);
+  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.32) 0 5px, transparent 5px 10px);
+}
+.empty-rail p { margin: 0; font-size: 0.84rem; color: #a98a5e; font-style: italic; text-align: center; }
+
+.placement-field {
+  display: grid; gap: 0.5rem; justify-items: center; width: 100%;
+  padding: 1.4rem 1rem; cursor: pointer;
+  border: 1px dashed rgba(236, 208, 138, 0.5); border-radius: 3px;
+  background: rgba(120, 84, 40, 0.16); color: var(--paper-light); font-size: 0.88rem;
+}
+.placement-field__rod {
+  width: 26px; height: 54px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--brass-bright) 0 18%, var(--paper) 18% 100%);
+}
+
+/* Read lever. */
+.carriage__apron { display: flex; justify-content: stretch; padding-top: 0.55rem; }
 .read-lever {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 3rem;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid #3d2d1d;
-  color: #f0deba;
-  background: linear-gradient(#6f5b36, #3b2e1d);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08), 0 3px 0 #24170e;
-  white-space: nowrap;
-  cursor: pointer;
+  flex: 1; min-height: 50px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  padding: 0.6rem 1rem; border-radius: 3px; cursor: pointer;
+  border: 1px solid #57431a;
+  background: linear-gradient(180deg, #d3b370, #9b7c3b 55%, #6d5325);
+  color: #2b1d08; font-size: 0.96rem; font-weight: 700; letter-spacing: 0.05em;
+  box-shadow: inset 0 1px 0 rgba(255, 243, 210, 0.62), 0 4px 10px rgba(0,0,0,0.42);
+  transition: filter 180ms var(--ease-mech), transform 140ms var(--ease-mech);
 }
-.read-lever:disabled { opacity: 0.38; }
-.read-lever span { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 1px solid #c4a66c; }
+.read-lever__pull {
+  width: 10px; height: 24px; border-radius: 5px; flex: none;
+  background: linear-gradient(180deg, #f3e0b0, #8a6c31); border: 1px solid #4b3a16;
+}
+.read-lever:disabled {
+  background: linear-gradient(180deg, #8e857a, #6d655b);
+  border-color: #56504a; color: #3b352d; opacity: 0.6; box-shadow: none;
+}
+.read-lever:not(:disabled):hover { filter: brightness(1.08); }
+.read-lever:not(:disabled):active { transform: translateY(2px); }
+
+/* ============================================================== REVELATION */
+/* The result is inscribed onto the same carriage, as four ruled lanes.       */
 
 .voice-manifestation {
-  width: min(100%, 980px);
-  margin: 2rem auto 0;
-  border: 1px solid #8c7754;
-  color: var(--ink);
-  background: var(--paper);
-  box-shadow: 0 20px 30px rgba(0,0,0,0.45), inset 0 0 34px rgba(81,52,25,0.17);
+  margin: 0 clamp(-7px, -2vw, -12px) 0;
+  padding: clamp(0.6rem, 2.4vw, 1rem) clamp(7px, 2vw, 12px) clamp(0.7rem, 2.4vw, 1rem);
+  background:
+    linear-gradient(178deg, var(--paper-bright), var(--paper) 72%, var(--paper-shadow)),
+    repeating-linear-gradient(0deg, rgba(120, 90, 50, 0.05) 0 2px, transparent 2px 5px);
+  border-top: 2px solid var(--brass-dark);
+  border-radius: 0 0 5px 5px;
+  box-shadow: inset 0 8px 18px rgba(120, 86, 48, 0.26);
+  animation: inscribe 520ms var(--ease-mech) both;
 }
-.voice-manifestation > header { border-bottom: 3px double rgba(41,26,16,0.48); }
-.voice-manifestation > header > p { margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; }
-.voice-score { padding: 1rem; overflow-x: auto; }
+@keyframes inscribe { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+.voice-manifestation__plate {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 0.25rem 0.6rem; border-bottom: 1.5px solid rgba(60, 40, 22, 0.45);
+  padding-bottom: 0.4rem; margin-bottom: 0.55rem;
+}
+.voice-manifestation__plate h2 {
+  margin: 0; font-size: clamp(1rem, 4.2vw, 1.3rem); font-weight: 700; color: var(--ink);
+}
+.eyebrow {
+  margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.52rem; letter-spacing: 0.13em; color: var(--muted-ink);
+}
+.voice-manifestation__tally {
+  margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.58rem; letter-spacing: 0.06em; color: var(--ink-soft);
+}
+
+/* Four lanes + a tempus lane. Six events always fit; nothing scrolls away. */
+.voice-score { display: grid; gap: 2px; }
 .voice-score__head,
 .voice-line,
-.rhythm-line { display: grid; grid-template-columns: minmax(5rem, 1.2fr) repeat(6, minmax(3rem, 1fr)); min-width: 440px; }
-.voice-score__head > span,
-.voice-line > span,
-.rhythm-line > span { display: grid; place-items: center; min-height: 3.25rem; border-right: 1px solid rgba(44,27,16,0.25); border-bottom: 1px solid rgba(44,27,16,0.25); }
-.voice-score__head > span { min-height: 1.8rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; }
-.voice-line > span:first-child,
-.rhythm-line > span:first-child { justify-items: start; padding-left: 0.5rem; text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.82rem; }
-.voice-line b { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; font-weight: 400; }
-.voice-line i { font-style: normal; font-size: 1.25rem; }
-.voice-line--cantus { border-left: 4px solid var(--voice-cantus); }
-.voice-line--altus { border-left: 4px solid var(--voice-altus); }
-.voice-line--tenor { border-left: 4px solid var(--voice-tenor); }
-.voice-line--bassus { border-left: 4px solid var(--voice-bassus); }
-.rhythm-line { border-left: 4px solid #725b3f; }
-.rhythm-line b { font-size: 1.25rem; }
-.rhythm-line i { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; font-style: normal; }
-.voice-nonclaim { margin: 0; padding: 0.75rem 1rem; border-top: 1px solid rgba(41,26,16,0.25); font-style: italic; color: var(--muted-ink); }
-
-.instrument-error { width: min(100%, 980px); margin: 1rem auto; padding: 0.8rem 1rem; color: #f4d2b9; border: 1px solid #8f4b32; background: rgba(81,28,17,0.82); }
-
-.provenance-leaf {
-  width: min(100%, 760px);
-  margin: 1.5rem auto 0;
-  color: #d8c29b;
-}
-.provenance-tab { min-height: 2.8rem; padding: 0.45rem 0.8rem; border: 1px solid #7f6944; color: #d8c49d; background: #30251a; cursor: pointer; }
-.provenance-tab span { display: inline-grid; place-items: center; width: 1.65rem; height: 1.65rem; margin-right: 0.4rem; border: 1px solid currentColor; border-radius: 50%; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; }
-.provenance-copy { padding: 1rem; border: 1px solid #6b573d; color: var(--ink); background: #cfbd99; box-shadow: inset 0 0 24px rgba(64,40,20,0.2); }
-.provenance-copy header { display: flex; justify-content: space-between; gap: 0.5rem; border-bottom: 1px solid rgba(36,23,15,0.42); }
-.provenance-copy header p { margin: 0; letter-spacing: 0.08em; font-weight: 700; }
-.provenance-copy header span { font-size: 0.8rem; }
-.provenance-copy dl { margin: 0.8rem 0; }
-.provenance-copy dl div { display: grid; grid-template-columns: 8rem 1fr; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px dotted rgba(36,23,15,0.3); }
-.provenance-copy dt { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
-.provenance-copy dd { margin: 0; overflow-wrap: anywhere; }
-.provenance-copy ul { margin: 0; padding-left: 1.2rem; }
-.provenance-copy li { margin-bottom: 0.45rem; }
-.provenance-copy li span { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; }
-
-.instrument-footer {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.7rem 1.5rem;
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(198,172,127,0.2);
-  color: #8f7959;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-}
-.instrument-footer p { margin: 0; }
-
-.loading-folio {
-  min-height: 100vh;
+.rhythm-line {
   display: grid;
-  place-content: center;
-  padding: 2rem;
-  color: #d6bd91;
-  text-align: center;
-  font-size: 1.15rem;
+  grid-template-columns: 44px repeat(6, 1fr);
+  align-items: stretch; gap: 2px;
 }
-.loading-folio--error pre { white-space: pre-wrap; max-width: 52rem; color: #d69f82; font: 0.8rem/1.5 'IBM Plex Mono', monospace; }
+.voice-score__head span {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; letter-spacing: 0.08em; color: var(--muted-ink);
+  text-align: center; padding-bottom: 1px;
+}
+.voice-score__head span:first-child { text-align: left; }
 
-@media (max-width: 720px) {
-  .instrument-masthead { align-items: center; }
-  .authority-mark p { display: none; }
-  .arca-stage { padding-top: 1rem; }
-  .arca-lid { width: 98%; padding: 0.45rem; border-width: 7px; }
-  .lid-frame { padding: 0.55rem; }
-  .mensa-heading small { display: none; }
-  .tone-rule { overflow-x: auto; }
-  .tone-rule__head, .tone-rule__row, .tone-rule__ghost { min-width: 530px; }
-  .arca-body { min-height: 390px; padding: 0.6rem; border-width: 8px; }
-  .bank-labels { grid-template-columns: 1.55fr 0.8fr 0.8fr; }
-  .bank-tab { min-height: 3.8rem; padding: 0.35rem; font-size: 0.75rem; }
-  .bank-tab > span { display: block; border: 0; width: auto; height: auto; }
-  .bank-tab small { margin: 0.22rem 0 0; font-size: 0.64rem; }
-  .bank-bed { min-height: 260px; padding: 0.5rem; }
-  .dodecamorium, .dodecamorium.is-focused { width: 68%; gap: 0.3rem; grid-template-columns: repeat(3, 1fr); }
-  .receptacle { min-height: 3rem; padding: 0.2rem; }
-  .receptacle__status { font-size: 0.6rem; }
-  .secondary-banks { width: 27%; right: 0.5rem; top: 0.5rem; }
-  .sealed-bank { grid-template-columns: auto 1fr; min-height: 4rem; }
-  .sealed-bank i:nth-of-type(n+2) { display: none; }
-  .cell-drawer { right: 0.5rem; bottom: 0.5rem; width: 30%; padding: 0.45rem; }
-  .cell-drawer header span, .cell-drawer > p { display: none; }
-  .stored-rods { gap: 0.2rem; }
-  .stored-rod { min-width: 0; padding: 0.15rem; }
-  .stored-rod small { font-size: 0.55rem; }
-  .front-staff { grid-template-columns: 3rem repeat(4, 1fr); gap: 0.12rem 0.22rem; font-size: 0.58rem; }
-  .working-rule { margin-top: 2rem; border-width: 6px; }
-  .working-rule__heading, .working-rule__footer, .voice-manifestation > header { align-items: flex-start; padding: 0.65rem; }
-  .rule-status { max-width: 12rem; text-align: right; font-size: 0.65rem; }
-  .working-rule__footer { flex-direction: column; align-items: stretch; }
-  .read-lever { justify-content: center; width: 100%; }
-  .column-rod { width: clamp(82px, 27vw, 126px); }
-  .rod-array { gap: 0.4rem; padding-inline: 0.35rem; }
-  .rod-pitch-grid span { font-size: 0.61rem; letter-spacing: -0.02em; }
-  .voice-manifestation > header { flex-direction: column; }
+.voice-line, .rhythm-line {
+  border-left: 3px solid var(--lane-colour, var(--brass-dark));
+  background: linear-gradient(180deg, rgba(255,252,242,0.5), rgba(214, 196, 158, 0.34));
+  animation: lane-ink 340ms var(--ease-mech) both;
+  animation-delay: calc(var(--lane, 0) * 70ms);
+}
+@keyframes lane-ink { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+.voice-line--cantus { --lane-colour: var(--voice-cantus); }
+.voice-line--altus  { --lane-colour: var(--voice-altus); }
+.voice-line--tenor  { --lane-colour: var(--voice-tenor); }
+.voice-line--bassus { --lane-colour: var(--voice-bassus); }
+.rhythm-line { --lane-colour: #5a4526; background: rgba(180, 160, 122, 0.3); }
+
+.voice-line [role='rowheader'],
+.rhythm-line [role='rowheader'] {
+  display: grid; align-content: center; padding-left: 5px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; letter-spacing: 0.06em; color: var(--ink-soft);
+}
+.voice-line [role='cell'],
+.rhythm-line [role='cell'] {
+  display: grid; justify-items: center; align-content: center; gap: 0;
+  padding: 0.3rem 0.1rem;
+  border-left: 1px solid rgba(90, 66, 38, 0.22);
+}
+/* Relative duration is shown as weight, and always also as an explicit count. */
+.voice-line [role='cell'][data-units='2'],
+.rhythm-line [role='cell'][data-units='2'] { background: rgba(120, 92, 52, 0.16); }
+.voice-line [role='cell'] b {
+  font-size: clamp(0.9rem, 3.9vw, 1.12rem); font-weight: 700; color: var(--ink); line-height: 1.05;
+}
+.voice-line [role='cell'] i {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; font-style: normal; color: var(--muted-ink);
+}
+.rhythm-line [role='cell'] b { font-size: 0.9rem; color: var(--ink); }
+.rhythm-line [role='cell'] i {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.5rem; font-style: normal; color: var(--muted-ink);
 }
 
-@media (max-width: 420px) {
-  .instrument-shell { padding-inline: 0.45rem; }
-  .instrument-masthead { padding-inline: 0.25rem; }
-  .instrument-masthead h1 { font-size: 1.42rem; }
-  .instrument-masthead p { font-size: 0.66rem; }
-  .authority-mark > span { width: 2rem; height: 2rem; }
-  .arca-lid { width: 100%; }
-  .arca-body { border-width: 6px; padding: 0.42rem; min-height: 370px; }
-  .bank-labels { gap: 0.25rem; }
-  .bank-tab { font-size: 0.66rem; }
-  .bank-tab small { display: none; }
-  .bank-bed { margin-top: 0.45rem; }
-  .dodecamorium, .dodecamorium.is-focused { width: 70%; gap: 0.22rem; }
-  .receptacle__number { font-size: 0.8rem; }
-  .cell-drawer { width: 29%; }
-  .cell-drawer header p { font-size: 0.65rem; }
-  .stored-rods { flex-direction: column; }
-  .stored-rod { min-height: 2.25rem; }
-  .arca-front { grid-template-columns: 1fr; }
-  .close-clasp { justify-self: end; min-height: 2.1rem; }
-  .rule-bed { min-height: 405px; }
-  .rod-array { gap: 0.25rem; }
-  .column-rod { width: calc((100vw - 3.2rem) / 3); }
-  .rod-cap { padding: 0.22rem; }
-  .rod-cap span { font-size: 0.59rem; }
-  .rod-pitch-grid span { font-size: 0.55rem; }
-  .rod-rhythm-grid > span { font-size: 0.74rem; }
-  .working-rule__heading { flex-direction: column; }
-  .rule-status { text-align: left; }
-  .provenance-copy dl div { grid-template-columns: 1fr; gap: 0.1rem; }
+.voice-revelation__footer { display: grid; gap: 0.55rem; margin-top: 0.6rem; }
+.voice-nonclaim {
+  margin: 0; font-size: 0.68rem; line-height: 1.35; color: var(--ink-soft); font-style: italic;
+}
+.return-to-rule {
+  min-height: 46px; padding: 0.5rem 1rem; border-radius: 3px; cursor: pointer;
+  border: 1px solid #57431a; background: linear-gradient(180deg, #4a3720, #2c1e10);
+  color: var(--paper-light); font-size: 0.9rem; letter-spacing: 0.04em;
+}
+.return-to-rule:hover { filter: brightness(1.15); }
+
+.instrument-error {
+  margin: 0.5rem clamp(7px, 2vw, 12px); padding: 0.6rem 0.8rem; border-radius: 3px;
+  background: rgba(125, 47, 29, 0.24); border: 1px solid rgba(214, 122, 92, 0.5);
+  color: #f0bfae; font-size: 0.84rem;
+}
+
+/* ============================================================== PROVENANCE */
+/* A wax seal set into the machine frame; the folio opens over the instrument. */
+
+.provenance-leaf { position: relative; }
+.provenance-seal {
+  position: absolute; right: 0; bottom: 0; transform: translateY(120%);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  min-height: 40px; padding: 0.28rem 0.7rem 0.28rem 0.3rem;
+  border-radius: 20px; cursor: pointer; z-index: 12;
+  border: 1px solid #3d2c14; background: linear-gradient(180deg, #3b2a17, #22150c);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.55);
+}
+.provenance-seal__wax {
+  display: grid; place-content: center; width: 26px; height: 26px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #a94b31, var(--seal-red) 70%);
+  color: #f3ddd2; font-size: 0.6rem; font-weight: 700;
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.4);
+}
+.provenance-seal__label {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.58rem; letter-spacing: 0.08em; color: #b99a68;
+}
+.provenance-scrim { position: fixed; inset: 0; z-index: 60; background: rgba(8, 5, 3, 0.72); }
+.provenance-copy {
+  position: fixed; z-index: 61; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 2rem)); max-height: min(78vh, 620px); overflow: auto;
+  padding: 1rem; border-radius: 3px;
+  background: linear-gradient(178deg, var(--paper-bright), var(--paper) 80%);
+  border: 1px solid #8a6f48;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+}
+.provenance-copy header { border-bottom: 1.5px solid rgba(60,40,22,0.4); padding-bottom: 0.4rem; margin-bottom: 0.6rem; }
+.provenance-copy header p { margin: 0; font-size: 0.94rem; font-weight: 700; letter-spacing: 0.1em; color: var(--ink); }
+.provenance-copy header span { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.58rem; color: var(--muted-ink); }
+.provenance-copy dl { margin: 0 0 0.7rem; display: grid; gap: 0.35rem; }
+.provenance-copy dl > div { display: grid; grid-template-columns: 104px 1fr; gap: 0.5rem; align-items: baseline; }
+.provenance-copy dt { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.55rem; letter-spacing: 0.07em; color: var(--muted-ink); }
+.provenance-copy dd { margin: 0; font-size: 0.78rem; color: var(--ink); word-break: break-word; }
+.provenance-copy ul { list-style: none; margin: 0 0 0.7rem; padding: 0; display: grid; gap: 0.35rem; }
+.provenance-copy ul li {
+  display: grid; gap: 1px; padding: 0.35rem 0.5rem; border-left: 3px solid var(--brass-dark);
+  background: rgba(160, 130, 88, 0.18);
+}
+.provenance-copy ul li b { font-size: 0.78rem; color: var(--ink); }
+.provenance-copy ul li span { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.55rem; color: var(--muted-ink); }
+.provenance-copy__note { margin: 0 0 0.7rem; font-size: 0.78rem; font-style: italic; color: var(--ink-soft); }
+.provenance-close {
+  width: 100%; min-height: 44px; border-radius: 3px; cursor: pointer;
+  border: 1px solid #7a6238; background: rgba(60, 42, 22, 0.14); color: var(--ink);
+  font-size: 0.86rem;
+}
+
+/* ========================================================== TRANSFER GHOST */
+/* The rod in flight from Cell IV to the rule. Purely presentational.         */
+
+.transfer-ghost {
+  position: fixed; z-index: 80; pointer-events: none;
+  display: grid; grid-template-rows: 20px 1fr;
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,0.7));
+}
+.transfer-ghost__head {
+  border-radius: 3px 3px 0 0; border: 1px solid #4b3a16;
+  background: linear-gradient(180deg, var(--brass-bright), var(--brass) 55%, var(--brass-dark));
+}
+.transfer-ghost__shaft {
+  border: 1px solid #6f5836; border-top: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(60,40,22,0.32) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, var(--paper-light), var(--paper-shadow));
+}
+
+/* ===================================================== affordance emphasis */
+/* One restrained brass breath on the single next physical opportunity.      */
+
+.is-cued:not(:disabled) { position: relative; }
+.is-cued:not(:disabled)::before {
+  content: ''; position: absolute; inset: -3px; border-radius: inherit;
+  border: 1px solid rgba(236, 208, 138, 0.75);
+  animation: cue-breathe 2.4s ease-in-out infinite; pointer-events: none;
+}
+@keyframes cue-breathe {
+  0%, 100% { opacity: 0.3; box-shadow: 0 0 0 rgba(236, 208, 138, 0); }
+  50% { opacity: 0.9; box-shadow: 0 0 12px rgba(236, 208, 138, 0.35); }
+}
+.is-cued-surface { filter: brightness(1.05); }
+
+/* ================================================================ VIEWPORTS */
+
+@media (min-width: 560px) {
+  .mensa-degrees { grid-template-columns: repeat(8, 1fr); }
+  .bank-spine { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bank-division { grid-template-columns: 24px minmax(0, 1fr); padding-right: 0.45rem; }
+  .bank-division__name { font-size: 0.78rem; letter-spacing: 0.05em; overflow-wrap: anywhere; }
+  .bank-division small { font-size: 0.48rem; overflow-wrap: anywhere; }
+  .voice-score__head, .voice-line, .rhythm-line { grid-template-columns: 62px repeat(6, 1fr); }
+  .voice-line [role='rowheader'], .rhythm-line [role='rowheader'] { font-size: 0.58rem; }
+  .carrier-slots { gap: 0.7rem; }
+}
+
+@media (min-width: 860px) {
+  :root {
+    --rod-band-h: 52px;
+    --rod-window-h: 312px;
+    --rod-read-y: 130px;
+  }
+  .instrument-shell { gap: 0.9rem; }
+  .arca-machine { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 10px; align-items: start; }
+  .machine-lid { grid-column: 1; grid-row: 1; }
+  .machine-interior { grid-column: 1; grid-row: 2; margin-top: 0; }
+  .machine-carriage {
+    grid-column: 2; grid-row: 1 / span 2; margin: 0; border-radius: 3px;
+    border: 1px solid rgba(184, 151, 78, 0.16); border-top-color: rgba(184, 151, 78, 0.24);
+    padding: 0 0.7rem 0.7rem;
+  }
+  .voice-manifestation { grid-column: 2; grid-row: 1 / span 2; margin: 0; border-radius: 3px; }
+  .provenance-leaf { grid-column: 1 / -1; grid-row: 3; }
+  .provenance-seal { position: static; transform: none; justify-self: end; }
+  .rod-face__row b { font-size: 0.48rem; }
+  .rod-face__row i { font-size: 0.62rem; }
+  .seal-mark { font-size: 0.46rem; }
+}
+
+/* ========================================================== REDUCED MOTION */
+/* Every state remains reachable and distinguishable with no movement at all. */
+
+.instrument-shell[data-reduced-motion='true'] *,
+.instrument-shell[data-reduced-motion='true'] *::before,
+.instrument-shell[data-reduced-motion='true'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+.instrument-shell[data-reduced-motion='true'] .is-cued:not(:disabled)::before {
+  opacity: 0.95; box-shadow: 0 0 10px rgba(236, 208, 138, 0.3);
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
+  .is-cued:not(:disabled)::before { opacity: 0.95; box-shadow: 0 0 10px rgba(236, 208, 138, 0.3); }
 }
-
-[data-reduced-motion='true'] .rod-strip,
-[data-reduced-motion='true'] .dodecamorium { transition: none; }

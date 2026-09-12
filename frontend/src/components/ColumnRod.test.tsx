@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { manifestFixture } from '../test/fixtures'
+import { BAND_DRAG_PIXELS } from './ColumnRod'
 import type { ColumnRodInstance } from '../instrument/types'
 import { ColumnRod } from './ColumnRod'
 
@@ -21,7 +22,7 @@ describe('ColumnRod physical input', () => {
     const slider = screen.getByRole('slider')
     Object.defineProperty(slider, 'setPointerCapture', { value: vi.fn() })
     fireEvent(slider, new MouseEvent('pointerdown', { bubbles: true, clientY: 100 }))
-    fireEvent(slider, new MouseEvent('pointermove', { bubbles: true, clientY: 168 }))
+    fireEvent(slider, new MouseEvent('pointermove', { bubbles: true, clientY: 100 + BAND_DRAG_PIXELS * 2 }))
 
     expect(onMove).toHaveBeenLastCalledWith(2)
   })
