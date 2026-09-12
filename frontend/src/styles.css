@@ -273,6 +273,7 @@ button:focus-visible,
   border-left: 2px solid rgba(178, 146, 76, 0.62);
   background: linear-gradient(90deg, rgba(255, 210, 150, 0.07), transparent 70%);
 }
+/* Only ever used where the note lies on vellum. Notes on wood use `bed`. */
 .scholium[data-place='margin'] {
   margin-top: 0.55rem;
   color: var(--ink-soft);
@@ -667,7 +668,8 @@ button:focus-visible,
 /* A brass selector latch on the lid, not a web CTA. */
 .mensa-engage {
   display: inline-flex; align-items: center; gap: 0.6rem;
-  align-self: start;
+  align-self: start; justify-self: start;
+  min-width: min(100%, 15rem); max-width: 100%;
   min-height: 48px;
   padding: 0.4rem 1rem 0.4rem 0.42rem;
   border: 1px solid #241a06; border-radius: 3px;
@@ -725,9 +727,11 @@ button:focus-visible,
   margin: 0;
   font-family: var(--face-text);
   font-size: clamp(0.84rem, 3.2vw, 0.95rem); font-style: italic; line-height: 1.42;
-  color: var(--ink-soft);
+  color: #c9ad7e;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
   text-wrap: pretty;
 }
+.machine-lid[data-engaged='true'] .mensa-status { color: #e8cf9f; }
 
 .machine-lid.is-cued-surface .mensa-mount {
   box-shadow:
@@ -900,10 +904,10 @@ button.bank-division[aria-pressed='true'] {
   font-size: 0.86rem; letter-spacing: 0.06em; color: var(--brass-pale);
   width: 2.1rem;
 }
-.bank-division__plate { padding-left: 2.3rem; }
+.bank-division__plate { padding-left: 2.3rem; padding-right: 2.5rem; }
 .bank-division__name {
   font-family: var(--face-display);
-  font-size: clamp(0.98rem, 3.9vw, 1.18rem); font-weight: 700; letter-spacing: 0.1em;
+  font-size: clamp(0.92rem, 3.7vw, 1.1rem); font-weight: 700; letter-spacing: 0.07em;
   color: #edd7ac; line-height: 1.1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-shadow: 0 1px 0 rgba(0,0,0,0.75);
@@ -947,7 +951,7 @@ button.bank-division[aria-pressed='true'] {
   border-radius: 2px;
   background: linear-gradient(180deg, #120a06, #1a0f09);
   box-shadow: inset 0 4px 11px rgba(0,0,0,0.85), inset 0 -1px 0 rgba(255, 206, 148, 0.1);
-  opacity: 0.42;
+  opacity: 0.55;
   transition: opacity 340ms var(--ease-mech);
 }
 .cell-bed.is-open { opacity: 1; }
@@ -1252,9 +1256,8 @@ button.bank-division[aria-pressed='true'] {
   box-shadow: inset 0 1px 0 rgba(255, 210, 152, 0.22), 0 2px 5px rgba(0,0,0,0.5);
 }
 .machine-apron__grain {
-  flex: 1; height: 5px;
-  background: repeating-linear-gradient(90deg, rgba(0,0,0,0.34) 0 1px, transparent 1px 6px);
-  opacity: 0.6;
+  flex: 1; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(178, 146, 76, 0.28), transparent);
 }
 .close-clasp {
   display: inline-flex; align-items: center; gap: 0.42rem;
@@ -2166,14 +2169,24 @@ button.bank-division[aria-pressed='true'] {
     --rod-read-y: 20px;
   }
   .rod-array { gap: 5px; }
-  .seal-mark__wax { display: none; }
-  .seal-mark em { letter-spacing: 0.07em; }
-  .rod-band { grid-template-columns: 11px 1fr; padding-right: 3px; }
+  /* The nameplate keeps its full inscription at Fold width. */
+  .instrument-masthead__sub { letter-spacing: 0.07em; font-size: 0.52rem; }
+  .authority-mark { padding-left: 0.22rem; }
+
+  .rod-band { grid-template-columns: 12px 1fr; padding: 2px 3px 2px 1px; }
+  .rod-band__index { font-size: 0.4rem; }
   .rod-face__row { grid-template-columns: 6px repeat(6, 1fr); }
   .carriage__runner--left { left: 9px; }
   .carriage__runner--right { right: 9px; }
   .closed-arca__strap--left { left: 9px; }
   .closed-arca__strap--right { right: 9px; }
+}
+
+/* --- Narrow rods: the sealed stamp drops its wax before it drops a letter. */
+@media (max-width: 559px) {
+  .seal-mark__wax { display: none; }
+  .seal-mark { gap: 0; }
+  .seal-mark em { letter-spacing: 0.06em; }
 }
 
 /* --- Mensa opens into one printed row once there is width for it. --------- */
@@ -2209,17 +2222,18 @@ button.bank-division[aria-pressed='true'] {
      cells fill the bed beside it — the cabinet's real internal division. */
   .interior__well {
     display: grid;
-    grid-template-columns: minmax(210px, 0.6fr) minmax(0, 1.5fr);
+    grid-template-columns: minmax(264px, 0.62fr) minmax(0, 1.5fr);
     grid-template-rows: auto 1fr;
     column-gap: clamp(10px, 1.6vw, 16px);
     align-items: start;
   }
   .bank-stack { grid-column: 1; grid-row: 1; align-content: start; }
-  .cell-bed { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  .cell-bed { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; align-self: stretch; }
   .interior__well > .scholium { grid-column: 1; grid-row: 2; align-self: start; }
 
   .dodecamorium { grid-template-columns: repeat(6, 1fr); }
   .socket { min-height: 52px; }
+  .bank-division__name { font-size: 0.96rem; letter-spacing: 0.05em; }
   .carrier-slots { gap: clamp(12px, 2vw, 20px); }
   .carrier-slot { min-height: 178px; }
 

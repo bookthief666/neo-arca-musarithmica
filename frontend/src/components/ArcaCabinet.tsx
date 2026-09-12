@@ -186,7 +186,7 @@ export function ArcaCabinet({
               </p>
             </div>
           </div>
-          <Scholium text={lidScholium} place="margin" />
+          <Scholium text={lidScholium} place="bed" />
         </div>
       </div>
 
