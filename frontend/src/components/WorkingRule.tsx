@@ -7,6 +7,7 @@ import type {
   InstrumentView,
 } from '../instrument/types'
 import { ColumnRod } from './ColumnRod'
+import { StarMedallion } from './Ornament'
 
 interface WorkingRuleProps {
   manifest: HistoricalManifest
@@ -90,6 +91,13 @@ export const WorkingRule = forwardRef<HTMLDivElement, WorkingRuleProps>(function
         </header>
 
         <div className="carriage__bed" ref={railRef}>
+          {/* The rails the carriage runs on, screwed down each side. */}
+          <span className="carriage__siderail carriage__siderail--left" aria-hidden="true">
+            <i /><i /><i />
+          </span>
+          <span className="carriage__siderail carriage__siderail--right" aria-hidden="true">
+            <i /><i /><i />
+          </span>
           {/* The brass transverse rule. It is drawn ACROSS the whole bed at the
               reading height; each rod then either continues the channel through
               itself or interrupts it. Continuity is geometry, not colour. */}
@@ -100,8 +108,18 @@ export const WorkingRule = forwardRef<HTMLDivElement, WorkingRuleProps>(function
             <span className="transverse-rule__cap transverse-rule__cap--left" />
             <span className="transverse-rule__channel" />
             <span className="transverse-rule__cap transverse-rule__cap--right" />
-            <span className="transverse-rule__legend">LECTIO TRANSVERSA</span>
+
           </div>
+
+          {/* The reading medallion rides the rule and marks where it reads. It is
+              a sibling of the rod array, not a child of the rule, so it paints
+              in front of the carriers the rule passes behind. */}
+          <span
+            className={`reading-medallion ${alignmentReady ? 'is-continuous' : ''}`}
+            aria-hidden="true"
+          >
+            <StarMedallion className="reading-medallion__star" />
+          </span>
 
           {state.heldRodId ? (
             <button type="button" className="placement-field is-cued" onClick={onPlaceHeld}>
@@ -138,6 +156,10 @@ export const WorkingRule = forwardRef<HTMLDivElement, WorkingRuleProps>(function
         </div>
 
         <footer className="carriage__apron">
+          {/* The drawer front: an engraved brass plate and a turned knob pull,
+              which is what tells the eye this whole surface pulls out. */}
+          <span className="carriage__motto" aria-hidden="true">MOTVS GENERAT HARMONIAM</span>
+          <span className="carriage__knob" aria-hidden="true" />
           <Scholium text={carriageScholium} place="bed" />
           <button
             type="button"

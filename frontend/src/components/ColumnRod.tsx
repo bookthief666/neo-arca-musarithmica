@@ -73,12 +73,17 @@ export function ColumnRod({ rod, source, onMove }: ColumnRodProps) {
       data-band-status={activeBand.status}
       data-copy={rod.copy_index}
     >
-      {/* Brass head: the turned grip a hand actually takes hold of. */}
+      {/* The head a hand actually takes hold of: a turned brass ball on a
+          collar, above an engraved name plate. This is the part that has to
+          read as pinchable — it is the grip the reader will reach for in the
+          spatial version of the instrument. */}
       <div className="rod-head" aria-hidden="true">
-        <span className="rod-head__cap" />
-        <span className="rod-head__knurl" />
-        <span className="rod-head__mark">{source.kind === 'pitch' ? 'COLVMNA' : 'NOTÆ'}</span>
-        <span className="rod-head__copy">EX. {rod.copy_index}</span>
+        <span className="rod-head__finial" />
+        <span className="rod-head__collar" />
+        <span className="rod-head__plate">
+          <span className="rod-head__mark">{source.kind === 'pitch' ? 'COLVMNA' : 'NOTÆ'}</span>
+          <span className="rod-head__copy">EX. {rod.copy_index}</span>
+        </span>
       </div>
 
       <div className="rod-shaft">

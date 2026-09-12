@@ -1,4 +1,5 @@
 import { Scholium } from './Scholium'
+import { Laurel, Sprig } from './Ornament'
 import type {
   HistoricalManifest,
   InstrumentAffordance,
@@ -57,21 +58,42 @@ export function ArcaCabinet({
         <div className="closed-arca__stage">
           <span className="closed-arca__cast" aria-hidden="true" />
           <div className="closed-arca__body">
-            {/* The lid seen in perspective: the surface a hand would reach for. */}
+            {/* The lid seen in perspective: the surface a hand reaches for. */}
             <div className="closed-arca__top" aria-hidden="true">
               <span className="closed-arca__top-panel" />
               <span className="closed-arca__top-band" />
+              <i className="closed-arca__top-bracket closed-arca__top-bracket--l" />
+              <i className="closed-arca__top-bracket closed-arca__top-bracket--r" />
             </div>
             <span className="closed-arca__lip" aria-hidden="true" />
 
             <div className="closed-arca__face">
-              <span className="closed-arca__strap closed-arca__strap--left" aria-hidden="true" />
-              <span className="closed-arca__strap closed-arca__strap--right" aria-hidden="true" />
+              {/* Brass corner brackets, wrapped over the carcass edges. */}
+              <i className="closed-arca__bracket closed-arca__bracket--tl" aria-hidden="true" />
+              <i className="closed-arca__bracket closed-arca__bracket--tr" aria-hidden="true" />
+              <i className="closed-arca__bracket closed-arca__bracket--bl" aria-hidden="true" />
+              <i className="closed-arca__bracket closed-arca__bracket--br" aria-hidden="true" />
 
-              <div className="closed-arca__cartouche">
-                <p id="resting-title" className="engraved-title">ARCA<br />MVSARITHMICA</p>
+              {/* Cast ring handles on both ends, for lifting it off the desk. */}
+              <span className="closed-arca__handle closed-arca__handle--left" aria-hidden="true">
+                <i className="closed-arca__ring" />
+                <i className="closed-arca__rosette" />
+              </span>
+              <span className="closed-arca__handle closed-arca__handle--right" aria-hidden="true">
+                <i className="closed-arca__ring" />
+                <i className="closed-arca__rosette" />
+              </span>
+
+              {/* The engraved brass nameplate, laurel either side. */}
+              <div className="closed-arca__nameplate">
+                <Laurel className="closed-arca__laurel" />
+                <p id="resting-title" className="engraved-title">NEO-ARCA MVSARITHMICA</p>
                 <span className="closed-arca__rule" aria-hidden="true" />
                 <p className="closed-arca__folio">ATHANASII KIRCHERI · ROMÆ · MDCL</p>
+                <i className="closed-arca__nail closed-arca__nail--tl" aria-hidden="true" />
+                <i className="closed-arca__nail closed-arca__nail--tr" aria-hidden="true" />
+                <i className="closed-arca__nail closed-arca__nail--bl" aria-hidden="true" />
+                <i className="closed-arca__nail closed-arca__nail--br" aria-hidden="true" />
               </div>
 
               <button type="button" className="cabinet-clasp is-cued" onClick={onOpen}>
@@ -137,6 +159,8 @@ export function ArcaCabinet({
             <i className="mensa-mount__nail mensa-mount__nail--br" aria-hidden="true" />
 
             <div className="mensa-plate">
+              <Sprig className="mensa-plate__sprig mensa-plate__sprig--left" />
+              <Sprig className="mensa-plate__sprig mensa-plate__sprig--right" />
               <header className="mensa-heading">
                 <span className="mensa-heading__name">MENSA TONOGRAPHICA</span>
                 <span className="mensa-heading__folio">testis impressus · p. {manifest.cell.printed_page}</span>
@@ -200,37 +224,39 @@ export function ArcaCabinet({
         data-focus={interiorFocus}
       >
         <div className="interior__well">
-          <div className="bank-stack" role="group" aria-label="Three principal internal banks">
+          {/* The bank rail: engraved brass nameplates screwed to the cabinet
+              rail, exactly as the reference cabinet carries them. Only the
+              operative bank is polished; the others are tarnished and sealed. */}
+          <div className="bank-rail" role="group" aria-label="Three principal internal banks">
             <button
               type="button"
-              className={`bank-division bank-division--one ${bankCued ? 'is-cued' : ''}`}
+              className={`bank-plate bank-plate--one ${bankCued ? 'is-cued' : ''}`}
               aria-pressed={state.focusedBank === 1}
               onClick={() => onFocusBank(1)}
             >
-              <span className="bank-division__pull" aria-hidden="true" />
-              <span className="bank-division__plate">
-                <span className="bank-division__numeral">I</span>
-                <span className="bank-division__name">DODECAMORIVM</span>
-                <small>SYNTAGMA I · XII CELLS</small>
-              </span>
+              <i className="bank-plate__screw bank-plate__screw--l" aria-hidden="true" />
+              <i className="bank-plate__screw bank-plate__screw--r" aria-hidden="true" />
+              <span className="bank-plate__numeral">I</span>
+              <span className="bank-plate__name">DODECAMORIVM</span>
+              <small className="bank-plate__note">SYNTAGMA I · XII CELLVLÆ</small>
             </button>
 
-            <div className="bank-division bank-division--sealed" aria-label="Bank II Hexamorium, sealed in M1.0">
-              <span className="bank-division__wax" aria-hidden="true" />
-              <span className="bank-division__plate">
-                <span className="bank-division__numeral">II</span>
-                <span className="bank-division__name">HEXAMORIVM</span>
-                <small>OBSIGNATVM</small>
-              </span>
+            <div className="bank-plate bank-plate--sealed" aria-label="Bank II Hexamorium, sealed in M1.0">
+              <i className="bank-plate__screw bank-plate__screw--l" aria-hidden="true" />
+              <i className="bank-plate__screw bank-plate__screw--r" aria-hidden="true" />
+              <span className="bank-plate__numeral">II</span>
+              <span className="bank-plate__name">HEXAMORIVM</span>
+              <small className="bank-plate__note">OBSIGNATVM</small>
+              <span className="bank-plate__wax" aria-hidden="true" />
             </div>
 
-            <div className="bank-division bank-division--fragment" aria-label="Bank III Fragmenta, incomplete corpus">
-              <span className="bank-division__wax" aria-hidden="true" />
-              <span className="bank-division__plate">
-                <span className="bank-division__numeral">III</span>
-                <span className="bank-division__name">FRAGMENTA</span>
-                <small>NON INTEGRVM</small>
-              </span>
+            <div className="bank-plate bank-plate--fragment" aria-label="Bank III Fragmenta, incomplete corpus">
+              <i className="bank-plate__screw bank-plate__screw--l" aria-hidden="true" />
+              <i className="bank-plate__screw bank-plate__screw--r" aria-hidden="true" />
+              <span className="bank-plate__numeral">III</span>
+              <span className="bank-plate__name">FRAGMENTA</span>
+              <small className="bank-plate__note">NON INTEGRVM</small>
+              <span className="bank-plate__wax" aria-hidden="true" />
             </div>
           </div>
 
@@ -298,9 +324,8 @@ export function ArcaCabinet({
                               onClick={(event) => onDeployRod(template, event.currentTarget.getBoundingClientRect())}
                               aria-label={`Deploy ${template.label} to the transverse rule`}
                             >
-                              <span className="carrier__head" aria-hidden="true">
-                                <i className="carrier__knurl" />
-                              </span>
+                              <span className="carrier__finial" aria-hidden="true" />
+                              <span className="carrier__collar" aria-hidden="true" />
                               <span className="carrier__shaft" aria-hidden="true">
                                 <i /><i /><i /><i /><i /><i /><i /><i />
                               </span>

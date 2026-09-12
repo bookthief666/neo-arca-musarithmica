@@ -14,47 +14,59 @@
  *   LIGHT   activation and verified continuity
  */
 [data-realm='historica'] {
-  /* -- WOOD: quartered walnut, raked from upper left ------------------- */
-  --realm-wood-lit: #8a5733;
-  --realm-wood-warm: #70452a;
-  --realm-wood-mid: #53311d;
-  --realm-wood-deep: #351e11;
-  --realm-wood-shadow: #22120a;
-  --realm-wood-edge: #150b06;
-  --realm-wood-grain: rgba(0, 0, 0, 0.16);
-  --realm-wood-fleck: rgba(240, 196, 138, 0.05);
+  /* -- WOOD: figured walnut under a warm key light from the upper left.
+        Deliberately far lighter than a "dark UI" palette: in the reference the
+        cabinet is the BRIGHTEST large surface in a dark room, not a black
+        rectangle. Everything else is keyed off that. ------------------------ */
+  --realm-wood-spec: #a9764f;
+  --realm-wood-lit: #8a5c3d;
+  --realm-wood-warm: #6d462e;
+  --realm-wood-mid: #563522;
+  --realm-wood-deep: #3f2618;
+  --realm-wood-shadow: #26160e;
+  --realm-wood-edge: #150c06;
+  --realm-wood-grain: rgba(0, 0, 0, 0.13);
+  --realm-wood-fleck: rgba(255, 216, 162, 0.06);
 
   /* -- VOID: the inside of a receptacle, wool-felt lined ---------------- */
-  --realm-void: #0a0604;
-  --realm-void-felt: #17100c;
-  --realm-void-lip: rgba(255, 214, 154, 0.16);
+  --realm-void: #100a07;
+  --realm-void-felt: #1d1510;
+  --realm-void-lip: rgba(255, 214, 154, 0.2);
 
-  /* -- BRASS: cast, turned, and lightly tarnished ----------------------- */
-  --realm-brass: #b2924c;
-  --realm-brass-lit: #f0d795;
-  --realm-brass-pale: #d8bd7c;
-  --realm-brass-dark: #6a5223;
-  --realm-brass-deep: #3d2f13;
+  /* -- BRASS: cast, turned, polished on the wear faces ------------------ */
+  --realm-brass-spec: #fff6d8;
+  --realm-brass-lit: #f7e7b4;
+  --realm-brass-pale: #e0c684;
+  --realm-brass: #c3a25c;
+  --realm-brass-dark: #8a6f33;
+  --realm-brass-deep: #4f3f1b;
 
-  /* -- VELLUM: printed sheet, laid and toned ---------------------------- */
-  --realm-vellum: #d8c6a3;
-  --realm-vellum-light: #e8dabb;
-  --realm-vellum-bright: #f4ead1;
-  --realm-vellum-shadow: #a98d66;
-  --realm-vellum-rule: rgba(60, 42, 26, 0.26);
+  /* -- VELLUM: the printed sheet. Nearly white, and the brightest thing on
+        the instrument — historical data is what the machine is FOR. ------ */
+  --realm-vellum-bright: #fdf8ec;
+  --realm-vellum-light: #f5eedc;
+  --realm-vellum: #eadfc4;
+  --realm-vellum-shadow: #c4b08b;
+  --realm-vellum-rule: rgba(58, 40, 24, 0.3);
 
   /* -- INK -------------------------------------------------------------- */
-  --realm-ink: #211509;
-  --realm-ink-soft: #46341f;
-  --realm-ink-muted: #6f5b3f;
+  --realm-ink: #1f1408;
+  --realm-ink-soft: #43301c;
+  --realm-ink-muted: #6d5839;
   --realm-ink-red: #7d2f1d;
 
   /* -- LIGHT: activation, verified continuity --------------------------- */
-  --realm-authority-h0: #dfbc73;
-  --realm-lamp: rgba(255, 219, 153, 0.5);
-  --realm-lamp-soft: rgba(255, 214, 146, 0.2);
-  --realm-seal: #7d2f1d;
+  --realm-authority-h0: #e8c67d;
+  --realm-lamp: rgba(255, 223, 162, 0.55);
+  --realm-lamp-soft: rgba(255, 216, 150, 0.22);
+  --realm-seal: #8a3520;
   --realm-shadow: rgba(0, 0, 0, 0.66);
+
+  /* -- GOLD FILLET: the inlaid pinstripe that frames every panel of the
+        cabinet. It is the signature of the reference object and the cheapest
+        way to make a flat rectangle read as a finished piece of cabinetwork. */
+  --realm-fillet: rgba(214, 176, 104, 0.72);
+  --realm-fillet-soft: rgba(196, 158, 90, 0.42);
 
   /* -- TYPE: bundled-free stacks. No externally hosted font is fetched. -- */
   --realm-face-display: 'Iowan Old Style', 'Palatino Linotype', Palatino,
@@ -79,14 +91,23 @@
   --paper-light: var(--realm-vellum-light);
   --paper-bright: var(--realm-vellum-bright);
   --paper-shadow: var(--realm-vellum-shadow);
+  --wood-spec: var(--realm-wood-spec);
   --wood-lit: var(--realm-wood-lit);
-  --wood-dark: var(--realm-wood-deep);
-  --wood: var(--realm-wood-mid);
   --wood-warm: var(--realm-wood-warm);
+  --wood-mid: var(--realm-wood-mid);
+  --wood-deep: var(--realm-wood-deep);
+  --wood-shadow: var(--realm-wood-shadow);
   --wood-edge: var(--realm-wood-edge);
+  /* Names the earlier component CSS was written against. */
+  --wood: var(--realm-wood-mid);
+  --wood-dark: var(--realm-wood-deep);
   --void: var(--realm-void);
   --felt: var(--realm-void-felt);
   --brass: var(--realm-brass);
+  --brass-spec: var(--realm-brass-spec);
+  --brass-lit: var(--realm-brass-lit);
+  --fillet: var(--realm-fillet);
+  --fillet-soft: var(--realm-fillet-soft);
   --brass-bright: var(--realm-brass-lit);
   --brass-pale: var(--realm-brass-pale);
   --brass-dark: var(--realm-brass-dark);

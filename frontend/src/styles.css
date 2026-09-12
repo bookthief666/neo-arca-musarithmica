@@ -19,13 +19,13 @@
 :root {
   font-family: var(--face-text, Georgia, serif);
   color: #211509;
-  background: #140d09;
+  background: #503322;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
 
-  --voice-cantus: #9d402c;
-  --voice-altus: #8a6620;
+  --voice-cantus: #b3452d;
+  --voice-altus: #aa7c22;
   --voice-tenor: #3d5d55;
   --voice-bassus: #4a4062;
 
@@ -44,7 +44,7 @@
 
 * { box-sizing: border-box; }
 
-html { min-width: 320px; min-height: 100%; background: #140d09; }
+html { min-width: 320px; min-height: 100%; background: #503322; }
 
 body {
   margin: 0;
@@ -55,7 +55,7 @@ body {
   background:
     radial-gradient(100% 52% at 50% -4%, rgba(196, 140, 80, 0.15), transparent 62%),
     radial-gradient(120% 80% at 50% 46%, rgba(52, 29, 15, 0.5), transparent 72%),
-    linear-gradient(172deg, #140d09, #070503 56%, #0d0806);
+    linear-gradient(172deg, #503322, #0b0805 56%, #140c09);
 }
 
 button { font: inherit; color: inherit; }
@@ -131,15 +131,15 @@ button:focus-visible,
     linear-gradient(100deg, rgba(255, 216, 160, 0.1) 0%, transparent 34%),
     radial-gradient(140% 70% at 18% 12%, rgba(255, 206, 148, 0.07), transparent 58%),
     var(--grain-fine),
-    linear-gradient(178deg, #6b4026 0%, #4a2b19 10%, #351e11 48%, #2a1710 88%, #1f110a 100%);
-  border: 1px solid #130a05;
+    linear-gradient(178deg, #8e522e 0%, #794425 10%, #6d3b20 48%, #623422 88%, #5e321c 100%);
+  border: 1px solid #1d0f08;
   box-shadow:
     inset 0 1px 0 rgba(245, 199, 138, 0.34),
     inset 0 -3px 7px rgba(0, 0, 0, 0.62),
     inset 3px 0 8px rgba(0, 0, 0, 0.34),
     inset -3px 0 8px rgba(0, 0, 0, 0.34),
     0 26px 56px rgba(0, 0, 0, 0.66),
-    0 4px 0 #120904,
+    0 4px 0 #1c0e06,
     0 6px 2px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
@@ -157,7 +157,7 @@ button:focus-visible,
   background:
     linear-gradient(90deg, rgba(255, 214, 158, 0.26), rgba(0, 0, 0, 0.34) 42%, rgba(0, 0, 0, 0.5)),
     var(--grain-cross),
-    linear-gradient(178deg, #77482a, #46291a 46%, #2b1810);
+    linear-gradient(178deg, #965830, #754228 46%, #633522);
   box-shadow:
     inset 0 1px 0 rgba(255, 214, 158, 0.4),
     1px 0 4px rgba(0, 0, 0, 0.55);
@@ -168,7 +168,7 @@ button:focus-visible,
   background:
     linear-gradient(270deg, rgba(255, 214, 158, 0.14), rgba(0, 0, 0, 0.4) 46%, rgba(0, 0, 0, 0.56)),
     var(--grain-cross),
-    linear-gradient(178deg, #5d3722, #38200f 46%, #241409);
+    linear-gradient(178deg, #844c2c, #723f1b 46%, #663716);
   box-shadow:
     inset 0 1px 0 rgba(255, 214, 158, 0.24),
     -1px 0 4px rgba(0, 0, 0, 0.55);
@@ -195,7 +195,7 @@ button:focus-visible,
   border-radius: 3px;
   background:
     linear-gradient(180deg, rgba(255, 213, 155, 0.09), rgba(0, 0, 0, 0.26)),
-    linear-gradient(178deg, #4d2d1b, #2e1a10);
+    linear-gradient(178deg, #7b4527, #673821);
   box-shadow:
     inset 0 1px 0 rgba(255, 214, 158, 0.3),
     inset 0 -1px 0 rgba(0, 0, 0, 0.6),
@@ -348,7 +348,7 @@ button:focus-visible,
     /* light rakes across the horizontal surface, brightest at the far edge */
     linear-gradient(178deg, rgba(255, 236, 196, 0.5) 0%, rgba(255, 212, 156, 0.12) 26%, transparent 62%),
     repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0 2px, transparent 2px 13px),
-    linear-gradient(180deg, #90603a 0%, #77492c 34%, #58351f 70%, #3f2517 100%);
+    linear-gradient(180deg, #a46a3d 0%, #955933 34%, #824c2a 70%, #714026 100%);
   box-shadow: inset 0 2px 0 rgba(255, 240, 204, 0.5);
 }
 /* An inlaid brass band running across the lid, receding with the surface. */
@@ -371,8 +371,8 @@ button:focus-visible,
 .closed-arca__lip {
   position: relative; z-index: 4;
   display: block; height: 15px;
-  background: linear-gradient(180deg, #b67a48 0%, #8a5430 34%, #4e2d19 78%, #2a1710 100%);
-  border-left: 1px solid #130a05; border-right: 1px solid #130a05;
+  background: linear-gradient(180deg, #bb7c47 0%, #a36034 34%, #7d4624 78%, #623422 100%);
+  border-left: 1px solid #1d0f08; border-right: 1px solid #1d0f08;
   box-shadow:
     inset 0 2px 0 rgba(255, 234, 190, 0.66),
     inset 0 -1px 0 rgba(0,0,0,0.7),
@@ -389,8 +389,8 @@ button:focus-visible,
     linear-gradient(100deg, rgba(255, 214, 158, 0.11), transparent 38%),
     radial-gradient(120% 80% at 50% 0%, rgba(255, 198, 138, 0.12), transparent 58%),
     var(--grain-fine),
-    linear-gradient(178deg, #603a22 0%, #3a2114 38%, #1c0f08 78%, #120a05 100%);
-  border: 1px solid #130a05; border-top: 0;
+    linear-gradient(178deg, #874f2c 0%, #6f3d23 38%, #5e3118 78%, #1c1008 100%);
+  border: 1px solid #1d0f08; border-top: 0;
   border-radius: 0 0 3px 3px;
   box-shadow:
     inset 0 0 0 10px rgba(16, 9, 4, 0.4),
@@ -406,7 +406,7 @@ button:focus-visible,
   position: absolute; top: 0; bottom: 0; width: 15px;
   top: 11px; bottom: 11px;
   background: linear-gradient(90deg,
-    rgba(0,0,0,0.6) 0 1px, #33280f 1px 3px, #6a5626 38%, #4d3d17 66%, #2a2009 94%, rgba(0,0,0,0.6) 99%);
+    rgba(0,0,0,0.6) 0 1px, #6d541d 1px 3px, #8d712e 38%, #7e6322 66%, #6c5214 94%, rgba(0,0,0,0.6) 99%);
   opacity: 0.7;
   box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.16), 1px 0 4px rgba(0,0,0,0.7);
 }
@@ -416,7 +416,7 @@ button:focus-visible,
 .closed-arca__strap::after {
   content: ''; position: absolute; left: 50%; width: 5px; height: 5px;
   margin-left: -2.5px; border-radius: 50%;
-  background: radial-gradient(circle at 36% 30%, #e6cd92, #2e2409);
+  background: radial-gradient(circle at 36% 30%, #e6cd92, #705712);
   box-shadow: 0 1px 1px rgba(0,0,0,0.8);
 }
 .closed-arca__strap::before { top: 14px; }
@@ -464,7 +464,7 @@ button:focus-visible,
   display: inline-flex; align-items: center; gap: 0.55rem;
   padding: 0.34rem 0.95rem 0.34rem 0.34rem;
   min-height: 48px;
-  border: 1px solid #241a06;
+  border: 1px solid #6c4d0e;
   border-radius: 3px;
   cursor: pointer;
   font-family: var(--face-display);
@@ -475,19 +475,19 @@ button:focus-visible,
   box-shadow:
     inset 0 1px 0 rgba(255, 252, 232, 0.9),
     inset 0 -2px 3px rgba(0, 0, 0, 0.36),
-    0 3px 0 #43330f,
+    0 3px 0 #7c5d18,
     0 10px 20px rgba(0, 0, 0, 0.66);
   transition: transform 140ms var(--ease-mech), box-shadow 140ms var(--ease-mech);
 }
 .cabinet-clasp:active {
   transform: translateX(-50%) translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(255, 246, 214, 0.6), 0 1px 0 #43330f, 0 4px 10px rgba(0,0,0,0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 246, 214, 0.6), 0 1px 0 #7c5d18, 0 4px 10px rgba(0,0,0,0.6);
 }
 /* The staple plate the hasp drops onto, screwed to the body below the seam. */
 .cabinet-clasp__escutcheon {
   position: relative; width: 32px; height: 36px; flex: none;
   border-radius: 2px 2px 14px 14px;
-  background: linear-gradient(180deg, #6b5423 0%, #3a2c0d 62%, #221a06 100%);
+  background: linear-gradient(180deg, #906f2b 0%, #765917 62%, #6a500f 100%);
   box-shadow: inset 0 1px 0 rgba(255, 236, 186, 0.5), inset 0 -2px 4px rgba(0,0,0,0.72);
 }
 .cabinet-clasp__hasp {
@@ -503,8 +503,8 @@ button:focus-visible,
 }
 .cabinet-clasp.is-cued { animation: clasp-catch-light 3.4s ease-in-out infinite; }
 @keyframes clasp-catch-light {
-  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,252,232,0.9), inset 0 -2px 3px rgba(0,0,0,0.36), 0 3px 0 #43330f, 0 10px 20px rgba(0,0,0,0.66); }
-  50%      { box-shadow: inset 0 1px 0 rgba(255,254,244,1), inset 0 -2px 3px rgba(0,0,0,0.3), 0 3px 0 #43330f, 0 10px 24px rgba(0,0,0,0.7), 0 0 34px rgba(255, 214, 144, 0.6); }
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,252,232,0.9), inset 0 -2px 3px rgba(0,0,0,0.36), 0 3px 0 #7c5d18, 0 10px 20px rgba(0,0,0,0.66); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,254,244,1), inset 0 -2px 3px rgba(0,0,0,0.3), 0 3px 0 #7c5d18, 0 10px 24px rgba(0,0,0,0.7), 0 0 34px rgba(255, 214, 144, 0.6); }
 }
 
 .closed-arca__plinth {
@@ -512,8 +512,8 @@ button:focus-visible,
   display: flex; justify-content: space-between; align-items: flex-start;
   padding: 0 clamp(22px, 10vw, 54px);
   height: 14px;
-  background: linear-gradient(180deg, #66401f 0%, #3a2113 38%, #170d06 100%);
-  border: 1px solid #0d0603; border-top: 0;
+  background: linear-gradient(180deg, #8e5727 0%, #703d21 38%, #5d3315 100%);
+  border: 1px solid #140905; border-top: 0;
   border-radius: 0 0 3px 3px;
   box-shadow:
     inset 0 2px 0 rgba(255, 208, 152, 0.4),
@@ -524,7 +524,7 @@ button:focus-visible,
 .closed-arca__foot {
   width: clamp(34px, 11vw, 54px); height: 10px;
   margin-top: 13px;
-  background: linear-gradient(180deg, #3a2113 0%, #190e07 60%, #0a0503 100%);
+  background: linear-gradient(180deg, #703d21 0%, #5d3217 60%, #100805 100%);
   border-radius: 0 0 4px 4px;
   box-shadow: inset 0 1px 0 rgba(255, 196, 138, 0.18), 0 4px 8px rgba(0,0,0,0.85);
 }
@@ -546,8 +546,8 @@ button:focus-visible,
   background:
     linear-gradient(104deg, rgba(255, 220, 168, 0.13), transparent 40%),
     var(--grain-fine),
-    linear-gradient(178deg, #6f4327 0%, #4c2c1a 42%, #391f12 100%);
-  border: 1px solid #150b06; border-bottom: 0;
+    linear-gradient(178deg, #91552f 0%, #7b4526 42%, #703a20 100%);
+  border: 1px solid #211109; border-bottom: 0;
   box-shadow:
     inset 0 2px 0 rgba(255, 216, 160, 0.34),
     inset 0 -10px 22px rgba(0, 0, 0, 0.44),
@@ -568,7 +568,7 @@ button:focus-visible,
   position: relative;
   padding: clamp(9px, 2.2vw, 14px);
   border-radius: 3px;
-  background: linear-gradient(180deg, #1d1109, #2a180e);
+  background: linear-gradient(180deg, #5e351a, #65381f);
   box-shadow:
     inset 0 3px 8px rgba(0, 0, 0, 0.72),
     inset 0 -1px 0 rgba(255, 205, 146, 0.16),
@@ -672,7 +672,7 @@ button:focus-visible,
   min-width: min(100%, 15rem); max-width: 100%;
   min-height: 48px;
   padding: 0.4rem 1rem 0.4rem 0.42rem;
-  border: 1px solid #241a06; border-radius: 3px;
+  border: 1px solid #6c4d0e; border-radius: 3px;
   cursor: pointer;
   font-family: var(--face-display);
   font-size: clamp(0.95rem, 3.6vw, 1.08rem); font-weight: 700; letter-spacing: 0.04em;
@@ -681,28 +681,28 @@ button:focus-visible,
   box-shadow:
     inset 0 1px 0 rgba(255, 246, 214, 0.7),
     inset 0 -2px 3px rgba(0,0,0,0.32),
-    0 2px 0 #443314, 0 5px 10px rgba(0,0,0,0.45);
+    0 2px 0 #785920, 0 5px 10px rgba(0,0,0,0.45);
   transition: filter 180ms var(--ease-mech), transform 140ms var(--ease-mech);
 }
 .mensa-engage:disabled {
   color: #7d6a48;
-  background: linear-gradient(180deg, #6a5c3d, #4a3f28 58%, #2e2718);
+  background: linear-gradient(180deg, #827048, #6f5e39 58%, #5e4f2f);
   box-shadow:
     inset 0 1px 0 rgba(255, 236, 200, 0.16),
     inset 0 -2px 4px rgba(0,0,0,0.58),
-    0 2px 0 #241d10;
+    0 2px 0 #5b4826;
   filter: saturate(0.5) brightness(0.94);
 }
 .mensa-engage:disabled .mensa-engage__lever {
-  background: radial-gradient(circle at 36% 30%, #3d3620, #17140a);
+  background: radial-gradient(circle at 36% 30%, #675b34, #534822);
 }
 .mensa-engage:disabled .mensa-engage__pointer {
-  background: linear-gradient(180deg, #8d7c52, #3a3218);
+  background: linear-gradient(180deg, #998555, #6b5b29);
 }
 .mensa-engage:not(:disabled):active { transform: translateY(2px); }
 .mensa-engage__lever {
   position: relative; width: 34px; height: 34px; flex: none; border-radius: 50%;
-  background: radial-gradient(circle at 36% 30%, #58461d, #221a07);
+  background: radial-gradient(circle at 36% 30%, #836727, #684e12);
   box-shadow: inset 0 1px 0 rgba(255, 232, 178, 0.34), inset 0 -2px 4px rgba(0,0,0,0.6);
 }
 /* The pointer swings when the Tone is taken — a dial, physically moved. */
@@ -749,8 +749,8 @@ button:focus-visible,
   position: relative;
   height: 16px;
   display: flex; align-items: center; justify-content: space-evenly;
-  background: linear-gradient(180deg, #2a180e, #1b0f08 46%, #36200f);
-  border-left: 1px solid #150b06; border-right: 1px solid #150b06;
+  background: linear-gradient(180deg, #65381f, #5d3219 46%, #70401c);
+  border-left: 1px solid #211109; border-right: 1px solid #211109;
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), inset 0 -1px 0 rgba(255, 206, 148, 0.16);
   z-index: 4;
 }
@@ -761,13 +761,13 @@ button:focus-visible,
 .lid-hinges__knuckle {
   position: relative; width: 34px; height: 11px; border-radius: 6px;
   background:
-    linear-gradient(180deg, var(--brass-bright) 0%, var(--brass) 36%, var(--brass-dark) 78%, #241a07 100%);
+    linear-gradient(180deg, var(--brass-bright) 0%, var(--brass) 36%, var(--brass-dark) 78%, #6a4b11 100%);
   box-shadow: inset 0 1px 0 rgba(255, 248, 220, 0.7), 0 2px 4px rgba(0,0,0,0.6);
 }
 .lid-hinges__knuckle::after {
   content: ''; position: absolute; left: 50%; top: 50%;
   width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #fff0c8, #3d2f13);
+  background: radial-gradient(circle at 34% 30%, #fff0c8, #735720);
 }
 
 /* ============================================================== INTERIOR === */
@@ -779,8 +779,8 @@ button:focus-visible,
   padding: clamp(9px, 2vw, 15px);
   background:
     linear-gradient(180deg, rgba(0,0,0,0.62), rgba(0,0,0,0.22) 16%, rgba(0,0,0,0.42)),
-    linear-gradient(178deg, #2e1a10, #24140c 60%, #1c100a);
-  border: 1px solid #150b06; border-top: 0; border-bottom: 0;
+    linear-gradient(178deg, #673821, #61341d 60%, #5a321e);
+  border: 1px solid #211109; border-top: 0; border-bottom: 0;
   box-shadow:
     inset 0 10px 20px rgba(0, 0, 0, 0.68),
     inset 3px 0 10px rgba(0, 0, 0, 0.4),
@@ -793,15 +793,15 @@ button:focus-visible,
 .machine-interior[data-focus='receded'] .interior__well { padding-bottom: 0.2rem; }
 
 /* Bank II and III shut; Bank I stays as a slim open drawer front. */
-.machine-interior[data-focus='receded'] .bank-division--sealed,
-.machine-interior[data-focus='receded'] .bank-division--fragment { display: none; }
-.machine-interior[data-focus='receded'] .bank-division--one {
-  min-height: 34px; padding-top: 0.2rem; padding-bottom: 0.2rem;
+/* The sealed plates come off the rail; the operative one stays, slimmer. */
+.machine-interior[data-focus='receded'] .bank-rail { grid-template-columns: 1fr; padding: 5px 7px; }
+.machine-interior[data-focus='receded'] .bank-plate--sealed,
+.machine-interior[data-focus='receded'] .bank-plate--fragment { display: none; }
+.machine-interior[data-focus='receded'] .bank-plate {
+  min-height: 32px; padding: 0.2rem 0.5rem;
+  grid-auto-flow: column; gap: 0.5rem; align-items: center; justify-content: center;
 }
-.machine-interior[data-focus='receded'] .bank-division__plate small { display: none; }
-.machine-interior[data-focus='receded'] .bank-division__name { font-size: 0.78rem; letter-spacing: 0.06em; }
-.machine-interior[data-focus='receded'] .bank-division { padding-right: 0.7rem; }
-.machine-interior[data-focus='receded'] .bank-division__pull { display: none; }
+.machine-interior[data-focus='receded'] .bank-plate__note { display: none; }
 
 /* The twelve cells shut to a thin course of mortices: still plainly twelve
    compartments in a cabinet, no longer competing for the reader's attention. */
@@ -815,7 +815,7 @@ button:focus-visible,
 /* The well stays open and the empty mortices stay visible — just shallower. */
 .machine-interior[data-focus='receded'] .carrier-slot { min-height: 82px; }
 .machine-interior[data-focus='receded'] .carrier-slot__mortice {
-  background: linear-gradient(180deg, #0a0705 0%, #16100b 72%, #1d1510 100%);
+  background: linear-gradient(180deg, #0f0b08 0%, #4f3826 72%, #513a2b 100%);
   box-shadow:
     inset 0 4px 10px rgba(0,0,0,0.95),
     inset 0 -1px 0 rgba(255, 206, 148, 0.26),
@@ -833,113 +833,136 @@ button:focus-visible,
 
 .interior__well { position: relative; }
 
-/* ------------------------------------------------------- bank drawers ----- */
+/* -------------------------------------------------- the bank nameplates --- */
+/* Engraved brass plates screwed to the cabinet rail. Only the operative bank
+   is polished; the sealed ones are tarnished and struck with wax.            */
 
-.bank-stack {
-  display: grid; gap: 6px;
-  padding: 7px;
+.bank-rail {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(5px, 1.4vw, 10px);
+  padding: clamp(7px, 1.6vw, 11px) clamp(7px, 1.6vw, 12px);
   border-radius: 2px;
-  background: linear-gradient(180deg, var(--void), #140c07);
-  box-shadow: inset 0 3px 9px rgba(0,0,0,0.85), inset 0 -1px 0 rgba(255, 206, 148, 0.12);
-}
-
-/* Each bank is a drawer front: frame, recessed panel, brass label plate. */
-.bank-division {
-  position: relative;
-  display: flex; align-items: center; gap: 0.7rem;
-  width: 100%;
-  min-height: 50px;
-  padding: 0.42rem 0.7rem 0.42rem 0.55rem;
-  text-align: left;
-  border: 1px solid #150b06;
-  border-radius: 2px;
+  /* The rail itself is a strip of the cabinet's own wood, sunk slightly. */
   background:
-    linear-gradient(102deg, rgba(255, 216, 160, 0.1), transparent 40%),
+    linear-gradient(180deg, rgba(0,0,0,0.42), rgba(0,0,0,0.14) 40%, rgba(0,0,0,0.34)),
     var(--grain-fine),
-    linear-gradient(178deg, #5b3520, #3c2214 56%, #2b180e);
+    linear-gradient(178deg, var(--wood-warm), var(--wood-mid) 60%, var(--wood-deep));
   box-shadow:
-    inset 0 1px 0 rgba(255, 216, 160, 0.28),
-    inset 0 -2px 4px rgba(0,0,0,0.5),
-    0 2px 4px rgba(0,0,0,0.45);
-  color: var(--paper);
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    inset 0 -1px 0 rgba(255, 214, 158, 0.22),
+    0 1px 0 rgba(255, 206, 148, 0.12);
 }
 
-button.bank-division { cursor: pointer; transition: transform 180ms var(--ease-mech), filter 180ms var(--ease-mech); }
-button.bank-division:hover { filter: brightness(1.1); }
-button.bank-division[aria-pressed='true'] {
-  /* The drawer is pulled: it sits proud, catches the top light, and the
-     cabinet shadow falls behind it. */
-  transform: translateY(-1px);
+.bank-plate {
+  position: relative;
+  display: grid;
+  align-content: center; justify-items: center;
+  gap: 0.06rem;
+  min-height: 56px;
+  padding: 0.42rem 0.5rem 0.44rem;
+  border: 1px solid var(--brass-deep);
+  border-radius: 2px;
+  text-align: center;
+  /* Cast brass: bright along the top bevel, warm in the field. */
   background:
-    linear-gradient(102deg, rgba(255, 226, 172, 0.16), transparent 40%),
-    repeating-linear-gradient(90.5deg, rgba(0,0,0,0.13) 0 2px, rgba(255,212,156,0.05) 2px 5px),
-    linear-gradient(178deg, #7a4a2b, #52301c 56%, #3a2012);
+    linear-gradient(180deg,
+      var(--brass-spec) 0%, var(--brass-lit) 9%, var(--brass-pale) 34%,
+      var(--brass) 66%, var(--brass-dark) 94%, var(--brass-deep) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 232, 180, 0.45),
-    inset 0 -2px 4px rgba(0,0,0,0.44),
-    0 5px 10px rgba(0,0,0,0.55);
+    inset 0 1px 0 rgba(255, 252, 236, 0.9),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.62);
+  color: #2c1d06;
 }
+/* The bevelled field the inscription is cut into. */
+.bank-plate::after {
+  content: ''; position: absolute; inset: 3px;
+  border-radius: 1px;
+  border: 1px solid rgba(80, 62, 24, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 224, 0.44);
+  pointer-events: none;
+}
+.bank-plate__screw {
+  position: absolute; top: 50%; width: 6px; height: 6px;
+  margin-top: -3px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff3cd, var(--brass-dark) 62%, var(--brass-deep));
+  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5), 0 1px 1px rgba(0,0,0,0.5);
+  z-index: 2;
+}
+.bank-plate__screw::after {
+  content: ''; position: absolute; left: 1px; right: 1px; top: 50%; height: 1px;
+  margin-top: -0.5px; background: rgba(60, 44, 14, 0.7);
+}
+.bank-plate__screw--l { left: 5px; }
+.bank-plate__screw--r { right: 5px; }
 
-/* A turned brass drop-pull on the live drawer. */
-.bank-division__pull {
-  position: absolute; right: 12px; top: 50%;
-  width: 26px; height: 9px; margin-top: -4.5px;
-  border-radius: 5px;
-  background: linear-gradient(180deg, var(--brass-bright), var(--brass) 40%, var(--brass-dark));
-  box-shadow: inset 0 1px 0 rgba(255, 250, 224, 0.8), 0 2px 4px rgba(0,0,0,0.6);
-}
-.bank-division.is-cued .bank-division__pull { animation: brass-wake 2.6s ease-in-out infinite; }
-.bank-division.is-cued {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 224, 174, 0.44),
-    inset 0 -2px 4px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(255, 210, 144, 0.42),
-    0 0 20px rgba(255, 202, 132, 0.22);
-}
-
-.bank-division__plate { display: grid; gap: 0.06rem; min-width: 0; }
-.bank-division__numeral {
-  position: absolute; left: 0.62rem; top: 50%; transform: translateY(-50%);
+.bank-plate__numeral {
   font-family: var(--face-engraved);
-  font-size: 0.86rem; letter-spacing: 0.06em; color: var(--brass-pale);
-  width: 2.1rem;
+  font-size: 0.62rem; letter-spacing: 0.12em;
+  color: #4a3a12;
 }
-.bank-division__plate { padding-left: 2.3rem; padding-right: 2.5rem; }
-.bank-division__name {
+.bank-plate__name {
   font-family: var(--face-display);
-  font-size: clamp(0.92rem, 3.7vw, 1.1rem); font-weight: 700; letter-spacing: 0.07em;
-  color: #edd7ac; line-height: 1.1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.75);
+  font-size: clamp(0.62rem, 2.3vw, 0.82rem);
+  font-weight: 700; letter-spacing: 0.055em;
+  line-height: 1.1;
+  color: #241802;
+  /* Cut into the metal: dark stroke, light catch on the lower edge. */
+  text-shadow: 0 1px 0 rgba(255, 248, 214, 0.6);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.bank-division__plate small {
+.bank-plate__note {
   font-family: var(--face-engraved);
-  font-size: 0.54rem; letter-spacing: 0.12em; color: #a3825a;
+  font-size: 0.44rem; letter-spacing: 0.1em;
+  color: rgba(58, 44, 12, 0.72);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* Sealed and fragmentary banks: materially present, plainly unavailable. */
-.bank-division--sealed,
-.bank-division--fragment {
-  filter: saturate(0.5) brightness(0.66);
+button.bank-plate { cursor: pointer; transition: filter 180ms var(--ease-mech), transform 160ms var(--ease-mech); }
+button.bank-plate:hover { filter: brightness(1.07); }
+button.bank-plate:active { transform: translateY(1px); }
+button.bank-plate[aria-pressed='true'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 254, 244, 1),
+    inset 0 -2px 3px rgba(0,0,0,0.26),
+    0 0 0 1px rgba(255, 226, 160, 0.5),
+    0 3px 7px rgba(0,0,0,0.6),
+    0 0 20px rgba(255, 206, 132, 0.28);
 }
-.bank-division--sealed .bank-division__name,
-.bank-division--fragment .bank-division__name { color: #b7a184; }
-.bank-division--fragment {
-  /* Deferred, not sealed: the front is there but the panel is unfinished. */
+.bank-plate.is-cued { animation: brass-wake 2.6s ease-in-out infinite; }
+
+/* Sealed and fragmentary banks: the same casting, left to tarnish. */
+.bank-plate--sealed,
+.bank-plate--fragment {
   background:
-    repeating-linear-gradient(-45deg, rgba(0,0,0,0.3) 0 5px, transparent 5px 11px),
-    linear-gradient(178deg, #4a2b19, #30190f);
+    linear-gradient(180deg, #8d7c55 0%, #7a6a45 32%, #5c4f31 70%, #3b3220 100%);
+  border-color: #2b2414;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 198, 0.28), inset 0 -2px 3px rgba(0,0,0,0.4);
 }
-/* A wax seal pressed across the drawer's opening seam. */
-.bank-division__wax {
-  position: absolute; right: 13px; top: 50%;
-  width: 20px; height: 20px; margin-top: -10px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #a8442c, var(--seal-red) 55%, #4a180d);
-  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.6);
+.bank-plate--sealed .bank-plate__name,
+.bank-plate--fragment .bank-plate__name { color: #3b3119; text-shadow: 0 1px 0 rgba(255, 244, 200, 0.24); }
+.bank-plate--sealed .bank-plate__numeral,
+.bank-plate--fragment .bank-plate__numeral { color: #564a2a; }
+.bank-plate--sealed .bank-plate__note,
+.bank-plate--fragment .bank-plate__note { color: rgba(64, 54, 28, 0.75); }
+.bank-plate--fragment {
+  background:
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.16) 0 5px, transparent 5px 11px),
+    linear-gradient(180deg, #82725071 0%, #6c5d3d 34%, #3b3220 100%),
+    linear-gradient(180deg, #7a6a45, #3b3220);
 }
-.bank-division__wax::after {
+/* Wax struck across the plate's lower edge. */
+.bank-plate__wax {
+  position: absolute; left: 50%; bottom: -6px;
+  width: 19px; height: 19px; margin-left: -9.5px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #b34e30, var(--seal-red) 55%, #4a180d);
+  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.66);
+  z-index: 3;
+}
+.bank-plate__wax::after {
   content: ''; position: absolute; inset: 5px; border-radius: 50%;
-  border: 1px solid rgba(255, 190, 160, 0.26);
+  border: 1px solid rgba(255, 196, 166, 0.3);
 }
 
 /* ---------------------------------------------------------- cell bed ------ */
@@ -949,7 +972,7 @@ button.bank-division[aria-pressed='true'] {
   margin-top: 9px;
   padding: 9px 7px 7px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #120a06, #1a0f09);
+  background: linear-gradient(180deg, #1c1009, #5a321c);
   box-shadow: inset 0 4px 11px rgba(0,0,0,0.85), inset 0 -1px 0 rgba(255, 206, 148, 0.1);
   opacity: 0.55;
   transition: opacity 340ms var(--ease-mech);
@@ -973,7 +996,7 @@ button.bank-division[aria-pressed='true'] {
   padding: 0.3rem 0.18rem;
   border: 0;
   border-radius: 2px;
-  background: linear-gradient(180deg, #0b0705 0%, #150d08 62%, #1d120b 100%);
+  background: linear-gradient(180deg, #110b08 0%, #54331e 62%, #5a361f 100%);
   /* Bevel: light catches the TOP lip, shadow gathers at the bottom — the read
      of a hole, not a tile. */
   box-shadow:
@@ -993,7 +1016,7 @@ button.bank-division[aria-pressed='true'] {
 .socket--sealed {
   background:
     repeating-linear-gradient(-45deg, rgba(255, 214, 160, 0.035) 0 3px, transparent 3px 7px),
-    linear-gradient(180deg, #0b0705, #150d08);
+    linear-gradient(180deg, #110b08, #54331e);
   cursor: not-allowed;
 }
 
@@ -1001,7 +1024,7 @@ button.bank-division[aria-pressed='true'] {
 .socket--active {
   cursor: pointer;
   color: var(--brass-pale);
-  background: linear-gradient(180deg, #1b1109 0%, #281709 60%, #35200d 100%);
+  background: linear-gradient(180deg, #5b381c 0%, #6a3b14 60%, #724318 100%);
   box-shadow:
     inset 0 2px 4px rgba(0,0,0,0.85),
     inset 0 -1px 0 rgba(255, 216, 160, 0.3),
@@ -1026,7 +1049,7 @@ button.bank-division[aria-pressed='true'] {
   animation: brass-wake 2.6s ease-in-out infinite;
 }
 .socket--active.is-open {
-  background: linear-gradient(180deg, #060403, #0d0806);
+  background: linear-gradient(180deg, #090605, #140c09);
   box-shadow: inset 0 5px 12px rgba(0,0,0,0.95), 0 0 0 1px rgba(178, 146, 76, 0.5);
 }
 .socket--active.is-open { color: #8d7450; }
@@ -1058,7 +1081,7 @@ button.bank-division[aria-pressed='true'] {
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(0,0,0,0.7), transparent 60%),
     repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 4px),
-    linear-gradient(180deg, #0a0604 0%, #17100c 48%, #0e0907 100%);
+    linear-gradient(180deg, #100906 0%, #4f3627 48%, #160e0b 100%);
   box-shadow:
     inset 0 7px 16px rgba(0,0,0,0.95),
     inset 0 -2px 6px rgba(0,0,0,0.7),
@@ -1101,7 +1124,7 @@ button.bank-division[aria-pressed='true'] {
 .carrier-slot__mortice {
   position: absolute; inset: 0;
   border-radius: 2px;
-  background: linear-gradient(180deg, #060403 0%, #0d0907 70%, #120c08 100%);
+  background: linear-gradient(180deg, #090605 0%, #140e0b 70%, #1c130c 100%);
   box-shadow:
     inset 0 4px 9px rgba(0,0,0,0.95),
     inset 0 -1px 0 rgba(255, 206, 148, 0.16),
@@ -1115,7 +1138,7 @@ button.bank-division[aria-pressed='true'] {
   content: '';
   position: absolute; left: -1px; right: -1px; bottom: 31px; height: 11px;
   z-index: 3;
-  background: linear-gradient(180deg, #4b2b19 0%, #2c1810 46%, #150c07 100%);
+  background: linear-gradient(180deg, #7a4425 0%, #643522 46%, #21130b 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 210, 152, 0.34),
     inset 0 -1px 0 rgba(0,0,0,0.8),
@@ -1201,7 +1224,7 @@ button.bank-division[aria-pressed='true'] {
 }
 .carrier[data-kind='rhythm'] .carrier__shaft i:nth-child(2n) { background: transparent; }
 .carrier[data-kind='rhythm'] .carrier__head {
-  background: linear-gradient(180deg, #f6e5b6 0%, #d4b878 28%, #a98d47 62%, #5e4a1e 100%);
+  background: linear-gradient(180deg, #f6e5b6 0%, #d4b878 28%, #b39446 62%, #886a27 100%);
 }
 
 .carrier.is-cued .carrier__head { animation: brass-wake 2.4s ease-in-out infinite; }
@@ -1252,7 +1275,7 @@ button.bank-division[aria-pressed='true'] {
   margin: 9px -1px 0;
   padding: 0.22rem 0.5rem;
   border-radius: 0 0 2px 2px;
-  background: linear-gradient(178deg, #4a2b19, #2c1810);
+  background: linear-gradient(178deg, #794425, #643522);
   box-shadow: inset 0 1px 0 rgba(255, 210, 152, 0.22), 0 2px 5px rgba(0,0,0,0.5);
 }
 .machine-apron__grain {
@@ -1309,8 +1332,8 @@ button.bank-division[aria-pressed='true'] {
 .carriage__mouth {
   position: relative;
   height: 15px;
-  background: linear-gradient(180deg, #0a0604 0%, #150d08 62%, #38200f 100%);
-  border-left: 1px solid #150b06; border-right: 1px solid #150b06;
+  background: linear-gradient(180deg, #100906 0%, #54331e 62%, #723f1b 100%);
+  border-left: 1px solid #211109; border-right: 1px solid #211109;
   box-shadow: inset 0 5px 10px rgba(0,0,0,0.95);
 }
 .carriage__reveal {
@@ -1320,7 +1343,7 @@ button.bank-division[aria-pressed='true'] {
 /* Two runners disappearing back into the carcass. */
 .carriage__runner {
   position: absolute; top: 3px; bottom: 4px; width: 9px;
-  background: linear-gradient(180deg, var(--brass-dark), #241a07);
+  background: linear-gradient(180deg, var(--brass-dark), #6a4b11);
   box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.34);
 }
 .carriage__runner--left { left: 14px; }
@@ -1334,8 +1357,8 @@ button.bank-division[aria-pressed='true'] {
   background:
     linear-gradient(102deg, rgba(255, 216, 160, 0.09), transparent 40%),
     var(--grain-fine),
-    linear-gradient(178deg, #63391f 0%, #47291a 36%, #321c11 100%);
-  border: 1px solid #150b06; border-top: 0;
+    linear-gradient(178deg, #8b4e27 0%, #764228 36%, #6a3921 100%);
+  border: 1px solid #211109; border-top: 0;
   box-shadow:
     inset 0 1px 0 rgba(255, 216, 160, 0.3),
     inset 0 -3px 7px rgba(0,0,0,0.55),
@@ -1387,7 +1410,7 @@ button.bank-division[aria-pressed='true'] {
   background:
     radial-gradient(120% 70% at 50% -8%, rgba(0,0,0,0.62), transparent 58%),
     repeating-linear-gradient(45deg, rgba(255,255,255,0.011) 0 2px, transparent 2px 4px),
-    linear-gradient(180deg, #0a0604, #17100c 46%, #0d0907);
+    linear-gradient(180deg, #100906, #4f3627 46%, #140e0b);
   box-shadow:
     inset 0 6px 14px rgba(0,0,0,0.92),
     inset 0 -2px 6px rgba(0,0,0,0.7),
@@ -1492,7 +1515,7 @@ button.bank-division[aria-pressed='true'] {
 .rod-gap span {
   position: absolute; left: 12%; right: 12%; bottom: 8px; height: 12px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #060403, #12100c);
+  background: linear-gradient(180deg, #090605, #463d2d);
   box-shadow: inset 0 3px 6px rgba(0,0,0,0.95), inset 0 -1px 0 rgba(255, 206, 148, 0.2);
 }
 
@@ -1504,7 +1527,7 @@ button.bank-division[aria-pressed='true'] {
 .empty-rail__slots { display: flex; gap: clamp(10px, 4vw, 22px); }
 .empty-rail__slots i {
   width: clamp(52px, 18vw, 82px); height: 10px; border-radius: 2px;
-  background: linear-gradient(180deg, #060403, #120c08);
+  background: linear-gradient(180deg, #090605, #1c130c);
   box-shadow: inset 0 3px 6px rgba(0,0,0,0.95), inset 0 -1px 0 rgba(255, 206, 148, 0.2);
 }
 .empty-rail p {
@@ -1601,7 +1624,7 @@ button.bank-division[aria-pressed='true'] {
   cursor: ns-resize;
   touch-action: none;
   background:
-    linear-gradient(180deg, #120c08, #0b0806 60%, #100b08);
+    linear-gradient(180deg, #1c130c, #110c09 60%, #19110c);
   box-shadow: inset 0 2px 7px rgba(0,0,0,0.92), inset 0 -2px 7px rgba(0,0,0,0.8);
   z-index: 2;
 }
@@ -1659,7 +1682,7 @@ button.bank-division[aria-pressed='true'] {
 }
 .seal-mark__wax {
   flex: none; width: 6px; height: 6px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #8d4630, #5d2617 60%, #35160c);
+  background: radial-gradient(circle at 34% 28%, #a54e33, #8c361e 60%, #732d16);
   opacity: 0.6;
 }
 .seal-mark em {
@@ -1810,7 +1833,7 @@ button.bank-division[aria-pressed='true'] {
   display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: stretch;
   border-radius: 0 0 3px 3px;
-  background: linear-gradient(180deg, #4a2b19, #24140c);
+  background: linear-gradient(180deg, #794425, #61341d);
   box-shadow: inset 0 1px 0 rgba(255, 210, 152, 0.24), 0 3px 6px rgba(0,0,0,0.6);
   overflow: hidden;
 }
@@ -1847,7 +1870,7 @@ button.bank-division[aria-pressed='true'] {
   display: inline-flex; align-items: center; gap: 0.55rem;
   min-height: 50px;
   padding: 0.42rem 1.1rem 0.42rem 0.5rem;
-  border: 1px solid #241a06; border-radius: 3px;
+  border: 1px solid #6c4d0e; border-radius: 3px;
   cursor: pointer;
   font-family: var(--face-display);
   font-size: clamp(0.98rem, 3.8vw, 1.12rem); font-weight: 700; letter-spacing: 0.04em;
@@ -1856,25 +1879,25 @@ button.bank-division[aria-pressed='true'] {
   box-shadow:
     inset 0 1px 0 rgba(255, 248, 220, 0.8),
     inset 0 -2px 3px rgba(0,0,0,0.32),
-    0 3px 0 #443314, 0 7px 14px rgba(0,0,0,0.5);
+    0 3px 0 #785920, 0 7px 14px rgba(0,0,0,0.5);
   transition: transform 140ms var(--ease-mech), filter 200ms var(--ease-mech);
 }
 .read-lever:disabled {
   color: #7d6a48;
-  background: linear-gradient(180deg, #6a5c3d, #4a3f28 58%, #2e2718);
+  background: linear-gradient(180deg, #827048, #6f5e39 58%, #5e4f2f);
   box-shadow:
     inset 0 1px 0 rgba(255, 236, 200, 0.16),
     inset 0 -2px 4px rgba(0,0,0,0.58),
-    0 2px 0 #241d10;
+    0 2px 0 #5b4826;
   filter: saturate(0.5) brightness(0.94);
 }
 .read-lever:disabled .read-lever__pull {
-  background: linear-gradient(180deg, #40381f, #1c180c);
+  background: linear-gradient(180deg, #6b5d31, #564923);
 }
 .read-lever:not(:disabled):active { transform: translateY(2px); }
 .read-lever__pull {
   width: 13px; height: 30px; flex: none; border-radius: 7px;
-  background: linear-gradient(180deg, #6b5523, #2c2109);
+  background: linear-gradient(180deg, #90712b, #6e5213);
   box-shadow: inset 0 1px 0 rgba(255, 232, 178, 0.5), inset 0 -2px 3px rgba(0,0,0,0.6);
 }
 .read-lever.is-cued { animation: brass-wake 2.2s ease-in-out infinite; }
@@ -1901,7 +1924,7 @@ button.bank-division[aria-pressed='true'] {
 /* The slot it emerged from. */
 .voice-manifestation__slot {
   display: block; height: 9px;
-  background: linear-gradient(180deg, #060403, #14100c 70%, #2c1810);
+  background: linear-gradient(180deg, #090605, #493a2a 70%, #643522);
   box-shadow: inset 0 4px 8px rgba(0,0,0,0.95);
 }
 
@@ -1997,7 +2020,7 @@ button.bank-division[aria-pressed='true'] {
 .voice-line--altus  { --lane-ink: var(--voice-altus); }
 .voice-line--tenor  { --lane-ink: var(--voice-tenor); }
 .voice-line--bassus { --lane-ink: var(--voice-bassus); }
-.rhythm-line { --lane-ink: #6d5941; margin-top: 0.3rem; }
+.rhythm-line { --lane-ink: #836a4b; margin-top: 0.3rem; }
 
 .voice-line [role='cell'],
 .rhythm-line [role='cell'] {
@@ -2043,16 +2066,16 @@ button.bank-division[aria-pressed='true'] {
   display: inline-flex; align-items: center; gap: 0.5rem;
   min-height: 44px;
   padding: 0.35rem 0.9rem 0.35rem 0.45rem;
-  border: 1px solid #241a06; border-radius: 3px;
+  border: 1px solid #6c4d0e; border-radius: 3px;
   cursor: pointer;
   font-family: var(--face-display);
   font-size: 0.98rem; font-weight: 700; color: #2a1c08;
   background: linear-gradient(180deg, var(--brass-pale), var(--brass) 58%, var(--brass-dark));
-  box-shadow: inset 0 1px 0 rgba(255, 246, 214, 0.7), 0 2px 0 #443314, 0 5px 10px rgba(0,0,0,0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 246, 214, 0.7), 0 2px 0 #785920, 0 5px 10px rgba(0,0,0,0.4);
 }
 .return-to-rule__pull {
   width: 10px; height: 22px; border-radius: 5px;
-  background: linear-gradient(180deg, #6b5523, #2c2109);
+  background: linear-gradient(180deg, #90712b, #6e5213);
   box-shadow: inset 0 1px 0 rgba(255, 232, 178, 0.5);
 }
 
@@ -2076,7 +2099,7 @@ button.bank-division[aria-pressed='true'] {
 .provenance-seal__wax {
   display: grid; place-content: center;
   width: 27px; height: 27px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #a8442c, var(--seal-red) 55%, #46170c);
+  background: radial-gradient(circle at 34% 28%, #bc472b, var(--seal-red) 55%, #822712);
   box-shadow: inset 0 -2px 3px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.6);
   font-family: var(--face-engraved); font-size: 0.6rem; color: #f0cdb6;
 }
@@ -2227,13 +2250,14 @@ button.bank-division[aria-pressed='true'] {
     column-gap: clamp(10px, 1.6vw, 16px);
     align-items: start;
   }
-  .bank-stack { grid-column: 1; grid-row: 1; align-content: start; }
+  .bank-rail { grid-column: 1; grid-row: 1; grid-template-columns: 1fr; align-content: start; }
   .cell-bed { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; align-self: stretch; }
   .interior__well > .scholium { grid-column: 1; grid-row: 2; align-self: start; }
 
   .dodecamorium { grid-template-columns: repeat(6, 1fr); }
   .socket { min-height: 52px; }
-  .bank-division__name { font-size: 0.96rem; letter-spacing: 0.05em; }
+  .bank-plate__name { font-size: 0.86rem; letter-spacing: 0.07em; }
+  .bank-plate { min-height: 62px; }
   .carrier-slots { gap: clamp(12px, 2vw, 20px); }
   .carrier-slot { min-height: 178px; }
 
@@ -2241,7 +2265,7 @@ button.bank-division[aria-pressed='true'] {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
   }
-  .machine-interior[data-focus='receded'] .bank-stack { grid-column: 1; grid-row: 1; }
+  .machine-interior[data-focus='receded'] .bank-rail { grid-column: 1; grid-row: 1; }
   .machine-interior[data-focus='receded'] .cell-bed { grid-column: 1; grid-row: 2; margin-top: 9px; }
   .machine-interior[data-focus='receded'] .interior__well > .scholium { grid-column: 1; grid-row: 3; }
 
@@ -2281,7 +2305,647 @@ button.bank-division[aria-pressed='true'] {
 .instrument-shell[data-reduced-motion='true'] .mensa-engage.is-cued,
 .instrument-shell[data-reduced-motion='true'] .read-lever.is-cued,
 .instrument-shell[data-reduced-motion='true'] .carrier.is-cued .carrier__head,
-.instrument-shell[data-reduced-motion='true'] .bank-division.is-cued .bank-division__pull {
+.instrument-shell[data-reduced-motion='true'] .bank-plate.is-cued {
   /* Static equivalent of `brass-wake`: the affordance still stands out. */
   filter: brightness(1.16) drop-shadow(0 0 10px rgba(255, 214, 148, 0.45));
+}
+
+/* ===========================================================================
+   REFERENCE-B PHYSICAL PASS
+   ---------------------------------------------------------------------------
+   The object in the 3D board is carried by BRASS: a gold fillet inlaid around
+   every panel, cast corner brackets wrapping the carcass edges, ring handles,
+   ball feet, turned finials on the rods. These rules add that hardware on top
+   of the structure already built, and pull the recesses back to true dark so
+   the wood/void/vellum/brass separation is unmistakable.
+   =========================================================================== */
+
+/* ---------------------------------------------------- the gold fillet ----- */
+/* One inlaid pinstripe, set in from the edge of a panel. Used on the lid, the
+   cabinet face, the interior and the drawer front so they read as one suite. */
+.machine-lid::after,
+.machine-interior::after,
+.carriage__box::after,
+.closed-arca__face::after,
+.closed-arca__top-panel::after {
+  content: '';
+  position: absolute;
+  inset: clamp(5px, 1.2vw, 9px);
+  border: 1px solid var(--fillet);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 1;
+}
+.machine-lid, .machine-interior, .carriage__box, .closed-arca__face { position: relative; }
+/* A second, finer line just inside it — the double fillet of the reference. */
+.machine-lid::before,
+.carriage__box::before,
+.closed-arca__face::before {
+  content: '';
+  position: absolute;
+  inset: calc(clamp(5px, 1.2vw, 9px) + 4px);
+  border: 1px solid var(--fillet-soft);
+  pointer-events: none;
+  z-index: 1;
+}
+.machine-lid__panel, .interior__well, .carriage__plate,
+.carriage__bed, .carriage__apron { position: relative; z-index: 2; }
+
+/* --------------------------------------------- recesses return to dark ---- */
+/* Lifting the wood lifted the cavities with it. A receptacle is a hole: it has
+   to stay near-black or the whole material hierarchy collapses. */
+.machine-interior {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.5), rgba(0,0,0,0.2) 18%, rgba(0,0,0,0.38)),
+    var(--grain-fine),
+    linear-gradient(178deg, var(--wood-warm), var(--wood-mid) 58%, var(--wood-deep));
+}
+.cell-bed,
+.carriage__bed,
+.receptacle__well,
+.rod-window,
+.carrier-slot__mortice,
+.socket {
+  --void-floor: #0d0805;
+  --void-wall: #17100a;
+}
+.cell-bed {
+  background: linear-gradient(180deg, var(--void-floor), var(--void-wall));
+  box-shadow: inset 0 5px 13px rgba(0,0,0,0.92), inset 0 -1px 0 rgba(255, 206, 148, 0.16);
+}
+.socket {
+  background: linear-gradient(180deg, #0a0604 0%, #140d08 62%, #1b120c 100%);
+  color: #8a7150;
+}
+.socket--sealed {
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 214, 160, 0.03) 0 3px, transparent 3px 7px),
+    linear-gradient(180deg, #0a0604, #150e09);
+}
+.socket--active {
+  background: linear-gradient(180deg, #1c1209 0%, #2b1a0a 58%, #3a230e 100%);
+  color: var(--brass-pale);
+}
+.carriage__bed {
+  background:
+    radial-gradient(120% 70% at 50% -8%, rgba(0,0,0,0.66), transparent 58%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.011) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #0a0604, #17100c 46%, #0d0806);
+}
+.receptacle__well {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(0,0,0,0.72), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #0a0604 0%, #18110c 48%, #0e0907 100%);
+}
+
+/* ---------------------------------------------- turned brass finials ------ */
+/* The grip. A sphere reads as pinchable in a way a flat cap never does, and
+   this is the part that becomes a grabbable handle in the spatial version. */
+.carrier { grid-template-rows: 26px 6px 1fr 8px 31px; }
+.carrier__finial {
+  position: relative;
+  width: 26px; height: 26px; justify-self: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, var(--brass-spec) 0%, var(--brass-lit) 18%,
+      var(--brass-pale) 38%, var(--brass) 62%, var(--brass-dark) 84%, var(--brass-deep) 100%);
+  box-shadow:
+    0 3px 6px rgba(0,0,0,0.7),
+    inset -2px -3px 5px rgba(0,0,0,0.42);
+}
+/* The specular pip that sells it as a sphere under a single light. */
+.carrier__finial::after {
+  content: ''; position: absolute; left: 26%; top: 18%;
+  width: 26%; height: 22%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.92), rgba(255,255,255,0) 70%);
+}
+.carrier__collar {
+  width: 15px; height: 6px; justify-self: center;
+  border-radius: 1px;
+  background: linear-gradient(180deg, var(--brass-lit), var(--brass) 46%, var(--brass-deep));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255, 250, 224, 0.7);
+}
+.carrier:hover .carrier__finial { filter: brightness(1.1); }
+.carrier.is-cued .carrier__finial { animation: brass-wake 2.4s ease-in-out infinite; }
+
+/* The same head on the rod once it is standing on the carriage. */
+.rod-head {
+  display: grid;
+  grid-template-rows: 20px 5px 1fr;
+  justify-items: center;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  overflow: visible;
+}
+.rod-head__finial {
+  position: relative;
+  width: 20px; height: 20px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, var(--brass-spec) 0%, var(--brass-lit) 18%,
+      var(--brass-pale) 38%, var(--brass) 62%, var(--brass-dark) 84%, var(--brass-deep) 100%);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.72), inset -2px -2px 4px rgba(0,0,0,0.42);
+  z-index: 3;
+}
+.rod-head__finial::after {
+  content: ''; position: absolute; left: 26%; top: 18%;
+  width: 28%; height: 24%; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.92), rgba(255,255,255,0) 70%);
+}
+.rod-head__collar {
+  width: 13px; height: 5px; border-radius: 1px;
+  background: linear-gradient(180deg, var(--brass-lit), var(--brass) 46%, var(--brass-deep));
+  box-shadow: 0 2px 3px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255, 250, 224, 0.7);
+  z-index: 3;
+}
+.rod-head__plate {
+  align-self: stretch; width: 100%;
+  display: grid; align-content: center; justify-items: center;
+  padding: 0 3px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, var(--brass-lit) 0%, var(--brass-pale) 26%, var(--brass) 62%, var(--brass-dark) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 226, 0.85), 0 2px 5px rgba(0,0,0,0.6);
+}
+
+/* ------------------------------------------------- carriage hardware ------ */
+.carriage__siderail {
+  position: absolute; top: 6px; bottom: 6px; width: 9px;
+  display: flex; flex-direction: column; justify-content: space-around; align-items: center;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brass-deep), var(--brass) 42%, var(--brass-dark) 78%, var(--brass-deep));
+  box-shadow: inset 0 1px 0 rgba(255, 240, 196, 0.6), 0 2px 5px rgba(0,0,0,0.7);
+  z-index: 3;
+}
+.carriage__siderail--left { left: 3px; }
+.carriage__siderail--right { right: 3px; }
+.carriage__siderail i {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff3cd, var(--brass-dark) 62%, var(--brass-deep));
+  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5);
+}
+.carriage__bed { padding-left: calc(var(--bed-pad) + 11px); padding-right: calc(var(--bed-pad) + 11px); }
+.transverse-rule { left: 13px; right: 13px; }
+
+/* The reading medallion riding the rule. */
+.transverse-rule__medallion {
+  position: absolute; left: 50%; top: 50%;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, var(--brass-spec), var(--brass-pale) 36%, var(--brass) 66%, var(--brass-deep));
+  box-shadow: 0 3px 7px rgba(0,0,0,0.76), inset 0 1px 0 rgba(255, 252, 232, 0.8);
+  z-index: 4;
+  opacity: 0.55;
+  transition: opacity 300ms var(--ease-mech), filter 300ms var(--ease-mech);
+}
+.transverse-rule.is-continuous .transverse-rule__medallion {
+  opacity: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 210, 140, 0.6));
+}
+.transverse-rule__star { width: 19px; height: 19px; color: #3a2b09; }
+
+/* The drawer front: engraved motto and a turned knob, so the surface reads as
+   something that pulls. */
+.carriage__apron {
+  position: relative;
+  padding-bottom: 2.5rem;
+}
+.carriage__motto {
+  position: absolute; left: 50%; bottom: 0.75rem; transform: translateX(-50%);
+  font-family: var(--face-engraved);
+  font-size: clamp(0.44rem, 1.8vw, 0.56rem); letter-spacing: 0.24em;
+  color: var(--fillet);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.8);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.carriage__knob {
+  position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
+  width: 26px; height: 26px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, var(--brass-spec) 0%, var(--brass-lit) 18%,
+      var(--brass-pale) 40%, var(--brass) 64%, var(--brass-dark) 86%, var(--brass-deep) 100%);
+  box-shadow: 0 4px 9px rgba(0,0,0,0.8), inset -2px -3px 5px rgba(0,0,0,0.42);
+  z-index: 4;
+  pointer-events: none;
+}
+.carriage__box { padding-bottom: clamp(14px, 2.4vw, 20px); }
+
+/* ------------------------------------------- Mensa engraved ornament ------ */
+.mensa-plate { position: relative; overflow: hidden; }
+.mensa-plate__sprig {
+  position: absolute; top: 10px;
+  width: clamp(20px, 5vw, 30px); height: auto;
+  color: rgba(74, 54, 30, 0.42);
+  pointer-events: none;
+}
+.mensa-plate__sprig--left { left: 8px; }
+.mensa-plate__sprig--right { right: 8px; transform: scaleX(-1); }
+@media (max-width: 559px) { .mensa-plate__sprig { display: none; } }
+@media (min-width: 560px) { .mensa-heading { padding-inline: clamp(26px, 6vw, 40px); } }
+
+/* ================================================ CLOSED CABINET HARDWARE == */
+/* The closed object is the product's first impression and the clearest promise
+   of the spatial version: it has to look liftable. Everything here is cast
+   brass on walnut — brackets that wrap the carcass edges, ring handles on
+   rosettes, ball feet, and an engraved nameplate between laurels. */
+
+.closed-arca__face {
+  min-height: clamp(214px, 54vw, 286px);
+  padding: clamp(2.6rem, 9vw, 3.8rem) clamp(2.6rem, 9vw, 4.2rem) clamp(1.6rem, 5vw, 2.4rem);
+}
+
+/* Corner brackets. Each is an L of brass wrapping the corner of the face. */
+.closed-arca__bracket {
+  position: absolute;
+  width: clamp(26px, 7vw, 40px); height: clamp(26px, 7vw, 40px);
+  z-index: 4;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, var(--brass-lit) 0%, var(--brass-pale) 24%, var(--brass) 58%, var(--brass-dark) 100%);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255, 250, 224, 0.7);
+}
+/* Cut the inner square away so only the L remains. */
+.closed-arca__bracket--tl { top: 4px; left: 4px; clip-path: polygon(0 0, 100% 0, 100% 34%, 34% 34%, 34% 100%, 0 100%); }
+.closed-arca__bracket--tr { top: 4px; right: 4px; clip-path: polygon(0 0, 100% 0, 100% 100%, 66% 100%, 66% 34%, 0 34%); }
+.closed-arca__bracket--bl { bottom: 4px; left: 4px; clip-path: polygon(0 0, 34% 0, 34% 66%, 100% 66%, 100% 100%, 0 100%); }
+.closed-arca__bracket--br { bottom: 4px; right: 4px; clip-path: polygon(66% 0, 100% 0, 100% 100%, 0 100%, 0 66%, 66% 66%); }
+.closed-arca__bracket::after {
+  content: ''; position: absolute; left: 12%; top: 12%;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff3cd, var(--brass-dark) 62%, var(--brass-deep));
+}
+/* Matching brackets on the lid's far corners. */
+.closed-arca__top-bracket {
+  position: absolute; bottom: 0; width: clamp(22px, 6vw, 34px); height: 60%;
+  background: linear-gradient(180deg, var(--brass) 0%, var(--brass-pale) 40%, var(--brass-dark) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 246, 210, 0.6);
+  opacity: 0.9;
+}
+.closed-arca__top-bracket--l { left: 5%; clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); }
+.closed-arca__top-bracket--r { right: 5%; clip-path: polygon(0 0, 78% 0, 100% 100%, 0 100%); }
+
+/* Ring handles, for lifting the cabinet off the desk. */
+.closed-arca__handle {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: clamp(26px, 7vw, 38px); height: clamp(26px, 7vw, 38px);
+  z-index: 4;
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+.closed-arca__handle--left { left: clamp(10px, 3vw, 18px); }
+.closed-arca__handle--right { right: clamp(10px, 3vw, 18px); }
+.closed-arca__rosette {
+  position: absolute; width: 46%; height: 46%; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, var(--brass-lit), var(--brass) 52%, var(--brass-deep));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.7), inset 0 -1px 2px rgba(0,0,0,0.45);
+}
+.closed-arca__ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: clamp(3px, 0.9vw, 5px) solid var(--brass);
+  border-top-color: var(--brass-lit);
+  border-bottom-color: var(--brass-deep);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.75), inset 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* The engraved nameplate: brass, laurel either side, nailed to the face. */
+.closed-arca__nameplate {
+  position: relative; z-index: 3;
+  display: grid; justify-items: center; gap: 0.3rem;
+  width: min(100%, 420px);
+  padding: clamp(0.7rem, 2.6vw, 1rem) clamp(1.2rem, 5vw, 2.2rem);
+  border: 1px solid var(--brass-deep);
+  border-radius: 3px;
+  background:
+    linear-gradient(180deg,
+      var(--brass-spec) 0%, var(--brass-lit) 8%, var(--brass-pale) 30%,
+      var(--brass) 64%, var(--brass-dark) 92%, var(--brass-deep) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 240, 0.95),
+    inset 0 -2px 4px rgba(0,0,0,0.3),
+    0 4px 10px rgba(0,0,0,0.7);
+}
+.closed-arca__nameplate::after {
+  content: ''; position: absolute; inset: 4px;
+  border: 1px solid rgba(84, 64, 24, 0.42);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 250, 224, 0.5);
+  pointer-events: none;
+}
+.closed-arca__laurel {
+  width: min(74%, 230px); height: auto;
+  color: rgba(74, 56, 18, 0.55);
+  margin-bottom: -0.1rem;
+}
+.engraved-title {
+  margin: 0; text-align: center; line-height: 1.06;
+  font-family: var(--face-display);
+  font-size: clamp(0.92rem, 4.2vw, 1.48rem); font-weight: 700; letter-spacing: 0.1em;
+  /* Cut INTO the brass: dark stroke with a light catch below it. */
+  color: #241802;
+  text-shadow: 0 1px 0 rgba(255, 250, 220, 0.72), 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
+.closed-arca__rule {
+  width: 58%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(78, 58, 18, 0.6), transparent);
+  opacity: 1;
+}
+.closed-arca__folio {
+  margin: 0; font-family: var(--face-engraved);
+  font-size: clamp(0.46rem, 1.9vw, 0.58rem); letter-spacing: 0.2em;
+  color: rgba(58, 44, 12, 0.78);
+  text-align: center;
+}
+.closed-arca__nail {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff3cd, var(--brass-dark) 62%, var(--brass-deep));
+  box-shadow: inset 0 -1px 1px rgba(0,0,0,0.5);
+}
+.closed-arca__nail--tl { top: 6px; left: 6px; }
+.closed-arca__nail--tr { top: 6px; right: 6px; }
+.closed-arca__nail--bl { bottom: 6px; left: 6px; }
+.closed-arca__nail--br { bottom: 6px; right: 6px; }
+
+/* A heavier, ornate hasp than a plain latch — it is the one thing to touch. */
+.cabinet-clasp {
+  top: clamp(-32px, -7vw, -26px);
+  padding: 0.36rem 1.05rem 0.36rem 0.36rem;
+  border-radius: 4px;
+}
+.cabinet-clasp__escutcheon {
+  width: 34px; height: 40px;
+  border-radius: 3px 3px 17px 17px;
+}
+.cabinet-clasp__escutcheon::after {
+  content: ''; position: absolute; inset: 3px;
+  border-radius: 2px 2px 14px 14px;
+  border: 1px solid rgba(255, 232, 180, 0.28);
+}
+
+/* Ball feet, which is what makes it sit ON something. */
+.closed-arca__plinth { padding: 0 clamp(26px, 11vw, 62px); }
+.closed-arca__foot {
+  width: clamp(20px, 6vw, 28px); height: clamp(14px, 4vw, 20px);
+  margin-top: 12px;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background:
+    radial-gradient(circle at 36% 24%, var(--brass-pale) 0%, var(--brass) 34%,
+      var(--brass-dark) 68%, var(--brass-deep) 100%);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.86), inset -2px -2px 4px rgba(0,0,0,0.5);
+}
+
+/* --------------------------------------- Reference-B wood and proportion -- */
+/* Deep red-brown mahogany, lit from the upper left, with the lid deep enough
+   to read as a real box rather than a lipped panel. */
+.closed-arca__face {
+  background:
+    linear-gradient(100deg, rgba(255, 206, 150, 0.1), transparent 36%),
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 190, 132, 0.1), transparent 56%),
+    var(--grain-fine),
+    linear-gradient(178deg, var(--wood-lit) 0%, var(--wood-warm) 34%,
+      var(--wood-deep) 76%, var(--wood-shadow) 100%);
+}
+.closed-arca__top { height: clamp(52px, 13vw, 92px); --lid-rake: 5%; }
+.closed-arca__top-panel {
+  background:
+    linear-gradient(178deg, rgba(255, 232, 190, 0.4) 0%, rgba(255, 206, 150, 0.1) 30%, transparent 66%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.045) 0 2px, transparent 2px 14px),
+    linear-gradient(180deg, var(--wood-spec) 0%, var(--wood-lit) 34%,
+      var(--wood-warm) 72%, var(--wood-mid) 100%);
+}
+.closed-arca__lip {
+  height: 13px;
+  background: linear-gradient(180deg, var(--wood-spec) 0%, var(--wood-lit) 30%,
+    var(--wood-mid) 74%, var(--wood-shadow) 100%);
+}
+.machine-lid {
+  background:
+    linear-gradient(104deg, rgba(255, 214, 160, 0.11), transparent 38%),
+    var(--grain-fine),
+    linear-gradient(178deg, var(--wood-lit) 0%, var(--wood-warm) 40%, var(--wood-deep) 100%);
+}
+.carriage__box {
+  background:
+    linear-gradient(102deg, rgba(255, 210, 152, 0.09), transparent 38%),
+    var(--grain-fine),
+    linear-gradient(178deg, var(--wood-lit) 0%, var(--wood-warm) 34%, var(--wood-deep) 100%);
+}
+.carcass-stile {
+  background:
+    linear-gradient(90deg, rgba(255, 214, 158, 0.24), rgba(0, 0, 0, 0.32) 42%, rgba(0, 0, 0, 0.5)),
+    var(--grain-cross),
+    linear-gradient(178deg, var(--wood-lit), var(--wood-mid) 48%, var(--wood-shadow));
+}
+.carcass-stile--right {
+  background:
+    linear-gradient(270deg, rgba(255, 214, 158, 0.12), rgba(0, 0, 0, 0.4) 46%, rgba(0, 0, 0, 0.56)),
+    var(--grain-cross),
+    linear-gradient(178deg, var(--wood-warm), var(--wood-deep) 48%, var(--wood-edge));
+}
+/* The nameplate sits high on the face so the hasp above it stays clear. */
+.closed-arca__nameplate { width: min(100%, 380px); }
+.closed-arca__laurel { color: rgba(74, 56, 18, 0.62); }
+
+/* ------------------------------------------------ lid surface and light --- */
+/* A horizontal face takes far more of the key light than a vertical one. The
+   lid must therefore be the BRIGHTEST wood on the closed object, or the box
+   reads flat however good the hardware is. */
+.closed-arca__top { height: clamp(58px, 14vw, 104px); --lid-rake: 5.5%; }
+.closed-arca__top-panel {
+  background:
+    linear-gradient(178deg,
+      rgba(255, 238, 202, 0.5) 0%, rgba(255, 220, 168, 0.24) 22%,
+      rgba(255, 200, 140, 0.06) 52%, transparent 82%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0 2px, transparent 2px 15px),
+    linear-gradient(180deg, #c08a5c 0%, #a5744b 30%, #8a5c3d 66%, #6d462e 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 244, 214, 0.66);
+}
+/* The far edge of the lid, catching the light square on. */
+.closed-arca__top::before,
+.closed-arca__top::after { display: none; }
+.closed-arca__top-band {
+  top: 30%; left: 18%; right: 18%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--brass), var(--brass-lit) 50%, var(--brass), transparent);
+  opacity: 0.8;
+}
+
+/* Small cast corner pieces on the lid's front edge — not ramps. */
+.closed-arca__top-bracket {
+  top: auto; bottom: -2px; height: 42%;
+  width: clamp(16px, 4vw, 24px);
+  clip-path: none;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--brass-lit) 0%, var(--brass-pale) 30%, var(--brass) 66%, var(--brass-dark) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 224, 0.8), 0 2px 4px rgba(0,0,0,0.6);
+  opacity: 1;
+}
+.closed-arca__top-bracket--l { left: 7%; }
+.closed-arca__top-bracket--r { right: 7%; left: auto; }
+
+/* The front face: rich mahogany with visible figure, darkening to the plinth. */
+.closed-arca__face {
+  background:
+    linear-gradient(100deg, rgba(255, 208, 152, 0.12), transparent 34%),
+    radial-gradient(110% 70% at 50% -6%, rgba(255, 196, 138, 0.16), transparent 54%),
+    repeating-linear-gradient(90.6deg,
+      rgba(0,0,0,0.05) 0 1px, transparent 1px 9px,
+      rgba(0,0,0,0.03) 9px 10px, transparent 10px 24px),
+    linear-gradient(178deg, #8a5c3d 0%, #74492f 36%, #573723 74%, #3b2415 100%);
+  box-shadow:
+    inset 0 0 0 10px rgba(16, 9, 4, 0.24),
+    inset 0 -12px 26px rgba(0,0,0,0.62),
+    inset 0 3px 9px rgba(0,0,0,0.44),
+    inset 12px 0 24px rgba(0,0,0,0.3),
+    inset -12px 0 24px rgba(0,0,0,0.3);
+}
+.closed-arca__lip {
+  height: 14px;
+  background: linear-gradient(180deg, #d1a173 0%, #a5744b 32%, #74492f 74%, #3b2415 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 242, 212, 0.78),
+    inset 0 -1px 0 rgba(0,0,0,0.66),
+    0 4px 10px rgba(0,0,0,0.6);
+}
+.closed-arca__plinth {
+  background: linear-gradient(180deg, #966944 0%, #5d3c26 40%, #2a1a10 100%);
+}
+
+/* Annular ring handles: open in the middle, as a lifting ring is. */
+.closed-arca__ring {
+  border-width: clamp(3px, 0.8vw, 4px);
+  border-color: var(--brass-pale) var(--brass) var(--brass-dark) var(--brass);
+  background: transparent;
+}
+.closed-arca__rosette { width: 34%; height: 34%; }
+
+/* ================================= REFERENCE-B INTERIOR COMPOSITION ======= */
+/* In the reference the bank nameplates run in ONE horizontal rail across the
+   full width of the carcass, with the cell bed beneath them. That is both
+   truer to the object and removes the dead column the two-up layout left. */
+@media (min-width: 820px) {
+  .interior__well {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: clamp(8px, 1.4vw, 13px);
+  }
+  .bank-rail {
+    grid-column: 1; grid-row: 1;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .cell-bed { grid-column: 1; grid-row: 2; margin-top: 0; align-self: auto; }
+  .interior__well > .scholium { grid-column: 1; grid-row: 3; }
+  .machine-interior[data-focus='receded'] .interior__well { grid-template-columns: 1fr; }
+  .machine-interior[data-focus='receded'] .bank-rail { grid-template-columns: 1fr; }
+  .bank-plate { min-height: 58px; }
+  .bank-plate__name { font-size: clamp(0.78rem, 1.9vw, 0.98rem); letter-spacing: 0.07em; }
+}
+
+/* The wax is struck on the plate's own corner, clear of the inscription. */
+.bank-plate { padding-bottom: 0.5rem; }
+.bank-plate__wax {
+  left: auto; right: -7px; bottom: -7px; margin-left: 0;
+  width: 17px; height: 17px;
+}
+/* Tarnish, so an unavailable bank is unmistakably not the live one. */
+.bank-plate--sealed,
+.bank-plate--fragment {
+  background: linear-gradient(180deg, #6f6144 0%, #5c5039 32%, #453b28 70%, #2b2418 100%);
+  border-color: #221c11;
+}
+.bank-plate--fragment {
+  background:
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.2) 0 5px, transparent 5px 11px),
+    linear-gradient(180deg, #665a3f 0%, #524734 34%, #2b2418 100%);
+}
+.bank-plate--sealed .bank-plate__name,
+.bank-plate--fragment .bank-plate__name {
+  color: #cbbb98;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.66);
+}
+.bank-plate--sealed .bank-plate__numeral,
+.bank-plate--fragment .bank-plate__numeral { color: #9d8f6d; }
+.bank-plate--sealed .bank-plate__note,
+.bank-plate--fragment .bank-plate__note { color: rgba(184, 168, 132, 0.8); }
+.bank-plate--sealed::after,
+.bank-plate--fragment::after { border-color: rgba(255, 236, 190, 0.14); box-shadow: none; }
+
+/* The finial is jewellery-scale, not a lamp. */
+.carrier { grid-template-rows: 20px 5px 1fr 8px 31px; }
+.carrier__finial { width: 20px; height: 20px; }
+.carrier__collar { width: 12px; height: 5px; }
+.carrier.is-cued .carrier__finial { animation: none; }
+.carrier.is-cued { animation: carrier-offer 2.8s var(--ease-mech) infinite; }
+.carrier__head, .carrier__knurl { display: none; }
+
+/* Sprigs flank the heading rather than crowding the plate's corners. */
+.mensa-plate__sprig { width: clamp(15px, 3.4vw, 21px); top: 14px; opacity: 0.5; }
+.mensa-plate__sprig--left { left: 14px; }
+.mensa-plate__sprig--right { right: 14px; }
+
+/* An idle control is tarnished brass, never a grey web slab. */
+.mensa-engage:disabled,
+.read-lever:disabled {
+  color: #8d7a55;
+  background: linear-gradient(180deg, #7a6a47 0%, #61543a 34%, #453b28 72%, #2e2718 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.22),
+    inset 0 -2px 4px rgba(0,0,0,0.5),
+    0 2px 0 #241d10;
+  filter: none;
+}
+
+/* ------------------------------------------------- the reading medallion -- */
+/* Rides the transverse rule at the point of reading. It sits above the rods
+   because it is what crosses them. */
+.reading-medallion {
+  position: absolute;
+  left: 50%; top: calc(var(--bed-pad) + var(--rod-head-h) + var(--rod-read-y) + var(--rod-band-h) / 2);
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, var(--brass-spec), var(--brass-pale) 36%, var(--brass) 66%, var(--brass-deep));
+  box-shadow: 0 3px 8px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255, 252, 232, 0.85);
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity 300ms var(--ease-mech), filter 300ms var(--ease-mech);
+}
+.reading-medallion.is-continuous {
+  opacity: 1;
+  filter: drop-shadow(0 0 13px rgba(255, 210, 140, 0.7));
+}
+.reading-medallion__star { width: 19px; height: 19px; color: #3a2b09; }
+.transverse-rule__legend { display: none; }
+
+/* The drawer knob hangs off the front of the carriage, fully visible. */
+.carriage__knob { bottom: 4px; width: 22px; height: 22px; }
+.carriage__motto { bottom: 1.9rem; }
+.carriage__apron { padding-bottom: 3.1rem; }
+
+/* ------------------------------------------------- Fold-width tightening -- */
+/* The side rails cost the rods 22px of width. At Fold width that is the
+   difference between a whole NON TRANSCRIPTVM stamp and a clipped one, so the
+   rails narrow and the bed gives its padding back to the carriers. */
+@media (max-width: 559px) {
+  .carriage__siderail { width: 6px; }
+  .carriage__siderail--left { left: 2px; }
+  .carriage__siderail--right { right: 2px; }
+  .carriage__bed {
+    padding-left: calc(var(--bed-pad) + 6px);
+    padding-right: calc(var(--bed-pad) + 6px);
+  }
+  .transverse-rule { left: 8px; right: 8px; }
+  .rod-array { gap: 4px; }
+  .seal-mark em { font-size: 0.38rem; letter-spacing: 0.04em; }
+  .rod-head__plate { padding: 0 1px; }
+  .rod-head__mark { font-size: 0.4rem; letter-spacing: 0.06em; }
+  .rod-head__copy { font-size: 0.36rem; }
+  .reading-medallion { width: 24px; height: 24px; margin: -12px 0 0 -12px; }
+  .reading-medallion__star { width: 15px; height: 15px; }
 }
