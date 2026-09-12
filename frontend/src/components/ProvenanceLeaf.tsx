@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { HistoricalExecution, HistoricalManifest } from '../instrument/types'
 
 interface ProvenanceLeafProps {
@@ -13,6 +14,21 @@ interface ProvenanceLeafProps {
  * instead of standing beside it as a competing panel.
  */
 export function ProvenanceLeaf({ manifest, execution, open, onToggle }: ProvenanceLeafProps) {
+  const folio = useRef<HTMLDivElement>(null)
+
+  // The apparatus is a sheet laid over the instrument: Escape puts it back, and
+  // opening it moves focus onto the sheet so a keyboard reader is not left
+  // behind on the machine underneath.
+  useEffect(() => {
+    if (!open) return
+    folio.current?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); onToggle() }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onToggle])
+
   return (
     <aside className={`provenance-leaf ${open ? 'is-open' : ''}`}>
       <button type="button" className="provenance-seal" aria-expanded={open} onClick={onToggle}>
@@ -23,7 +39,14 @@ export function ProvenanceLeaf({ manifest, execution, open, onToggle }: Provenan
       {open && (
         <>
           <div className="provenance-scrim" onClick={onToggle} aria-hidden="true" />
-          <div className="provenance-copy" role="dialog" aria-label="Apparatus fontium, source witnesses">
+          <div
+            className="provenance-copy"
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+            ref={folio}
+            aria-label="Apparatus fontium, source witnesses"
+          >
             <header>
               <p>APPARATVS FONTIVM</p>
               <span>{manifest.cell.cell_label} · printed p. {manifest.cell.printed_page}</span>
