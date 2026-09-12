@@ -96,6 +96,21 @@ describe('Arca Mechanica interaction', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('exposes Historica and derived scholia only at the presentation boundary', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(manifestFixture), { status: 200 })))
+    const user = userEvent.setup()
+    const { container } = render(<App />)
+
+    await screen.findByRole('button', { name: 'Open the Arca' })
+    const shell = container.querySelector('.instrument-shell')
+    expect(shell).toHaveAttribute('data-realm', 'historica')
+    expect(shell).toHaveAttribute('data-guidance-mode', 'scholia')
+    expect(shell).toHaveAttribute('data-realm-guidance', 'open_arca')
+
+    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
+    expect(shell).toHaveAttribute('data-realm-guidance', 'focus_bank_i')
+  })
+
   it('propagates reduced-motion preference into the instrument surface', async () => {
     Object.defineProperty(window, 'matchMedia', { writable: true, value: vi.fn(() => matchMedia(true)) })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(manifestFixture), { status: 200 })))
