@@ -18,6 +18,11 @@ import type {
   InstrumentState,
   RodTemplate,
 } from './instrument/types'
+import { getRealmGuidance } from './realms/guidance'
+import { DEFAULT_REALM_ID, getRealmDefinition } from './realms/registry'
+import type { GuidanceMode } from './realms/types'
+
+const GUIDANCE_MODE: GuidanceMode = 'scholia'
 
 interface RodTransfer {
   origin: { top: number; left: number; width: number; height: number }
@@ -121,6 +126,8 @@ export default function App() {
   )
   const view = deriveInstrumentView(state)
   const nextAffordance = getNextAffordance(state, manifest ?? undefined)
+  const realm = getRealmDefinition(DEFAULT_REALM_ID)
+  const realmGuidance = getRealmGuidance(realm.id, nextAffordance, GUIDANCE_MODE)
 
   const deployRod = useCallback((template: RodTemplate, origin: DOMRect | null) => {
     if (origin && !state.reducedMotion) {
@@ -174,6 +181,9 @@ export default function App() {
       data-view={view}
       data-next-affordance={nextAffordance}
       data-reduced-motion={state.reducedMotion}
+      data-realm={realm.id}
+      data-guidance-mode={GUIDANCE_MODE}
+      data-realm-guidance={realmGuidance?.affordance ?? 'none'}
     >
       <header className="instrument-masthead">
         <p className="instrument-masthead__line">
