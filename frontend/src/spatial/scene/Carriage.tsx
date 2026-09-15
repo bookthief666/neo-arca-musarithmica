@@ -5,6 +5,8 @@ import { CARRIAGE, CASE, READER, VIRGA } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { KnobPull } from './Hardware'
 import { DetentScale } from './DetentScale'
+import { LectioControl } from './LectioControl'
+import type { MechanismState } from '../mechanismState'
 
 /** Guide-lip height: below the rod's face, so the face stays readable. */
 const LIP_HEIGHT = 0.006
@@ -42,6 +44,7 @@ export interface ChannelReading {
 export function Carriage({
   materials, extended, reducedMotion, readings, concordant, children, onPullOut, travelRef,
   targetLane = null, onPlaceHeldRod, channelOffsets = [null, null, null],
+  lectioState = 'dormant', lectioCued = false, onExecute,
 }: {
   materials: ArcaMaterials
   extended: boolean
@@ -57,6 +60,10 @@ export function Carriage({
   onPlaceHeldRod?: () => void
   /** Canonical band presented in each channel, or null where none is seated. */
   channelOffsets?: [number | null, number | null, number | null]
+  /** LECTIO's own state, derived from canonical readiness. */
+  lectioState?: MechanismState
+  lectioCued?: boolean
+  onExecute?: () => void
 }) {
   const group = useRef<THREE.Group>(null)
 
@@ -269,6 +276,17 @@ export function Carriage({
           <cylinderGeometry args={[0.0085, 0.0085, 0.004, 18]} />
         </mesh>
       </group>
+
+      {/* LECTIO lives in the drawer, so it travels with the mechanism it
+          operates instead of hanging in cabinet space beside it. */}
+      {onExecute && (
+        <LectioControl
+          materials={materials}
+          state={lectioState}
+          cued={lectioCued}
+          onExecute={onExecute}
+        />
+      )}
 
       {children}
     </group>

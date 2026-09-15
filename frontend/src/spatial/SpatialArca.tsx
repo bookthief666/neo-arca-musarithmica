@@ -1,7 +1,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
-import { CARRIAGE } from './dimensions'
 import {
   deriveCameraMode, dollyBy, orbitBy, useCameraDirector, useOrbitState, useResetView,
 } from './camera'
@@ -15,6 +14,7 @@ import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
 import { SpatialTestProbe } from './TestProbe'
 import { shouldExtendCarriage, targetLane, workspaceOffsets } from './operative'
+import { lectioMechanismState, toneMechanismState } from './mechanismState'
 import type {
   HistoricalManifest,
   InstrumentAffordance,
@@ -51,9 +51,6 @@ export interface SpatialArcaProps {
   onEngageTone: () => void
   onExecute: () => void
 }
-
-/** Height of the reading lever, standing proud of the drawer's front rail. */
-const CARRIAGE_LEVER_Y = CARRIAGE.y + CARRIAGE.height + 0.006
 
 /** Lighting: a warm key, a cool fill, and enough ambient that walnut stays wood. */
 function Lighting({ reducedMotion }: { reducedMotion: boolean }) {
@@ -253,11 +250,10 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         manifest={rest.manifest}
         open={isOpen}
         reducedMotion={rest.state.reducedMotion}
-        toneEngaged={rest.state.toneEngaged}
         cued={rest.nextAffordance === 'open_arca'}
         onToggle={() => (isOpen ? rest.onClose() : rest.onOpen())}
         onEngageTone={rest.onEngageTone}
-        toneAvailable={rest.alignmentReady || rest.state.toneEngaged}
+        toneState={toneMechanismState(rest.alignmentReady, rest.state.toneEngaged)}
         toneCued={rest.nextAffordance === 'engage_tone_ii'}
       />
       {isOpen && (
@@ -279,6 +275,9 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         targetLane={activeTargetLane}
         onPlaceHeldRod={rest.onPlaceHeldRod}
         channelOffsets={channelOffsets}
+        lectioState={lectioMechanismState(rest.executionReady, rest.state.phase, rest.state.error)}
+        lectioCued={rest.nextAffordance === 'read_transverse' || rest.nextAffordance === 'recover'}
+        onExecute={rest.onExecute}
       />
       {isOpen && (
         <Virgae
@@ -299,23 +298,6 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         reducedMotion={rest.state.reducedMotion}
         travelRef={travelRef}
       />
-      {/* The reading lever: the act that sends the alignment to the kernel. */}
-      {rest.executionReady && (
-        <mesh
-          position={[0.086, CARRIAGE_LEVER_Y, 0.052]}
-          onClick={(event) => { event.stopPropagation(); rest.onExecute() }}
-          onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}
-          onPointerOut={() => { document.body.style.cursor = 'auto' }}
-          castShadow
-        >
-          <cylinderGeometry args={[0.009, 0.011, 0.016, 18]} />
-          <meshStandardMaterial
-            color="#e8cb87" metalness={0.9} roughness={0.2}
-            emissive={rest.nextAffordance === 'read_transverse' ? '#5a3f12' : '#000000'}
-            emissiveIntensity={rest.nextAffordance === 'read_transverse' ? 0.7 : 0}
-          />
-        </mesh>
-      )}
     </>
   )
 }

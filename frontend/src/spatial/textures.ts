@@ -416,3 +416,41 @@ export function makeDetentScaleTexture(count: number) {
 
   return finish(element)
 }
+
+/**
+ * A small engraved legend for a piece of operating hardware — TONVS II beside
+ * the selector, LECTIO on the carriage apron.
+ *
+ * These name the two acts the reader has to perform last, and they are cut
+ * into the instrument rather than floated over it, so the machine says what
+ * its controls are for in its own voice.
+ */
+export function makeLegendTexture(lines: string[], opts?: { tarnished?: boolean }) {
+  const { element, context } = canvas(256, 128)
+  const dark = opts?.tarnished ?? false
+
+  const ground = context.createLinearGradient(0, 0, 0, 128)
+  ground.addColorStop(0, dark ? '#5a4a28' : '#8a7038')
+  ground.addColorStop(0.5, dark ? '#6b5730' : '#a58747')
+  ground.addColorStop(1, dark ? '#4e4023' : '#7d6531')
+  context.fillStyle = ground
+  context.fillRect(0, 0, 256, 128)
+
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  const step = 128 / (lines.length + 1)
+  lines.forEach((line, index) => {
+    const y = step * (index + 1)
+    const size = index === 0 ? 34 : 44
+    context.font = `600 ${size}px ${ENGRAVED}`
+    context.letterSpacing = '4px'
+    // Cut, then catch the light on the upper edge: an engraving, not a print.
+    context.fillStyle = 'rgba(30, 20, 6, 0.85)'
+    context.fillText(line, 128, y + 2)
+    context.fillStyle = dark ? 'rgba(220, 200, 160, 0.35)' : 'rgba(255, 240, 205, 0.62)'
+    context.fillText(line, 128, y)
+  })
+  context.letterSpacing = '0px'
+
+  return finish(element)
+}

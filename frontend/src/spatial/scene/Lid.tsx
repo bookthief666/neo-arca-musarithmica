@@ -5,6 +5,8 @@ import { CASE, LID } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { makeMensaTexture } from '../textures'
 import { Fillet, Hinge } from './Hardware'
+import { ToneSelector } from './ToneSelector'
+import type { MechanismState } from '../mechanismState'
 import type { HistoricalManifest } from '../../instrument/types'
 
 /**
@@ -18,19 +20,18 @@ import type { HistoricalManifest } from '../../instrument/types'
  * switched to.
  */
 export function Lid({
-  materials, manifest, open, reducedMotion, toneEngaged, onToggle, cued,
-  onEngageTone, toneAvailable, toneCued,
+  materials, manifest, open, reducedMotion, onToggle, cued,
+  onEngageTone, toneState, toneCued,
 }: {
   materials: ArcaMaterials
   manifest: HistoricalManifest
   open: boolean
   reducedMotion: boolean
-  toneEngaged: boolean
   onToggle: () => void
   cued: boolean
   onEngageTone: () => void
-  /** The Tone can only be taken once the rule reads a continuous band. */
-  toneAvailable: boolean
+  /** The selector's own state, derived from canonical readiness. */
+  toneState: MechanismState
   toneCued: boolean
 }) {
   const { width, depth, bodyHeight, plinth, lidHeight, wall } = CASE
@@ -106,31 +107,17 @@ export function Lid({
           </mesh>
         ))}
 
-        {/* ---- the Tone selector: a real turned control on the lid's inner face ---- */}
-        <group
-          position={[innerW / 2 - 0.026, -lidHeight / 2 - 0.004, innerD / 2 - 0.02]}
-          onClick={toneAvailable ? (event) => { event.stopPropagation(); onEngageTone() } : undefined}
-          onPointerOver={toneAvailable ? (event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' } : undefined}
-          onPointerOut={() => { document.body.style.cursor = 'auto' }}
-        >
-          <mesh castShadow>
-            <cylinderGeometry args={[0.011, 0.012, 0.007, 20]} />
-            <meshStandardMaterial
-              color={toneAvailable ? '#c3a25c' : '#6b5a3a'}
-              metalness={toneAvailable ? 0.92 : 0.5}
-              roughness={toneAvailable ? 0.26 : 0.66}
-              emissive={toneCued || toneEngaged ? '#5a3f12' : '#000000'}
-              emissiveIntensity={toneCued ? 0.75 : toneEngaged ? 0.4 : 0}
-            />
-          </mesh>
-          {/* The pointer swings when the Tone is taken. */}
-          <mesh
-            material={materials.brassDark}
-            position={[0, 0.004, 0]}
-            rotation={[0, toneEngaged ? Math.PI * 0.28 : -Math.PI * 0.28, 0]}
-          >
-            <boxGeometry args={[0.0022, 0.0016, 0.016]} />
-          </mesh>
+        {/* ---- TONVS II: a persistent turned control on the lid's inner face ---- */}
+        {/* Placed in the clear vellum below the ruled table. Mounted higher up
+            the sheet it sat squarely on the printed degrees, hiding the very
+            map the Tone is selected from. */}
+        <group position={[innerW / 2 - 0.03, -lidHeight / 2 - 0.004, -0.042]}>
+          <ToneSelector
+            materials={materials}
+            state={toneState}
+            cued={toneCued}
+            onEngage={onEngageTone}
+          />
         </group>
       </group>
 
