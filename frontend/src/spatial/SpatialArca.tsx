@@ -2,7 +2,9 @@ import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CARRIAGE } from './dimensions'
-import { dollyBy, orbitBy, useCameraDirector, useOrbitState, useResetView } from './camera'
+import {
+  deriveCameraMode, dollyBy, orbitBy, useCameraDirector, useOrbitState, useResetView,
+} from './camera'
 import { useArcaMaterials } from './materials'
 import { Cabinet } from './scene/Cabinet'
 import { Lid } from './scene/Lid'
@@ -204,7 +206,9 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   const { orbit, ...rest } = props
   const materials = useArcaMaterials()
   useEffect(() => () => materials.dispose(), [materials])
-  useCameraDirector(orbit, rest.view, rest.state.reducedMotion)
+  // Presentation only: the mode is derived from canonical state every render
+  // and nothing about the camera is ever written back into the instrument.
+  useCameraDirector(orbit, deriveCameraMode(rest.state), rest.state.reducedMotion)
 
   const isOpen = rest.state.phase !== 'dormant'
   // The carriage comes out as soon as there is anything to put on it, and stays

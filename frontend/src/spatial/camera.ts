@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import type { InstrumentView } from '../instrument/types'
+import type { InstrumentState } from '../instrument/types'
 
 /**
  * THE CAMERA DIRECTOR.
@@ -10,11 +10,41 @@ import type { InstrumentView } from '../instrument/types'
  * arriving at the carriage should not have to find it — and the reader must
  * still be able to pick the object up and look at its back.
  *
- * So the director owns a default framing per canonical view, and the reader
- * owns an orbit offset on top of it. Changing view re-aims the camera; dragging
- * hands control back to the reader and the director stops pushing until the
- * view changes again. It never fights an active gesture.
+ * So the director owns a default framing, and the reader owns an orbit offset
+ * on top of it. Dragging hands control back to the reader and the director
+ * stops pushing until the framing itself changes. It never fights a gesture.
+ *
+ * CAMERA INTERVENTION IS NOT SEMANTIC VIEW.
+ *
+ * M1.2 drove this from InstrumentView, which has six values, so the camera
+ * moved every time the instrument changed its mind about what it was doing:
+ * lifting a virga cut away from the cell to the drawer, reaching concord threw
+ * the camera back out to the lid, and engaging the Tone dragged it in again.
+ * Three cuts in the middle of one continuous manual operation, and the reader
+ * loses the thread of where anything is.
+ *
+ * A camera mode is a change in what the instrument physically IS, not in what
+ * it is thinking about. There are only three such changes: the box opens, the
+ * first carrier reaches the carriage, and the folio appears. Everything else —
+ * Bank I, Cell IV, retrieval, the second and third placements, sliding bands,
+ * concord, Tone II — happens without the camera moving at all.
  */
+
+/** The only four framings the director is allowed to intervene with. */
+export type CameraMode = 'arca' | 'open' | 'working' | 'revelation'
+
+/**
+ * Pure, and derived from canonical state alone. No camera field is added to
+ * InstrumentState: the presence of a seated rod IS the 0 -> 1 transition that
+ * moves the reader to the carriage, and it stays true thereafter, so the
+ * second and third retrievals cannot drop the framing back.
+ */
+export function deriveCameraMode(state: InstrumentState): CameraMode {
+  if (state.phase === 'dormant') return 'arca'
+  if (state.phase === 'revealed' && state.execution) return 'revelation'
+  if (state.rods.some((rod) => rod.location === 'workspace')) return 'working'
+  return 'open'
+}
 
 interface Framing {
   /** Horizontal angle, radians. 0 looks at the front of the cabinet. */
@@ -27,20 +57,20 @@ interface Framing {
   target: [number, number, number]
 }
 
-/** Framing per canonical view. Distances are metres: this is a desk object. */
-const FRAMING: Record<InstrumentView, Framing> = {
+/** Framing per intervention mode. Distances are metres: this is a desk object. */
+const FRAMING: Record<CameraMode, Framing> = {
   // At rest: a three-quarter product view that shows front, side and lid top.
   arca: { azimuth: 0.62, elevation: 0.38, distance: 0.62, target: [0, 0.055, 0] },
-  // Opened: pull up and back so the raised lid stays in frame with the interior.
-  cabinet: { azimuth: 0.44, elevation: 0.4, distance: 0.94, target: [0, 0.095, 0.012] },
-  // Cell IV: closer, steeper, looking down into the compartment deck.
-  cell: { azimuth: 0.28, elevation: 0.68, distance: 0.66, target: [0, 0.07, 0.015] },
-  // At the carriage: over the drawer, rods filling the frame.
-  working: { azimuth: 0.16, elevation: 0.72, distance: 0.40, target: [0, 0.03, 0.155] },
-  // Consulting the Tone: include the lid so the Mensa and the rule are both read.
-  tone: { azimuth: 0.26, elevation: 0.6, distance: 0.66, target: [0, 0.06, 0.105] },
+  // Opened: steep, because the carcass front apron stands 54 mm above the deck
+  // only 80 mm in front of it. Below about 60 degrees of elevation that apron
+  // hides the storage deck completely — at M1.2's 0.4 rad the reader was told
+  // to take a virga while looking at the lid and a wooden wall.
+  open: { azimuth: 0.34, elevation: 0.93, distance: 0.60, target: [0, 0.058, 0.004] },
+  // At the carriage: the drawer AND the deck above it in one frame, because
+  // the second and third carriers are still lifted out of the cell from here.
+  working: { azimuth: 0.2, elevation: 0.88, distance: 0.64, target: [0, 0.042, 0.07] },
   // The folio: reveal the result without losing the carriage that printed it.
-  revelation: { azimuth: 0.1, elevation: 0.72, distance: 0.56, target: [0, 0.03, 0.245] },
+  revelation: { azimuth: 0.1, elevation: 0.7, distance: 0.66, target: [0, 0.035, 0.18] },
 }
 
 /** Aspect the framings above were composed at. */
@@ -92,16 +122,18 @@ export function dollyBy(state: OrbitState, factor: number) {
  */
 export function useCameraDirector(
   orbit: React.RefObject<OrbitState>,
-  view: InstrumentView,
+  mode: CameraMode,
   reducedMotion: boolean,
 ) {
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
-  const goal = useMemo(() => FRAMING[view], [view])
+  const goal = useMemo(() => FRAMING[mode], [mode])
   const goalTarget = useRef(new THREE.Vector3(...goal.target))
   const aimed = useMemo(() => new THREE.Vector3(), [])
 
-  // A view change re-aims the director and takes back control for the move.
+  // Only a MODE change re-aims the director and takes back control for the
+  // move. Once the reader has orbited, the director yields until either the
+  // instrument physically changes or Recentre is pressed.
   useEffect(() => {
     goalTarget.current.set(...goal.target)
     if (orbit.current) orbit.current.userDriven = false
@@ -114,28 +146,30 @@ export function useCameraDirector(
     // Reduced motion: arrive immediately rather than sweeping the reader there.
     const ease = reducedMotion ? 1 : 1 - Math.pow(0.0016, delta)
 
-    // On a tall viewport the extra standoff leaves the instrument riding high,
-    // so the look-at point rises with it and the object stays centred.
-    const aspectNow = size.height > 0 ? size.width / size.height : AUTHORED_ASPECT
-    const rise = Math.max(0, AUTHORED_ASPECT / Math.max(aspectNow, 0.2) - 1) * 0.045
-    aimed.copy(goalTarget.current).y += rise
+    // The framings are authored for a landscape viewport. A camera's fov is
+    // VERTICAL, so on a tall phone the horizontal field collapses and a
+    // distance tuned on a desktop puts the cabinet through both edges. Back
+    // off by however much narrower this viewport is than the authored one.
+    //
+    // ^0.75 rather than linear: backing off by the full ratio is correct for a
+    // flat card but over-corrects for a deep object, leaving it tiny. And
+    // capped, because uncapped it reached 2.42x on a folded Fold, which put the
+    // cabinet at 44% of the frame width with most of the screen empty around
+    // it — and, in the open framing, past the fog's far plane entirely.
+    const aspect = size.height > 0 ? size.width / size.height : AUTHORED_ASPECT
+    const fit = THREE.MathUtils.clamp(
+      Math.pow(AUTHORED_ASPECT / Math.max(aspect, 0.2), 0.75), 1, MAX_ASPECT_FIT,
+    )
+
+    // The extra standoff leaves the instrument riding high in a tall frame, so
+    // the aim point rises with it. It rises by the SAME capped factor: driven
+    // by the uncapped ratio it lifted the aim 101 mm on a folded Fold and hung
+    // the cabinet off the bottom of the screen.
+    aimed.copy(goalTarget.current).y += (fit - 1) * 0.045
     state.target.lerp(aimed, ease)
     if (!state.userDriven) {
       state.azimuth = THREE.MathUtils.lerp(state.azimuth, goal.azimuth, ease)
       state.elevation = THREE.MathUtils.lerp(state.elevation, goal.elevation, ease)
-      // The framings are authored for a landscape viewport. A camera's fov is
-      // VERTICAL, so on a tall phone the horizontal field collapses and a
-      // distance tuned on a desktop puts the cabinet through both edges. Back
-      // off by however much narrower this viewport is than the authored one.
-      const aspect = size.height > 0 ? size.width / size.height : AUTHORED_ASPECT
-      // ^0.75 rather than linear: backing off by the full ratio is correct for
-      // a flat card but over-corrects for a deep object, leaving it tiny.
-      // Capped, because uncapped it reached 2.42x on a folded Fold, which put
-      // the cabinet at 44% of the frame width with most of the screen empty
-      // above and below it — and, in the open framing, past the fog.
-      const fit = THREE.MathUtils.clamp(
-        Math.pow(AUTHORED_ASPECT / Math.max(aspect, 0.2), 0.75), 1, MAX_ASPECT_FIT,
-      )
       state.distance = THREE.MathUtils.lerp(state.distance, goal.distance * fit, ease)
     }
 
