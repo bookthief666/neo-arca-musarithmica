@@ -107,6 +107,42 @@ describe('the semantic instrument', () => {
 
     await user.click(screen.getByRole('button', { name: /^Engage Tone II/ }))
     expect(state.toneEngaged).toBe(true)
+    expect(screen.getByRole('button', { name: /Operate LECTIO/ })).toBeEnabled()
+  })
+
+  it('offers a retry, not a reset, when a reading is refused', async () => {
+    const user = userEvent.setup()
+    let state = createInitialState()
+    const dispatch = (action: InstrumentAction) => {
+      state = instrumentReducer(state, action, manifestFixture)
+      rerender(harness(state, dispatch))
+    }
+    const { rerender } = render(harness(state, dispatch))
+    await open(user)
+    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
+    await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
+    await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
+    for (const template of manifestFixture.rod_templates) {
+      await user.click(screen.getByRole('button', { name: `Lift ${template.label} from Cell IV` }))
+      await user.click(screen.getByRole('button', { name: new RegExp(`Seat held virga, ${template.label}`) }))
+    }
+    for (const slider of screen.getAllByRole('slider')) {
+      slider.focus()
+      await user.keyboard('{Home}')
+    }
+    await user.click(screen.getByRole('button', { name: /^Engage Tone II/ }))
+
+    const disposition = JSON.stringify(state.rods)
+    dispatch({ type: 'EXECUTION_ERROR', message: 'The historical alignment was rejected.' })
+
+    // The physical disposition survives the refusal entirely.
+    expect(JSON.stringify(state.rods)).toBe(disposition)
+    expect(state.toneEngaged).toBe(true)
+    expect(isAlignmentReady(state, manifestFixture)).toBe(true)
+
+    // And the offer is to try the SAME reading again, with no reset anywhere.
+    expect(screen.getByRole('button', { name: /Retry LECTIO/ })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /reset/i })).not.toBeInTheDocument()
   })
 
   it('never lets a band offset leave the canonical range', async () => {

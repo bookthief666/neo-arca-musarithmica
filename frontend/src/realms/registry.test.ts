@@ -23,18 +23,28 @@ describe('Arca presentation realms', () => {
     expect(Object.values(REALM_REGISTRY).every(Object.isFrozen)).toBe(true)
   })
 
-  it('derives terse Historica scholia from canonical affordances', () => {
+  it('derives concrete first-use Historica scholia from canonical affordances', () => {
+    // Each line names the PART and the ACT. "Take a virga" and "Bring the
+    // first bands into concord" are accurate and teach nothing: a first-time
+    // reader does not yet know what a virga or a band is, or where either is.
+    const say = (affordance: Parameters<typeof getRealmGuidance>[1]) =>
+      getRealmGuidance('historica', affordance, 'scholia')?.text
+
+    expect(say('open_arca')).toBe('Open the instrument.')
+    expect(say('focus_bank_i')).toBe('Open Bank I.')
+    expect(say('open_cell_iv')).toBe('Open Cell IV; the verified virgae are stored within.')
+    expect(say('deploy_rods')).toBe('Lift a virga from its socket.')
+    expect(say('place_held_rod')).toBe('Seat the lifted virga in the illuminated channel.')
+    expect(say('align_rods')).toBe('Slide each virga until band I lies beneath the reader.')
+    expect(say('engage_tone_ii')).toBe('The rule is concordant. Engage Tone II.')
+    expect(say('read_transverse')).toBe('Tone II is set. Operate LECTIO.')
+    expect(say('await_execution')).toBe('The Arca is reading.')
+    expect(say('inspect_revelation')).toBe('Four voices are disclosed.')
+    expect(say('recover')).toBe('The disposition is preserved; restore the reading.')
+
     expect(getRealmGuidance('historica', 'open_arca', 'scholia')).toEqual({
       affordance: 'open_arca',
       text: 'Open the instrument.',
-    })
-    expect(getRealmGuidance('historica', 'deploy_rods', 'scholia')).toEqual({
-      affordance: 'deploy_rods',
-      text: 'Take a virga.',
-    })
-    expect(getRealmGuidance('historica', 'align_rods', 'scholia')).toEqual({
-      affordance: 'align_rods',
-      text: 'Bring the first bands into concord.',
     })
   })
 

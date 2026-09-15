@@ -190,13 +190,20 @@ export function AccessibleInstrumentControls({
           >
             Engage Tone II {manifest.tone.name}
           </button>
+          {/* A failed reading is retried, not reset. The rods, the bands and
+              the Tone are all still where the reader put them, so the action
+              on offer is the same one again — never a destructive start-over. */}
           <button
             type="button"
             disabled={!executionReady || state.phase === 'executing'}
-            data-cued={nextAffordance === 'read_transverse'}
+            data-cued={nextAffordance === 'read_transverse' || nextAffordance === 'recover'}
             onClick={onExecute}
           >
-            {state.phase === 'executing' ? 'Reading…' : 'Read the transverse'}
+            {state.phase === 'executing'
+              ? 'Reading…'
+              : state.error && executionReady
+                ? 'Retry LECTIO; the disposition is preserved'
+                : 'Operate LECTIO, reading the transverse'}
           </button>
           {state.execution && state.phase === 'revealed' && (
             <button type="button" onClick={onReturn}>Return to the rods</button>
