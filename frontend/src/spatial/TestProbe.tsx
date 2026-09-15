@@ -17,6 +17,7 @@ export function SpatialTestProbe() {
   const camera = useThree((s) => s.camera)
   const scene = useThree((s) => s.scene)
   const size = useThree((s) => s.size)
+  const gl = useThree((s) => s.gl)
 
   useEffect(() => {
     if (!import.meta.env.DEV) return
@@ -40,10 +41,24 @@ export function SpatialTestProbe() {
         return { ...project(world.x, world.y, world.z), world: world.toArray() }
       },
       camera: () => camera.position.toArray(),
+      /**
+       * Hardware-independent render cost. Frame rate under a software
+       * rasteriser is meaningless, but draw calls, triangles and shader
+       * programs are the numbers that actually predict behaviour on a phone
+       * or a standalone headset.
+       */
+      cost: () => ({
+        drawCalls: gl.info.render.calls,
+        triangles: gl.info.render.triangles,
+        programs: gl.info.programs?.length ?? 0,
+        geometries: gl.info.memory.geometries,
+        textures: gl.info.memory.textures,
+        pixelRatio: gl.getPixelRatio(),
+      }),
     }
     ;(window as unknown as { __arcaProbe?: typeof probe }).__arcaProbe = probe
     return () => { delete (window as unknown as { __arcaProbe?: typeof probe }).__arcaProbe }
-  }, [camera, scene, size])
+  }, [camera, scene, size, gl])
 
   return null
 }

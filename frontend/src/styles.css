@@ -3091,3 +3091,11 @@ button.bank-plate[aria-pressed='true'] {
   .spatial-reset { font-size: 0.76rem; padding: 0.3rem 0.7rem; }
   .spatial-controls { max-width: calc(100vw - 1.4rem); }
 }
+
+.spatial-loading {
+  position: absolute; inset: 0;
+  display: grid; place-content: center;
+  margin: 0;
+  font-family: var(--face-text); font-style: italic;
+  font-size: 1rem; color: #a98a60;
+}

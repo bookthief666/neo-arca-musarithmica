@@ -19,7 +19,15 @@ import type {
   InstrumentState,
   RodTemplate,
 } from './instrument/types'
-import { SpatialArca } from './spatial/SpatialArca'
+import { lazy, Suspense } from 'react'
+/**
+ * three.js is by far the heaviest thing this application ships. Loading it
+ * lazily keeps it out of the initial parse, off the critical path for the
+ * fallback renderer entirely, and in its own cacheable chunk.
+ */
+const SpatialArca = lazy(() =>
+  import('./spatial/SpatialArca').then((m) => ({ default: m.SpatialArca })),
+)
 import { AccessibleInstrumentControls } from './spatial/AccessibleInstrumentControls'
 import { resolveRenderer, supportsWebGL } from './renderer'
 import { getRealmGuidance } from './realms/guidance'
@@ -206,22 +214,24 @@ export default function App() {
         <p className="visually-hidden" aria-live="polite">
           Current instrument state: {nextAffordance.replaceAll('_', ' ')}.
         </p>
-        <SpatialArca
-          manifest={manifest}
-          state={state}
-          view={view}
-          nextAffordance={nextAffordance}
-          alignmentReady={alignmentReady}
-          executionReady={alignmentReady && state.toneEngaged}
-          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-          onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
-          onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-          onExecute={execute}
-        />
+        <Suspense fallback={<p className="spatial-loading">Setting the instrument on the desk…</p>}>
+          <SpatialArca
+              manifest={manifest}
+            state={state}
+            view={view}
+            nextAffordance={nextAffordance}
+            alignmentReady={alignmentReady}
+            executionReady={alignmentReady && state.toneEngaged}
+            onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
+            onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
+            onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
+            onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
+            onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
+            onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
+              onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
+              onExecute={execute}
+          />
+        </Suspense>
         {scholium && <Scholium text={scholium} place="cornice" />}
         {/* The same canonical actions, as real buttons in the real tab order. */}
         <AccessibleInstrumentControls

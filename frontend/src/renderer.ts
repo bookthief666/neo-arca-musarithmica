@@ -21,13 +21,13 @@ export function resolveRenderer(search?: string): RendererId {
 /** True when this browser can actually present the spatial renderer. */
 export function supportsWebGL(): boolean {
   if (typeof document === 'undefined') return false
+  // Cheap negative first. Environments without WebGL — jsdom among them — have
+  // no WebGLRenderingContext at all, and asking such a canvas for a context
+  // logs a noisy "not implemented" before returning null anyway.
+  if (typeof WebGLRenderingContext === 'undefined') return false
   try {
     const probe = document.createElement('canvas')
-    return Boolean(
-      probe.getContext('webgl2') ??
-      probe.getContext('webgl') ??
-      probe.getContext('experimental-webgl'),
-    )
+    return Boolean(probe.getContext('webgl2') ?? probe.getContext('webgl'))
   } catch {
     return false
   }
