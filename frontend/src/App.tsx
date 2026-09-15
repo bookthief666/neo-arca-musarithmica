@@ -19,6 +19,9 @@ import type {
   InstrumentState,
   RodTemplate,
 } from './instrument/types'
+import { SpatialArca } from './spatial/SpatialArca'
+import { AccessibleInstrumentControls } from './spatial/AccessibleInstrumentControls'
+import { resolveRenderer, supportsWebGL } from './renderer'
 import { getRealmGuidance } from './realms/guidance'
 import { DEFAULT_REALM_ID, getRealmDefinition } from './realms/registry'
 import type { GuidanceMode } from './realms/types'
@@ -95,6 +98,10 @@ export default function App() {
   const [transfer, setTransfer] = useState<RodTransfer | null>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const transferKey = useRef(0)
+
+  // Resolved once: a renderer that changed under the reader mid-session would
+  // discard the instrument's state for no reason they could see.
+  const [renderer] = useState(() => (supportsWebGL() ? resolveRenderer() : 'legacy'))
 
   const [state, dispatch] = useReducer(
     (current: InstrumentState, action: InstrumentAction) =>
@@ -180,9 +187,70 @@ export default function App() {
   // from underneath the rods that produced it rather than replacing them.
   const carriageMounted = view === 'working' || view === 'tone' || view === 'revelation'
 
+  // M1.2: the spatial instrument is the default presentation. The M1.1 DOM
+  // renderer stays reachable at ?renderer=legacy as rollback and as the
+  // fallback wherever WebGL is unavailable.
+  if (renderer === 'spatial') {
+    return (
+      <main
+        className="instrument-shell instrument-shell--spatial"
+        data-phase={state.phase}
+        data-view={view}
+        data-next-affordance={nextAffordance}
+        data-reduced-motion={state.reducedMotion}
+        data-realm={realm.id}
+        data-renderer="spatial"
+        data-guidance-mode={GUIDANCE_MODE}
+        data-realm-guidance={realmGuidance?.affordance ?? 'none'}
+      >
+        <p className="visually-hidden" aria-live="polite">
+          Current instrument state: {nextAffordance.replaceAll('_', ' ')}.
+        </p>
+        <SpatialArca
+          manifest={manifest}
+          state={state}
+          view={view}
+          nextAffordance={nextAffordance}
+          alignmentReady={alignmentReady}
+          executionReady={alignmentReady && state.toneEngaged}
+          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
+          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
+          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
+          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
+          onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
+          onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
+          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
+          onExecute={execute}
+        />
+        {scholium && <Scholium text={scholium} place="cornice" />}
+        {/* The same canonical actions, as real buttons in the real tab order. */}
+        <AccessibleInstrumentControls
+          manifest={manifest}
+          state={state}
+          nextAffordance={nextAffordance}
+          alignmentReady={alignmentReady}
+          executionReady={alignmentReady && state.toneEngaged}
+          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
+          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
+          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
+          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
+          onDeployRod={(templateId) => {
+            const template = manifest.rod_templates.find((t) => t.template_id === templateId)
+            if (template) dispatch({ type: 'DEPLOY_ROD', template })
+          }}
+          onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
+          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
+          onExecute={execute}
+          onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
+        />
+      </main>
+    )
+  }
+
   return (
     <main
       className="instrument-shell"
+      data-renderer="legacy"
       data-phase={state.phase}
       data-view={view}
       data-next-affordance={nextAffordance}
