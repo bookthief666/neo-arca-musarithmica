@@ -30,6 +30,11 @@ import type {
 /** How high a carrier rises at the top of its arc between cell and channel. */
 const LIFT_APEX = 0.05
 
+/* The held pose, in metres. Large enough that a 9 mm carrier is unmistakably
+   OUT of its 8 mm mortise rather than merely sitting high in it. */
+const HELD_LIFT = 0.022
+const HELD_FORWARD = 0.024
+
 const CELL_Z = (() => {
   const backZ = -CASE.depth / 2 + CASE.wall + INTERIOR.railDepth
   const frontZ = CASE.depth / 2 - CASE.wall
@@ -39,6 +44,17 @@ const CELL_Z = (() => {
 /** Where a stored carrier rests in its Cell IV slot. */
 function slotPose(lane: number): [number, number, number] {
   return [lane * CELL_IV.slotPitch, DECK_TOP - SLOT_DEPTH + VIRGA.thickness / 2 + 0.0006, CELL_Z]
+}
+
+/**
+ * Where a carrier hangs once it has been lifted OUT of its mortise but has not
+ * yet been seated. It rises clear of the cell and stands slightly forward, so
+ * the reader can see both the object in the hand and the empty socket it came
+ * from in the same glance.
+ */
+function heldPose(lane: number): [number, number, number] {
+  const [x, y, z] = slotPose(lane)
+  return [x, y + HELD_LIFT, z + HELD_FORWARD]
 }
 
 /** Where a seated carrier rests in its channel at a given canonical offset. */
@@ -56,12 +72,13 @@ interface VirgaeProps {
   materials: ArcaMaterials
   nextAffordance: InstrumentAffordance
   travelRef: React.RefObject<number>
-  onDeployRod: (template: RodTemplate) => void
+  onRetrieveRod: (template: RodTemplate) => void
+  onPlaceHeldRod: () => void
   onMoveRod: (instanceId: string, offset: number) => void
 }
 
 export function Virgae({
-  manifest, state, materials, nextAffordance, travelRef, onDeployRod, onMoveRod,
+  manifest, state, materials, nextAffordance, travelRef, onRetrieveRod, onPlaceHeldRod, onMoveRod,
 }: VirgaeProps) {
   const sources = useMemo(
     () => new Map(manifest.source_columns.map((source) => [source.id, source])),
@@ -78,11 +95,16 @@ export function Virgae({
   const poses = useMemo(() => {
     return manifest.rod_templates.map((template, lane) => {
       const laneIndex = lane - 1
-      const seated = state.rods.find((rod) => rod.template_id === template.template_id)
+      const rod = state.rods.find((candidate) => candidate.template_id === template.template_id) ?? null
       return {
         template,
         lane: laneIndex,
-        seated: seated ?? null,
+        rod,
+        // Canonical location IS the physical state. A rod in the hand has left
+        // its mortise but has NOT reached the channel, and must not be posed
+        // as though it had.
+        seated: rod?.location === 'workspace' ? rod : null,
+        held: rod?.location === 'hand' ? rod : null,
         source: sources.get(template.source_column_id) ?? null,
       }
     })
@@ -90,13 +112,16 @@ export function Virgae({
 
   useFrame((_, delta) => {
     const travel = travelRef.current ?? 0
-    poses.forEach(({ template, lane, seated }) => {
+    poses.forEach(({ template, lane, seated, held }) => {
       const node = groups.current.get(template.template_id)
       if (!node) return
       const target = seated
         ? channelPose(lane, seated.vertical_offset)
-        : slotPose(lane)
+        : held
+          ? heldPose(lane)
+          : slotPose(lane)
       const goal = new THREE.Vector3(...target)
+      // Only a SEATED carrier rides with the drawer. One in the hand does not.
       if (seated) goal.z += travel
 
       if (state.reducedMotion) {
@@ -191,11 +216,13 @@ export function Virgae({
 
   return (
     <group>
-      {poses.map(({ template, lane, seated, source }) => {
+      {poses.map(({ template, lane, rod, seated, held, source }) => {
         if (!source) return null
-        const stored = !seated
-        // A stored carrier is only liftable once its cell is open.
-        const liftable = stored && cellOpen
+        const stored = !rod
+        // A stored carrier is only liftable once its cell is open, and only
+        // while the hand is empty: one carrier at a time, as the reducer says.
+        const liftable = stored && cellOpen && !state.heldRodId
+        const isHeld = Boolean(held)
         return (
           <group
             key={template.template_id}
@@ -215,20 +242,27 @@ export function Virgae({
             <Virga
               source={source}
               materials={materials}
-              cued={liftable && deployCued}
+              cued={(liftable && deployCued) || isHeld}
+              held={isHeld}
               onPointerDown={(event: ThreeEvent<PointerEvent>) => {
+                // The decision table is canonical location, nothing else.
                 if (stored) {
                   if (!liftable) return
                   event.stopPropagation()
-                  onDeployRod(template)
+                  onRetrieveRod(template)
                   return
                 }
-                beginDrag(event, seated.instance_id, lane)
+                if (isHeld) {
+                  event.stopPropagation()
+                  onPlaceHeldRod()
+                  return
+                }
+                if (seated) beginDrag(event, seated.instance_id, lane)
               }}
               onPointerOver={(event: ThreeEvent<PointerEvent>) => {
-                if (!liftable && stored) return
+                if (stored && !liftable) return
                 event.stopPropagation()
-                document.body.style.cursor = stored ? 'pointer' : 'ns-resize'
+                document.body.style.cursor = seated ? 'ns-resize' : 'pointer'
               }}
               onPointerOut={() => { document.body.style.cursor = 'auto' }}
             />

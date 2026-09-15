@@ -31,7 +31,10 @@ export interface AccessibleControlsProps {
   onClose: () => void
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
-  onDeployRod: (templateId: string) => void
+  /** Lift a stored virga into the hand. Dispatches canonical RETRIEVE_ROD. */
+  onRetrieveRod: (templateId: string) => void
+  /** Seat the held virga. Dispatches canonical PLACE_HELD_ROD. */
+  onPlaceHeldRod: () => void
   onMoveRod: (instanceId: string, offset: number) => void
   onEngageTone: () => void
   onExecute: () => void
@@ -40,15 +43,17 @@ export interface AccessibleControlsProps {
 
 export function AccessibleInstrumentControls({
   manifest, state, nextAffordance, alignmentReady, executionReady,
-  onOpen, onClose, onFocusBank, onFocusCell, onDeployRod, onMoveRod,
+  onOpen, onClose, onFocusBank, onFocusCell, onRetrieveRod, onPlaceHeldRod, onMoveRod,
   onEngageTone, onExecute, onReturn,
 }: AccessibleControlsProps) {
   const [open, setOpen] = useState(false)
   const panelId = useId()
 
   const isOpen = state.phase !== 'dormant'
-  const taken = new Set(state.rods.map((rod) => rod.template_id))
   const sources = new Map(manifest.source_columns.map((source) => [source.id, source]))
+  const held = state.heldRodId
+    ? state.rods.find((rod) => rod.instance_id === state.heldRodId) ?? null
+    : null
   const workspaceRods = state.rods.filter((rod) => rod.location === 'workspace')
 
   return (
@@ -96,24 +101,50 @@ export function AccessibleInstrumentControls({
           </button>
         </section>
 
+        {/* The SAME two-stage grammar the object performs: a virga is lifted
+            into the hand, and then seated. Skipping the held state here would
+            leave a screen-reader user operating a different machine from the
+            one the scene is showing. */}
         <section aria-label="The virgae">
-          {manifest.rod_templates.map((template) => (
-            taken.has(template.template_id) ? (
-              <p key={template.template_id} className="spatial-controls__done">
-                {template.label} — lifted out of Cell IV
-              </p>
-            ) : (
+          {manifest.rod_templates.map((template) => {
+            const rod = state.rods.find((candidate) => candidate.template_id === template.template_id)
+            const isHeld = rod !== undefined && rod.instance_id === state.heldRodId
+
+            if (isHeld) {
+              return (
+                <button
+                  key={template.template_id}
+                  type="button"
+                  data-cued={nextAffordance === 'place_held_rod'}
+                  onClick={onPlaceHeldRod}
+                >
+                  Seat held virga, {template.label}, in the transverse carriage
+                </button>
+              )
+            }
+
+            if (rod) {
+              return (
+                <p key={template.template_id} className="spatial-controls__done">
+                  {template.label} — seated in the transverse carriage
+                </p>
+              )
+            }
+
+            return (
               <button
                 key={template.template_id}
                 type="button"
-                disabled={state.focusedCell !== 4}
+                // One hand, one carrier: while a virga is held, the only rod
+                // action available is seating it.
+                disabled={state.focusedCell !== 4 || held !== null}
                 data-cued={nextAffordance === 'deploy_rods'}
-                onClick={() => onDeployRod(template.template_id)}
+                onClick={() => onRetrieveRod(template.template_id)}
               >
-                Deploy {template.label} to the transverse rule
+                Lift {template.label} from Cell IV
               </button>
             )
-          ))}
+          })}
         </section>
 
         {workspaceRods.length > 0 && (

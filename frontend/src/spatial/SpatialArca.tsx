@@ -40,7 +40,10 @@ export interface SpatialArcaProps {
   onClose: () => void
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
-  onDeployRod: (template: RodTemplate) => void
+  /** Lift a stored virga into the hand. Dispatches canonical RETRIEVE_ROD. */
+  onRetrieveRod: (template: RodTemplate) => void
+  /** Seat the held virga in its channel. Dispatches canonical PLACE_HELD_ROD. */
+  onPlaceHeldRod: () => void
   onMoveRod: (instanceId: string, offset: number) => void
   onEngageTone: () => void
   onExecute: () => void
@@ -270,7 +273,8 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           materials={materials}
           nextAffordance={rest.nextAffordance}
           travelRef={travelRef}
-          onDeployRod={rest.onDeployRod}
+          onRetrieveRod={rest.onRetrieveRod}
+          onPlaceHeldRod={rest.onPlaceHeldRod}
           onMoveRod={rest.onMoveRod}
         />
       )}

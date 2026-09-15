@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AccessibleInstrumentControls } from './AccessibleInstrumentControls'
 import {
-  createInitialState, instrumentReducer, isAlignmentReady, MAX_VERTICAL_OFFSET,
+  createInitialState, getNextAffordance, instrumentReducer, isAlignmentReady,
+  MAX_VERTICAL_OFFSET,
 } from '../instrument/model'
 import type { InstrumentAction, InstrumentState } from '../instrument/types'
 import { manifestFixture } from '../test/fixtures'
@@ -20,17 +21,18 @@ function harness(state: InstrumentState, dispatch: (action: InstrumentAction) =>
     <AccessibleInstrumentControls
       manifest={manifestFixture}
       state={state}
-      nextAffordance="open_arca"
+      nextAffordance={getNextAffordance(state, manifestFixture)}
       alignmentReady={alignmentReady}
       executionReady={alignmentReady && state.toneEngaged}
       onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
       onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
       onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
       onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-      onDeployRod={(id) => {
+      onRetrieveRod={(id) => {
         const template = manifestFixture.rod_templates.find((t) => t.template_id === id)
-        if (template) dispatch({ type: 'DEPLOY_ROD', template })
+        if (template) dispatch({ type: 'RETRIEVE_ROD', template })
       }}
+      onPlaceHeldRod={() => dispatch({ type: 'PLACE_HELD_ROD' })}
       onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
       onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
       onExecute={() => dispatch({ type: 'EXECUTE' })}
@@ -79,7 +81,17 @@ describe('the semantic instrument', () => {
     expect(state.focusedCell).toBe(4)
 
     for (const template of manifestFixture.rod_templates) {
-      await user.click(screen.getByRole('button', { name: `Deploy ${template.label} to the transverse rule` }))
+      await user.click(screen.getByRole('button', { name: `Lift ${template.label} from Cell IV` }))
+      // The carrier is in the hand, not yet on the rule: the semantic surface
+      // must say so, and must not offer another lift while it is held.
+      expect(state.heldRodId).toBe(`rod-${template.template_id}`)
+      expect(state.rods.find((rod) => rod.template_id === template.template_id)?.location).toBe('hand')
+      for (const other of manifestFixture.rod_templates) {
+        const lift = screen.queryByRole('button', { name: `Lift ${other.label} from Cell IV` })
+        if (lift) expect(lift).toBeDisabled()
+      }
+      await user.click(screen.getByRole('button', { name: new RegExp(`Seat held virga, ${template.label}`) }))
+      expect(state.heldRodId).toBeNull()
     }
     // Exactly three carriers exist, each once: a transfer must not clone.
     expect(state.rods).toHaveLength(3)
@@ -110,7 +122,10 @@ describe('the semantic instrument', () => {
     await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
     await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
     await user.click(screen.getByRole('button', {
-      name: `Deploy ${manifestFixture.rod_templates[0].label} to the transverse rule`,
+      name: `Lift ${manifestFixture.rod_templates[0].label} from Cell IV`,
+    }))
+    await user.click(screen.getByRole('button', {
+      name: new RegExp(`Seat held virga, ${manifestFixture.rod_templates[0].label}`),
     }))
 
     const slider = screen.getAllByRole('slider')[0]
@@ -152,7 +167,10 @@ describe('the semantic instrument', () => {
     await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
     await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
     await user.click(screen.getByRole('button', {
-      name: `Deploy ${manifestFixture.rod_templates[0].label} to the transverse rule`,
+      name: `Lift ${manifestFixture.rod_templates[0].label} from Cell IV`,
+    }))
+    await user.click(screen.getByRole('button', {
+      name: new RegExp(`Seat held virga, ${manifestFixture.rod_templates[0].label}`),
     }))
 
     const slider = screen.getAllByRole('slider')[0]

@@ -226,7 +226,8 @@ export default function App() {
             onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
             onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
             onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-            onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
+            onRetrieveRod={(template) => dispatch({ type: 'RETRIEVE_ROD', template })}
+            onPlaceHeldRod={() => dispatch({ type: 'PLACE_HELD_ROD' })}
             onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
               onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
               onExecute={execute}
@@ -244,10 +245,11 @@ export default function App() {
           onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
           onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
           onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-          onDeployRod={(templateId) => {
+          onRetrieveRod={(templateId) => {
             const template = manifest.rod_templates.find((t) => t.template_id === templateId)
-            if (template) dispatch({ type: 'DEPLOY_ROD', template })
+            if (template) dispatch({ type: 'RETRIEVE_ROD', template })
           }}
+          onPlaceHeldRod={() => dispatch({ type: 'PLACE_HELD_ROD' })}
           onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
           onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
           onExecute={execute}

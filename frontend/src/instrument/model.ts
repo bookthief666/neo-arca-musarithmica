@@ -105,7 +105,15 @@ export function instrumentReducer(
       if (state.focusedBank !== 1 || action.cell !== 4) return state
       return { ...state, focusedCell: action.cell, phase: 'cell_focus', error: null }
     case 'RETRIEVE_ROD': {
-      if (state.focusedCell !== 4 || state.rods.some((rod) => rod.template_id === action.template.template_id)) {
+      // A hand holds ONE carrier. Without this guard a second lift overwrote
+      // heldRodId and left the first rod stranded in 'hand' forever, which the
+      // spatial renderer would then draw as two suspended virgae with only one
+      // of them placeable.
+      if (
+        state.heldRodId ||
+        state.focusedCell !== 4 ||
+        state.rods.some((rod) => rod.template_id === action.template.template_id)
+      ) {
         return state
       }
       const rod = createRodInstance(state, action.template, 'hand')

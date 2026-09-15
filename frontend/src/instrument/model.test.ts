@@ -67,6 +67,55 @@ describe('canonical instrument model', () => {
     expect(state.rods[0].location).toBe('workspace')
   })
 
+  it('holds exactly one virga at a time and refuses a second concurrent lift', () => {
+    let state = reduce(createInitialState(), { type: 'OPEN_ARCA' })
+    state = reduce(state, { type: 'FOCUS_BANK', bank: 1 })
+    state = reduce(state, { type: 'FOCUS_CELL', cell: 4 })
+
+    state = reduce(state, { type: 'RETRIEVE_ROD', template: manifestFixture.rod_templates[0] })
+    const firstId = state.heldRodId
+    expect(firstId).toBe(`rod-${manifestFixture.rod_templates[0].template_id}`)
+    expect(state.rods).toHaveLength(1)
+    expect(state.rods[0].location).toBe('hand')
+
+    // A hand can only hold one carrier. Reaching for a second must be inert,
+    // not silently produce two suspended rods with one heldRodId pointing at
+    // whichever happened to be written last.
+    state = reduce(state, { type: 'RETRIEVE_ROD', template: manifestFixture.rod_templates[1] })
+    expect(state.heldRodId).toBe(firstId)
+    expect(state.rods).toHaveLength(1)
+    expect(state.rods.filter((rod) => rod.location === 'hand')).toHaveLength(1)
+  })
+
+  it('seats the held virga without changing its instance identity', () => {
+    let state = reduce(createInitialState(), { type: 'OPEN_ARCA' })
+    state = reduce(state, { type: 'FOCUS_BANK', bank: 1 })
+    state = reduce(state, { type: 'FOCUS_CELL', cell: 4 })
+    state = reduce(state, { type: 'RETRIEVE_ROD', template: manifestFixture.rod_templates[0] })
+    const instanceId = state.heldRodId
+
+    state = reduce(state, { type: 'PLACE_HELD_ROD' })
+    expect(state.heldRodId).toBeNull()
+    expect(state.rods).toHaveLength(1)
+    expect(state.rods[0].instance_id).toBe(instanceId)
+    expect(state.rods[0].location).toBe('workspace')
+  })
+
+  it('repeats lift and seat for all three required virgae without duplication', () => {
+    let state = reduce(createInitialState(), { type: 'OPEN_ARCA' })
+    state = reduce(state, { type: 'FOCUS_BANK', bank: 1 })
+    state = reduce(state, { type: 'FOCUS_CELL', cell: 4 })
+    for (const template of manifestFixture.rod_templates) {
+      state = reduce(state, { type: 'RETRIEVE_ROD', template })
+      expect(state.heldRodId).not.toBeNull()
+      state = reduce(state, { type: 'PLACE_HELD_ROD' })
+      expect(state.heldRodId).toBeNull()
+    }
+    expect(state.rods).toHaveLength(3)
+    expect(new Set(state.rods.map((rod) => rod.instance_id)).size).toBe(3)
+    expect(state.rods.every((rod) => rod.location === 'workspace')).toBe(true)
+  })
+
   it('creates repeated rod instances without mutating source templates', () => {
     const sourceBefore = structuredClone(manifestFixture.source_columns)
     const state = stateWithPlacedRods()
