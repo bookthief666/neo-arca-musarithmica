@@ -14,7 +14,7 @@ import { Carriage, type ChannelReading } from './scene/Carriage'
 import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
 import { SpatialTestProbe } from './TestProbe'
-import { shouldExtendCarriage, targetLane } from './operative'
+import { shouldExtendCarriage, targetLane, workspaceOffsets } from './operative'
 import type {
   HistoricalManifest,
   InstrumentAffordance,
@@ -216,6 +216,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   // revealed before the reader commits to placing, and stays out thereafter.
   const carriageOut = shouldExtendCarriage(rest.state)
   const activeTargetLane = targetLane(rest.manifest, rest.state)
+  const channelOffsets = workspaceOffsets(rest.manifest, rest.state)
   const travelRef = useRef(0)
 
   const sources = useMemo(
@@ -277,6 +278,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         travelRef={travelRef}
         targetLane={activeTargetLane}
         onPlaceHeldRod={rest.onPlaceHeldRod}
+        channelOffsets={channelOffsets}
       />
       {isOpen && (
         <Virgae

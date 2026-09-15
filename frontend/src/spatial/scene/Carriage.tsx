@@ -4,11 +4,15 @@ import * as THREE from 'three'
 import { CARRIAGE, CASE, READER, VIRGA } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { KnobPull } from './Hardware'
+import { DetentScale } from './DetentScale'
 
 /** Guide-lip height: below the rod's face, so the face stays readable. */
 const LIP_HEIGHT = 0.006
-/** Depth of each reading rail, front and back of the gap. */
-const RAIL_DEPTH = 0.008
+/* Depth of each reading rail, front and back of the gap. Slimmer than M1.2's
+   8 mm: with a shutter closed in every channel the old bridge read as one
+   solid brass slab lying across the drawer, and the aperture it was supposed
+   to be showing could not be found at all. */
+const RAIL_DEPTH = 0.005
 
 /**
  * THE PULL-OUT CARRIAGE and THE TRANSVERSE READER.
@@ -37,7 +41,7 @@ export interface ChannelReading {
 
 export function Carriage({
   materials, extended, reducedMotion, readings, concordant, children, onPullOut, travelRef,
-  targetLane = null, onPlaceHeldRod,
+  targetLane = null, onPlaceHeldRod, channelOffsets = [null, null, null],
 }: {
   materials: ArcaMaterials
   extended: boolean
@@ -51,6 +55,8 @@ export function Carriage({
   /** The one channel awaiting the carrier currently in the hand. */
   targetLane?: -1 | 0 | 1 | null
   onPlaceHeldRod?: () => void
+  /** Canonical band presented in each channel, or null where none is seated. */
+  channelOffsets?: [number | null, number | null, number | null]
 }) {
   const group = useRef<THREE.Group>(null)
 
@@ -189,6 +195,15 @@ export function Carriage({
                 <boxGeometry args={[0.004, LIP_HEIGHT, CARRIAGE.depth - wall * 2]} />
               </mesh>
             ))}
+
+            {/* The band index: what a "band" actually is, written on the
+                machine beside the thing that moves between them. */}
+            <DetentScale
+              laneX={x}
+              verticalOffset={channelOffsets[lane + 1] ?? null}
+              cued={concordant}
+              materials={materials}
+            />
           </group>
         )
       })}
@@ -208,7 +223,7 @@ export function Carriage({
             position={[0, 0, side * (READING_GAP / 2 + RAIL_DEPTH / 2)]}
             castShadow
           >
-            <boxGeometry args={[CARRIAGE.width - 0.01, READER.barHeight, RAIL_DEPTH]} />
+            <boxGeometry args={[CARRIAGE.width - 0.01, READER.barHeight * 0.62, RAIL_DEPTH]} />
           </mesh>
         ))}
 
@@ -220,7 +235,7 @@ export function Carriage({
             position={[side * (CARRIAGE.width / 2 - 0.008), 0, 0]}
             castShadow
           >
-            <boxGeometry args={[0.01, READER.barHeight * 1.3, READING_GAP + RAIL_DEPTH * 2]} />
+            <boxGeometry args={[0.01, READER.barHeight * 1.1, READING_GAP + RAIL_DEPTH * 2]} />
           </mesh>
         ))}
 
@@ -232,11 +247,14 @@ export function Carriage({
           return (
             <mesh
               key={lane}
+              name={`shutter:${lane}`}
               material={materials.brassDark}
-              position={[lane * CARRIAGE.channelPitch, -READER.barHeight * 0.1, 0]}
+              position={[lane * CARRIAGE.channelPitch, -READER.barHeight * 0.22, 0]}
               castShadow
             >
-              <boxGeometry args={[CARRIAGE.channelWidth + 0.004, READER.barHeight * 0.8, READING_GAP]} />
+              <boxGeometry args={[
+                CARRIAGE.channelWidth + 0.004, READER.barHeight * 0.52, READING_GAP * 0.94,
+              ]} />
             </mesh>
           )
         })}

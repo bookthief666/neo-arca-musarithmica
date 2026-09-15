@@ -96,7 +96,8 @@ export const INTERIOR = {
  * rather than a rotation the reader has to interpret.
  */
 export const CELL_IV = {
-  width: mm(96),
+  /** Wide enough for three mortises at the carriage's channel pitch. */
+  width: mm(116),
   /* A virga is 103.6 mm end to end once its collar and finial are counted, so
      the cell cannot be shorter than this and still contain one. */
   depth: mm(104),
@@ -105,8 +106,9 @@ export const CELL_IV = {
      stands 54 mm above the deck only 80 mm away, hides the carriers entirely. */
   centreZ: mm(-4),
   slotWidth: mm(24),
-  /** Centre-to-centre spacing of the three slots. */
-  slotPitch: mm(32),
+  /** Matches the carriage's channel pitch, so a carrier drops straight down
+      into its channel instead of fanning sideways on the way. */
+  slotPitch: mm(42),
   /**
    * THE COVER IS A BI-FOLD, NOT A SLIDE.
    *
@@ -164,8 +166,12 @@ export const CARRIAGE = {
   /** World height of the drawer's floor. */
   y: FLOOR_TOP,
   wall: mm(5),
-  /** Centre-to-centre spacing of the three working channels. */
-  channelPitch: mm(32),
+  /* 42 mm, not 32. At 32 the three 24 mm channels and their 4 mm guide lips
+     tiled the drawer edge to edge with nothing between them, so a band index
+     had physically nowhere to go — the first attempt at one rendered through
+     the lips and the neighbouring channel. 42 leaves a clear 10 mm gutter
+     beside each channel for the scale to be let into. */
+  channelPitch: mm(42),
   channelWidth: mm(24),
   channelDepth: mm(10),
   /* Touch volumes over a channel. A 24 mm channel is about 21 CSS px at the

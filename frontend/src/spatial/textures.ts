@@ -363,3 +363,56 @@ export function makeBrassPlateTexture(lines: { text: string; size: number; gap?:
 
   return finish(element, 8)
 }
+
+/**
+ * A channel's band index: the ten canonical offsets written I..X down a slim
+ * engraved strip beside the channel.
+ *
+ * ONE texture per scale, not ten labels. The reader needs to be able to count
+ * the stations a virga can occupy before being told to bring one to band I —
+ * an instruction that means nothing if the bands themselves are invisible.
+ * Drawn in the same engraved hand as the cabinet's other brass, so it reads as
+ * part of the instrument rather than as an overlay on it.
+ */
+export function makeDetentScaleTexture(count: number) {
+  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+  const cell = 64
+  const { element, context } = canvas(96, cell * count)
+  const h = cell * count
+
+  context.fillStyle = '#6d5730'
+  context.fillRect(0, 0, 96, h)
+  // A brushed grain along the strip, so it reads as metal rather than paper.
+  for (let i = 0; i < 160; i += 1) {
+    const y = Math.random() * h
+    context.strokeStyle = `rgba(255, 233, 186, ${0.02 + Math.random() * 0.05})`
+    context.lineWidth = 0.6
+    context.beginPath()
+    context.moveTo(0, y)
+    context.lineTo(96, y)
+    context.stroke()
+  }
+
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  for (let index = 0; index < count; index += 1) {
+    // Band I sits at the FOOT of the virga, which is the -Z end of the channel,
+    // so the strip counts in the same direction the rod's own bands run.
+    const y = index * cell + cell / 2
+    context.strokeStyle = 'rgba(38, 26, 10, 0.5)'
+    context.lineWidth = 2
+    context.beginPath()
+    context.moveTo(6, index * cell)
+    context.lineTo(90, index * cell)
+    context.stroke()
+
+    const numeral = ROMAN[index] ?? String(index + 1)
+    context.font = `600 ${numeral.length > 3 ? 24 : 30}px ${ENGRAVED}`
+    context.fillStyle = 'rgba(32, 22, 8, 0.82)'
+    context.fillText(numeral, 48, y + 1)
+    context.fillStyle = 'rgba(255, 238, 200, 0.5)'
+    context.fillText(numeral, 48, y)
+  }
+
+  return finish(element)
+}

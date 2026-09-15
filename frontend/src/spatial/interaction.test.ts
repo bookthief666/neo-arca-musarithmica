@@ -46,6 +46,17 @@ describe('constrained spatial manipulation', () => {
     }
   })
 
+  it('reaches every one of the ten canonical bands, one to one', () => {
+    // A detent scale the reader can count I..X is only honest if each numeral
+    // is actually reachable: nine of ten would be a scale with a dead stop.
+    const count = MAX_VERTICAL_OFFSET + 1
+    const seen = new Set<number>()
+    for (let index = 0; index < count; index += 1) {
+      seen.add(snapToDetent(index / MAX_VERTICAL_OFFSET, 0, 1, count))
+    }
+    expect([...seen].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+  })
+
   it('snaps identically whether the axis runs forward or backward', () => {
     expect(snapToDetent(0.25, 0, 1, 10)).toBe(snapToDetent(0.25, 0, 1, 10))
     expect(snapToDetent(-0.5, -1, 0, 10)).toBe(5)
