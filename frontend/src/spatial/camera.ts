@@ -65,7 +65,7 @@ const FRAMING: Record<CameraMode, Framing> = {
   // only 80 mm in front of it. Below about 60 degrees of elevation that apron
   // hides the storage deck completely — at M1.2's 0.4 rad the reader was told
   // to take a virga while looking at the lid and a wooden wall.
-  open: { azimuth: 0.34, elevation: 0.93, distance: 0.60, target: [0, 0.058, 0.004] },
+  open: { azimuth: 0.32, elevation: 0.9, distance: 0.72, target: [0, 0.05, 0.055] },
   // At the carriage: the drawer AND the deck above it in one frame, because
   // the second and third carriers are still lifted out of the cell from here.
   working: { azimuth: 0.2, elevation: 0.88, distance: 0.64, target: [0, 0.042, 0.07] },

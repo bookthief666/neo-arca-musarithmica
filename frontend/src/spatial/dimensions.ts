@@ -168,6 +168,10 @@ export const CARRIAGE = {
   channelPitch: mm(32),
   channelWidth: mm(24),
   channelDepth: mm(10),
+  /* Touch volumes over a channel. A 24 mm channel is about 21 CSS px at the
+     Fold's working framing; these reach roughly 44. */
+  hitWidth: mm(30),
+  hitHeight: mm(46),
 } as const
 
 /**

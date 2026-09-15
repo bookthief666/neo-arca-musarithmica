@@ -37,6 +37,7 @@ export interface ChannelReading {
 
 export function Carriage({
   materials, extended, reducedMotion, readings, concordant, children, onPullOut, travelRef,
+  targetLane = null, onPlaceHeldRod,
 }: {
   materials: ArcaMaterials
   extended: boolean
@@ -47,6 +48,9 @@ export function Carriage({
   onPullOut?: () => void
   /** Publishes the drawer's live Z so virgae can ride with it in world space. */
   travelRef?: React.RefObject<number>
+  /** The one channel awaiting the carrier currently in the hand. */
+  targetLane?: -1 | 0 | 1 | null
+  onPlaceHeldRod?: () => void
 }) {
   const group = useRef<THREE.Group>(null)
 
@@ -114,8 +118,54 @@ export function Carriage({
       {/* ---- three working channels, cut into the drawer floor ---- */}
       {[-1, 0, 1].map((lane) => {
         const x = lane * CARRIAGE.channelPitch
+        const awaiting = lane === targetLane
         return (
-          <group key={lane}>
+          <group key={lane} name={`channel:${lane}`}>
+            {/* THE RECEIVER: a brass throat at the mouth of the channel. It is
+                present in every channel, so it reads as part of the mechanism
+                rather than as a hint, and only the ONE channel the held carrier
+                belongs in lights up. There is never a choice to get wrong. */}
+            {/* The group sits AT the throat, so everything in it is local and
+                the whole receiver has one real world position. */}
+            <group
+              name={awaiting ? 'receiver:active' : `receiver:${lane}`}
+              position={[x, floorY + wall, halfD - wall - 0.01]}
+            >
+              <mesh
+                material={awaiting ? materials.brassLit : materials.brassDark}
+                position={[0, LIP_HEIGHT / 2, 0.004]}
+                castShadow
+              >
+                <boxGeometry args={[CARRIAGE.channelWidth + 0.006, LIP_HEIGHT * 1.1, 0.006]} />
+              </mesh>
+              {/* Two jaws, so the throat reads as something a rod slides into. */}
+              {[-1, 1].map((side) => (
+                <mesh
+                  key={side}
+                  material={awaiting ? materials.brassLit : materials.brassDark}
+                  position={[side * (CARRIAGE.channelWidth / 2 + 0.002), LIP_HEIGHT * 0.9, -0.004]}
+                  castShadow
+                >
+                  <boxGeometry args={[0.005, LIP_HEIGHT * 0.8, 0.016]} />
+                </mesh>
+              ))}
+              {/* A touch volume over the waking channel, running back along it.
+                  Tapping here dispatches the SAME canonical PLACE_HELD_ROD as
+                  tapping the carrier: one verb, two affordances. */}
+              {awaiting && onPlaceHeldRod && (
+                <mesh
+                  position={[0, CARRIAGE.hitHeight / 2, -(CARRIAGE.depth - wall * 2) / 2 + 0.01]}
+                  visible={false}
+                  onClick={(event) => { event.stopPropagation(); onPlaceHeldRod() }}
+                  onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}
+                  onPointerOut={() => { document.body.style.cursor = 'auto' }}
+                >
+                  <boxGeometry args={[
+                    CARRIAGE.hitWidth, CARRIAGE.hitHeight, CARRIAGE.depth - wall * 2,
+                  ]} />
+                </mesh>
+              )}
+            </group>
             {/* The channel's recessed bed. */}
             <mesh
               material={materials.felt}

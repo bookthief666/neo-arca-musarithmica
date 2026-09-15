@@ -30,10 +30,17 @@ import type {
 /** How high a carrier rises at the top of its arc between cell and channel. */
 const LIFT_APEX = 0.05
 
-/* The held pose, in metres. Large enough that a 9 mm carrier is unmistakably
-   OUT of its 8 mm mortise rather than merely sitting high in it. */
-const HELD_LIFT = 0.022
-const HELD_FORWARD = 0.024
+/* The held pose. The lift has to beat the 8 mm mortise by enough that "out of
+   its socket" is unarguable at a glance, and the carrier stands forward so it
+   is not read as simply sitting high among its neighbours. Forward travel is
+   capped by the carcass front apron: any further and the finial would pass
+   through it. */
+const HELD_LIFT = 0.034
+const HELD_FORWARD = 0.03
+/* A few degrees nose-up. A carrier lying flat and slightly high still reads as
+   STORED; one tilted in the air reads as HELD, which is the whole distinction
+   this milestone exists to make visible. */
+const HELD_TILT = -0.16
 
 /** Where a stored carrier rests in its Cell IV slot. */
 function slotPose(lane: number): [number, number, number] {
@@ -122,10 +129,13 @@ export function Virgae({
       // Only a SEATED carrier rides with the drawer. One in the hand does not.
       if (seated) goal.z += travel
 
+      const tilt = held ? HELD_TILT : 0
       if (state.reducedMotion) {
         node.position.copy(goal)
+        node.rotation.x = tilt
         return
       }
+      node.rotation.x = THREE.MathUtils.lerp(node.rotation.x, tilt, 1 - Math.pow(0.002, delta))
 
       // A carrier in flight arcs UP over the cabinet lip rather than passing
       // through it. The lift is a function of how far it still has to go in the
@@ -235,6 +245,9 @@ export function Virgae({
               }
             }}
             visible={stored ? cellOpen : true}
+            // One name for the carrier's whole life, because it is one object
+            // for its whole life. Its state is readable from the instrument,
+            // not from what the scene graph happens to be calling it.
             name={`virga:${template.template_id}`}
           >
             <Virga

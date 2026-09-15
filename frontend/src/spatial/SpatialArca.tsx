@@ -14,6 +14,7 @@ import { Carriage, type ChannelReading } from './scene/Carriage'
 import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
 import { SpatialTestProbe } from './TestProbe'
+import { shouldExtendCarriage, targetLane } from './operative'
 import type {
   HistoricalManifest,
   InstrumentAffordance,
@@ -211,9 +212,10 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   useCameraDirector(orbit, deriveCameraMode(rest.state), rest.state.reducedMotion)
 
   const isOpen = rest.state.phase !== 'dormant'
-  // The carriage comes out as soon as there is anything to put on it, and stays
-  // out: the reader should never have to re-open the drawer they are working at.
-  const carriageOut = rest.state.rods.length > 0
+  // The drawer comes out as soon as a carrier is LIFTED, so the destination is
+  // revealed before the reader commits to placing, and stays out thereafter.
+  const carriageOut = shouldExtendCarriage(rest.state)
+  const activeTargetLane = targetLane(rest.manifest, rest.state)
   const travelRef = useRef(0)
 
   const sources = useMemo(
@@ -273,6 +275,8 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         readings={readings}
         concordant={rest.alignmentReady}
         travelRef={travelRef}
+        targetLane={activeTargetLane}
+        onPlaceHeldRod={rest.onPlaceHeldRod}
       />
       {isOpen && (
         <Virgae
