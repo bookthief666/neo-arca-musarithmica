@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import {
-  CARRIAGE, CELL_IV, CASE, DECK_TOP, INTERIOR, SLOT_DEPTH, VIRGA,
+  CARRIAGE, CELL_IV, DECK_TOP, SLOT_DEPTH, VIRGA,
 } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { Virga } from './Virga'
@@ -35,15 +35,13 @@ const LIFT_APEX = 0.05
 const HELD_LIFT = 0.022
 const HELD_FORWARD = 0.024
 
-const CELL_Z = (() => {
-  const backZ = -CASE.depth / 2 + CASE.wall + INTERIOR.railDepth
-  const frontZ = CASE.depth / 2 - CASE.wall
-  return (backZ + frontZ) / 2
-})()
-
 /** Where a stored carrier rests in its Cell IV slot. */
 function slotPose(lane: number): [number, number, number] {
-  return [lane * CELL_IV.slotPitch, DECK_TOP - SLOT_DEPTH + VIRGA.thickness / 2 + 0.0006, CELL_Z]
+  return [
+    lane * CELL_IV.slotPitch,
+    DECK_TOP - SLOT_DEPTH + VIRGA.thickness / 2 + 0.0006,
+    CELL_IV.centreZ,
+  ]
 }
 
 /**

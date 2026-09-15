@@ -181,7 +181,11 @@ export function SpatialArca(props: SpatialArcaProps) {
           // the lid's specular blew out to near-white from behind.
           gl.toneMappingExposure = 0.94
           scene.background = new THREE.Color('#120c09')
-          scene.fog = new THREE.Fog('#120c09', 0.9, 2.2)
+          // Far plane sits beyond the camera's own MAX_DISTANCE. At 0.9/2.2 a
+          // tall Fold viewport backed the camera off to 2.37 m in the open
+          // framing and the fog swallowed the entire instrument: opening the
+          // Arca at 390 x 844 produced an empty screen.
+          scene.fog = new THREE.Fog('#120c09', 1.4, 3.6)
         }}
       >
         <Suspense fallback={null}>

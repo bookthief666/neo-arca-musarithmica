@@ -50,6 +50,8 @@ const MIN_ELEVATION = -0.26
 const MAX_ELEVATION = 1.36
 const MIN_DISTANCE = 0.22
 const MAX_DISTANCE = 2.2
+/** Ceiling on the tall-viewport standoff. See the note at its use site. */
+const MAX_ASPECT_FIT = 1.8
 
 export interface OrbitState {
   azimuth: number
@@ -128,7 +130,12 @@ export function useCameraDirector(
       const aspect = size.height > 0 ? size.width / size.height : AUTHORED_ASPECT
       // ^0.75 rather than linear: backing off by the full ratio is correct for
       // a flat card but over-corrects for a deep object, leaving it tiny.
-      const fit = Math.max(1, Math.pow(AUTHORED_ASPECT / Math.max(aspect, 0.2), 0.75))
+      // Capped, because uncapped it reached 2.42x on a folded Fold, which put
+      // the cabinet at 44% of the frame width with most of the screen empty
+      // above and below it — and, in the open framing, past the fog.
+      const fit = THREE.MathUtils.clamp(
+        Math.pow(AUTHORED_ASPECT / Math.max(aspect, 0.2), 0.75), 1, MAX_ASPECT_FIT,
+      )
       state.distance = THREE.MathUtils.lerp(state.distance, goal.distance * fit, ease)
     }
 

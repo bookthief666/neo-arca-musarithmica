@@ -72,7 +72,11 @@ export const BODY_TOP = CASE.plinth + CASE.bodyHeight
 export const FLOOR_TOP = CASE.plinth + CASE.wall
 export const DECK_TOP = mm(52)
 export const DECK_THICKNESS = mm(14)
-export const SLOT_DEPTH = mm(12)
+/* 8 mm, not 12 mm. At a 12 mm recess a 9 mm carrier's top face lay 3 mm BELOW
+   deck level and only 0.5 mm of its finial stood proud, so opening Cell IV
+   revealed what looked like an empty box. At 8 mm the carrier stands 1 mm
+   proud and the finial crown 4.5 mm proud: visibly stored objects. */
+export const SLOT_DEPTH = mm(8)
 
 export const INTERIOR = {
   /** Clear width and depth inside the four walls. */
@@ -83,6 +87,11 @@ export const INTERIOR = {
   /** Depth of the bank nameplate rail along the back wall. */
   railDepth: mm(24),
   railHeight: mm(26),
+  /* The rail stands on a short plinth so the Cell IV cover has a real slot to
+     slide into. Its underside was previously the deck itself, which is why
+     "translates rearward beneath the bank rail" described a clearance that did
+     not exist. There is ~28 mm of headroom under BODY_TOP, so this is free. */
+  railLift: mm(11),
 } as const
 
 /**
@@ -93,10 +102,30 @@ export const INTERIOR = {
  */
 export const CELL_IV = {
   width: mm(96),
-  depth: mm(104),
+  /* 76 mm, not the 104 mm of M1.2. The virgae are only 70 mm long, so nothing
+     is lost, and the 28 mm recovered is what lets the cover retract its own
+     full length instead of jamming against the bank rail after 16 mm. */
+  depth: mm(76),
+  /* Moved forward from z = +12 mm. The deck runs -56..+80 mm; putting the cell
+     at +36 leaves a clear run behind it for the cover to disappear into. */
+  centreZ: mm(36),
   slotWidth: mm(24),
   /** Centre-to-centre spacing of the three slots. */
   slotPitch: mm(32),
+  /** The sliding cover plate. */
+  coverThickness: mm(4),
+  /* The cover rides in side rebates ABOVE the deck, so it passes clear over
+     carriers that now stand proud of their mortises. */
+  coverLift: mm(6),
+  /* Very nearly the cover's own length, so a full retraction carries its front
+     edge PAST the rearmost point of a stored carrier rather than stopping
+     flush with it. Rear edge finishes at -77 mm, clear of the -80 mm carcass
+     back wall; the 1 mm short of full depth is the closed-position stop. */
+  get coverTravel() { return this.depth - mm(1) },
+  coverHandleDepth: mm(7),
+  /* Touch volume. At the Fold's working framing 1 mm of world is about
+     0.9 CSS px, so a comfortable 44 px target needs roughly 50 mm. */
+  hitSize: mm(50),
 } as const
 
 /**

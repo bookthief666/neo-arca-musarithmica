@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import {
-  BODY_TOP, CASE, CELL_IV, DECK_THICKNESS, DECK_TOP, INTERIOR, SLOT_DEPTH,
+  BODY_TOP, CASE, CELL_IV, DECK_THICKNESS, DECK_TOP, INTERIOR,
 } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { makeBrassPlateTexture } from '../textures'
+import { CellIV } from './CellIV'
 import type { InstrumentAffordance, InstrumentState } from '../../instrument/types'
 
 /**
@@ -28,7 +29,7 @@ export function Interior({
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
 }) {
-  const { width: iw, depth: idp, railDepth, railHeight, divider } = INTERIOR
+  const { width: iw, depth: idp, railDepth, railHeight, railLift, divider } = INTERIOR
   const backZ = -CASE.depth / 2 + CASE.wall
   const deckFrontZ = CASE.depth / 2 - CASE.wall
   const deckBackZ = backZ + railDepth
@@ -63,8 +64,28 @@ export function Interior({
         <boxGeometry args={[iw, DECK_THICKNESS, deckDepth]} />
       </mesh>
 
-      {/* ---- the bank rail: three engraved brass plates on the back wall ---- */}
-      <mesh material={materials.woodDark} position={[0, DECK_TOP + railHeight / 2, backZ + railDepth / 2]} receiveShadow>
+      {/* ---- the bank rail, standing on a plinth ---- */}
+      {/* The plinth is structural, not decorative: it lifts the rail's
+          underside clear of the deck so the Cell IV cover has a slot to
+          retract into. Without it the rail's underside IS the deck and the
+          cover jams against its front face after 16 mm. */}
+      {[-1, 1].map((side) => (
+        <mesh
+          key={side}
+          material={materials.woodDark}
+          position={[side * (iw / 2 - divider), DECK_TOP + railLift / 2, backZ + railDepth / 2]}
+          castShadow
+          receiveShadow
+        >
+          <boxGeometry args={[divider * 2, railLift, railDepth]} />
+        </mesh>
+      ))}
+      <mesh
+        material={materials.woodDark}
+        position={[0, DECK_TOP + railLift + railHeight / 2, backZ + railDepth / 2]}
+        receiveShadow
+        castShadow
+      >
         <boxGeometry args={[iw, railHeight, railDepth]} />
       </mesh>
       {plates.map((plate, index) => {
@@ -73,7 +94,7 @@ export function Interior({
         return (
           <mesh
             key={plate.id}
-            position={[x, DECK_TOP + railHeight * 0.58, backZ + railDepth + 0.0008]}
+            position={[x, DECK_TOP + railLift + railHeight * 0.58, backZ + railDepth + 0.0008]}
             onClick={live ? (event) => { event.stopPropagation(); onFocusBank(1) } : undefined}
             onPointerOver={live ? (event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' } : undefined}
             onPointerOut={live ? () => { document.body.style.cursor = 'auto' } : undefined}
@@ -119,58 +140,14 @@ export function Interior({
         )
       })}
 
-      {/* ---- CELL IV: the operative cavity ---- */}
-      <group>
-        {/* The felt-lined floor of the cell. */}
-        <mesh
-          material={materials.felt}
-          position={[0, DECK_TOP - SLOT_DEPTH, (deckBackZ + deckFrontZ) / 2]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[CELL_IV.width, CELL_IV.depth]} />
-        </mesh>
-
-        {/* Three slots, cut by four dividers. They stay whether or not a virga
-            is in them — the empty slot is the proof of where one came from. */}
-        {[-1, 0, 1].map((lane) => {
-          const x = lane * CELL_IV.slotPitch
-          return (
-            <group key={lane}>
-              {[-1, 1].map((edge) => (
-                <mesh
-                  key={edge}
-                  material={materials.woodDark}
-                  position={[x + edge * (CELL_IV.slotWidth / 2 + divider / 2), DECK_TOP - SLOT_DEPTH / 2, (deckBackZ + deckFrontZ) / 2]}
-                  castShadow
-                  receiveShadow
-                >
-                  <boxGeometry args={[divider, SLOT_DEPTH, CELL_IV.depth * 0.92]} />
-                </mesh>
-              ))}
-            </group>
-          )
-        })}
-
-        {/* The cell's own nameplate on the deck lip, and the surface that
-            opens it. Clicking anywhere on the cell opens Cell IV. */}
-        <mesh
-          position={[0, DECK_TOP + 0.0004, deckFrontZ - 0.008]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          onClick={(event) => { event.stopPropagation(); onFocusCell(4) }}
-          onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}
-          onPointerOut={() => { document.body.style.cursor = 'auto' }}
-        >
-          <planeGeometry args={[CELL_IV.width, 0.014]} />
-          <meshStandardMaterial
-            color={cellOpen ? '#8a6f33' : '#c3a25c'}
-            metalness={0.85}
-            roughness={0.32}
-            emissive={cellCued ? '#5a3f12' : '#000000'}
-            emissiveIntensity={cellCued ? 0.6 : 0}
-          />
-        </mesh>
-      </group>
+      {/* ---- CELL IV: now its own mechanism ---- */}
+      <CellIV
+        materials={materials}
+        open={cellOpen}
+        cued={cellCued}
+        reducedMotion={state.reducedMotion}
+        onOpen={() => onFocusCell(4)}
+      />
 
       {/* ---- the carcass's inner faces, so the box reads as hollow ---- */}
       <mesh material={materials.woodDark} position={[0, (DECK_TOP + BODY_TOP) / 2, backZ + 0.0005]}>
