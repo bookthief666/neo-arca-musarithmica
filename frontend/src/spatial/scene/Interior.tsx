@@ -29,7 +29,7 @@ export function Interior({
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
 }) {
-  const { width: iw, depth: idp, railDepth, railHeight, railLift, divider } = INTERIOR
+  const { width: iw, depth: idp, railDepth, railHeight, divider } = INTERIOR
   const backZ = -CASE.depth / 2 + CASE.wall
   const deckFrontZ = CASE.depth / 2 - CASE.wall
   const deckBackZ = backZ + railDepth
@@ -64,28 +64,8 @@ export function Interior({
         <boxGeometry args={[iw, DECK_THICKNESS, deckDepth]} />
       </mesh>
 
-      {/* ---- the bank rail, standing on a plinth ---- */}
-      {/* The plinth is structural, not decorative: it lifts the rail's
-          underside clear of the deck so the Cell IV cover has a slot to
-          retract into. Without it the rail's underside IS the deck and the
-          cover jams against its front face after 16 mm. */}
-      {[-1, 1].map((side) => (
-        <mesh
-          key={side}
-          material={materials.woodDark}
-          position={[side * (iw / 2 - divider), DECK_TOP + railLift / 2, backZ + railDepth / 2]}
-          castShadow
-          receiveShadow
-        >
-          <boxGeometry args={[divider * 2, railLift, railDepth]} />
-        </mesh>
-      ))}
-      <mesh
-        material={materials.woodDark}
-        position={[0, DECK_TOP + railLift + railHeight / 2, backZ + railDepth / 2]}
-        receiveShadow
-        castShadow
-      >
+      {/* ---- the bank rail: three engraved brass plates on the back wall ---- */}
+      <mesh material={materials.woodDark} position={[0, DECK_TOP + railHeight / 2, backZ + railDepth / 2]} receiveShadow>
         <boxGeometry args={[iw, railHeight, railDepth]} />
       </mesh>
       {plates.map((plate, index) => {
@@ -94,7 +74,8 @@ export function Interior({
         return (
           <mesh
             key={plate.id}
-            position={[x, DECK_TOP + railLift + railHeight * 0.58, backZ + railDepth + 0.0008]}
+            name={`bank:${plate.id}`}
+            position={[x, DECK_TOP + railHeight * 0.58, backZ + railDepth + 0.0008]}
             onClick={live ? (event) => { event.stopPropagation(); onFocusBank(1) } : undefined}
             onPointerOver={live ? (event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' } : undefined}
             onPointerOut={live ? () => { document.body.style.cursor = 'auto' } : undefined}

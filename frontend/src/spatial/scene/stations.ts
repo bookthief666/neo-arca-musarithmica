@@ -25,16 +25,25 @@ export const VIRGA_TRAVEL = {
 }
 
 /**
- * World Z of the Cell IV cover. Closed, it lies over the cell; open, it has
- * retracted very nearly its own length into the slot beneath the raised bank
- * rail, carrying its front edge past the rearmost point of a stored carrier.
+ * The Cell IV cover's two fold angles, in radians: the inner leaf's lift about
+ * the cell's rear edge, and the outer leaf's fold relative to it.
  *
- * The travel is short of the cover's full depth by the closed-position stop,
- * and its rear edge finishes clear of the carcass back wall. Those two
- * clearances are what make the motion physically possible at all: with the
- * rail sitting directly on the deck, as it did in M1.2, the cover jammed
- * against its front face after 16 mm.
+ * The cover folds rather than slides because a slide cannot exist here. Full
+ * rearward retraction would need the cell's centre at z >= +76 mm, while a
+ * stored virga's finial must clear the front apron, which caps the centre at
+ * +28 mm; a bi-parting slide fails the same way. Folded in two, the cover
+ * needs 52 mm of headroom against the 54 mm the carcass has.
+ *
+ * Closed, both leaves lie flat. Open, the inner leaf stands up just short of
+ * upright and the outer leaf lies back down against it, so the pair reads as
+ * one board doubled over behind the mortises.
  */
-export function cellCoverTarget(open: boolean): number {
-  return open ? CELL_IV.centreZ - CELL_IV.coverTravel : CELL_IV.centreZ
+export function cellCoverAngles(open: boolean): { inner: number; outer: number } {
+  if (!open) return { inner: 0, outer: 0 }
+  return { inner: -CELL_IV.coverOpenAngle, outer: Math.PI - 0.16 }
+}
+
+/** Height the folded cover reaches above the deck, for clearance checks. */
+export function cellCoverFoldedHeight(): number {
+  return (CELL_IV.depth / 2) * Math.sin(CELL_IV.coverOpenAngle)
 }

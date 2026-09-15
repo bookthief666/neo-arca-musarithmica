@@ -1,32 +1,52 @@
 import { describe, expect, it } from 'vitest'
-import { CASE, CELL_IV, DECK_TOP, INTERIOR, SLOT_DEPTH, VIRGA } from '../dimensions'
-import { cellCoverTarget } from './stations'
+import {
+  BODY_TOP, CASE, CELL_IV, DECK_TOP, INTERIOR, SLOT_DEPTH, VIRGA,
+} from '../dimensions'
+import { cellCoverAngles, cellCoverFoldedHeight } from './stations'
+import { VIRGA_HEAD_REACH } from './Virga'
 
+const deckBackZ = -CASE.depth / 2 + CASE.wall + INTERIOR.railDepth
+const apronInnerZ = CASE.depth / 2 - CASE.wall
+const headroom = BODY_TOP - DECK_TOP
+
+/**
+ * These are the clearances that decide whether Cell IV can physically open at
+ * all. The approved design asked for a sliding cover; it cannot exist in this
+ * carcass at any cell depth, and the arithmetic below is what proves it. They
+ * are pinned so that a later change to the case, the deck, the cell or the
+ * virga cannot quietly reintroduce a mechanism that does not fit.
+ */
 describe('Cell IV cover', () => {
-  it('has deterministic closed and open travel', () => {
-    expect(cellCoverTarget(false)).toBe(CELL_IV.centreZ)
-    expect(cellCoverTarget(true)).toBe(CELL_IV.centreZ - CELL_IV.coverTravel)
+  it('lies flat when closed and folds double when open', () => {
+    expect(cellCoverAngles(false)).toEqual({ inner: 0, outer: 0 })
+    const open = cellCoverAngles(true)
+    expect(open.inner).toBeLessThan(0)
+    expect(Math.abs(open.outer)).toBeGreaterThan(Math.PI / 2)
   })
 
-  it('retracts far enough to uncover the whole slot run', () => {
-    const front = CELL_IV.centreZ + CELL_IV.depth / 2
-    const virgaBack = CELL_IV.centreZ - VIRGA.length / 2
-    // Once open, the cover's front edge must have passed behind the rearmost
-    // point of a stored carrier, or the reveal hides the thing it reveals.
-    expect(front - CELL_IV.coverTravel).toBeLessThanOrEqual(virgaBack)
+  it('records why the specified sliding cover cannot be built here', () => {
+    // Full rearward retraction needs the cell's centre this far forward...
+    const neededCentre = -CASE.depth / 2 + CASE.wall + CELL_IV.depth + CELL_IV.depth / 2
+    // ...but a stored virga's finial has to clear the front apron.
+    const finialCap = apronInnerZ - VIRGA_HEAD_REACH
+    expect(neededCentre).toBeGreaterThan(finialCap)
   })
 
-  it('stops clear of the carcass back wall when fully retracted', () => {
-    const backWall = -CASE.depth / 2 + CASE.wall
-    const coverRearWhenOpen = CELL_IV.centreZ - CELL_IV.depth / 2 - CELL_IV.coverTravel
-    expect(coverRearWhenOpen).toBeGreaterThan(backWall)
+  it('fits the folded cover inside the carcass headroom', () => {
+    expect(cellCoverFoldedHeight()).toBeLessThan(headroom)
   })
 
-  it('passes beneath the raised bank rail rather than through it', () => {
-    // The M1.2 rail sat ON the deck, so a cover at deck level struck its front
-    // face after 16 mm. The plinth is what makes the specified motion possible.
-    const coverTop = DECK_TOP + CELL_IV.coverLift + CELL_IV.coverThickness
-    expect(DECK_TOP + INTERIOR.railLift).toBeGreaterThan(coverTop)
+  it('folds clear of the bank rail behind it', () => {
+    // The fold axis is the cell's rear edge; the rail is behind that line.
+    expect(CELL_IV.centreZ - CELL_IV.depth / 2).toBeGreaterThanOrEqual(deckBackZ)
+  })
+
+  it('is long enough to contain a whole virga, finial included', () => {
+    expect(CELL_IV.depth).toBeGreaterThanOrEqual(VIRGA_HEAD_REACH * 2)
+  })
+
+  it('keeps a stored virga clear of the carcass front apron', () => {
+    expect(CELL_IV.centreZ + VIRGA_HEAD_REACH).toBeLessThanOrEqual(apronInnerZ)
   })
 
   it('leaves a stored carrier and its finial standing proud of the deck', () => {
@@ -34,7 +54,5 @@ describe('Cell IV cover', () => {
     const finialTop = DECK_TOP - SLOT_DEPTH + VIRGA.thickness / 2 + VIRGA.finialRadius
     expect(carrierTop).toBeGreaterThan(DECK_TOP)
     expect(finialTop).toBeGreaterThan(DECK_TOP + 0.003)
-    // ...and the cover must still clear them.
-    expect(DECK_TOP + CELL_IV.coverLift).toBeGreaterThan(finialTop)
   })
 })

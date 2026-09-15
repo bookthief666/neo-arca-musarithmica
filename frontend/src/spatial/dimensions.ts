@@ -87,11 +87,6 @@ export const INTERIOR = {
   /** Depth of the bank nameplate rail along the back wall. */
   railDepth: mm(24),
   railHeight: mm(26),
-  /* The rail stands on a short plinth so the Cell IV cover has a real slot to
-     slide into. Its underside was previously the deck itself, which is why
-     "translates rearward beneath the bank rail" described a clearance that did
-     not exist. There is ~28 mm of headroom under BODY_TOP, so this is free. */
-  railLift: mm(11),
 } as const
 
 /**
@@ -102,26 +97,34 @@ export const INTERIOR = {
  */
 export const CELL_IV = {
   width: mm(96),
-  /* 76 mm, not the 104 mm of M1.2. The virgae are only 70 mm long, so nothing
-     is lost, and the 28 mm recovered is what lets the cover retract its own
-     full length instead of jamming against the bank rail after 16 mm. */
-  depth: mm(76),
-  /* Moved forward from z = +12 mm. The deck runs -56..+80 mm; putting the cell
-     at +36 leaves a clear run behind it for the cover to disappear into. */
-  centreZ: mm(36),
+  /* A virga is 103.6 mm end to end once its collar and finial are counted, so
+     the cell cannot be shorter than this and still contain one. */
+  depth: mm(104),
+  /* As far back as the deck allows: the cell's rear edge sits flush with the
+     deck's back edge at -56 mm. Forward of this the carcass front apron, which
+     stands 54 mm above the deck only 80 mm away, hides the carriers entirely. */
+  centreZ: mm(-4),
   slotWidth: mm(24),
   /** Centre-to-centre spacing of the three slots. */
   slotPitch: mm(32),
-  /** The sliding cover plate. */
+  /**
+   * THE COVER IS A BI-FOLD, NOT A SLIDE.
+   *
+   * The approved design asked for a plate that slides rearward. Measured
+   * against this carcass it cannot exist at any cell depth: full retraction
+   * needs the cell's centre at z >= +76 mm, while a stored virga's finial has
+   * to clear the front apron, which caps the centre at +28 mm. A two-leaf
+   * bi-parting slide fails the same way once the cell is long enough to hold a
+   * virga at all. A single rear-hinged flap needs 104 mm of headroom and there
+   * are 54 mm.
+   *
+   * Folded in two it needs 52 mm, and fits. So the cover hinges at the cell's
+   * rear edge and folds back on itself, standing as a double panel behind the
+   * mortises — the smallest correction that keeps a real, physical cover.
+   */
   coverThickness: mm(4),
-  /* The cover rides in side rebates ABOVE the deck, so it passes clear over
-     carriers that now stand proud of their mortises. */
-  coverLift: mm(6),
-  /* Very nearly the cover's own length, so a full retraction carries its front
-     edge PAST the rearmost point of a stored carrier rather than stopping
-     flush with it. Rear edge finishes at -77 mm, clear of the -80 mm carcass
-     back wall; the 1 mm short of full depth is the closed-position stop. */
-  get coverTravel() { return this.depth - mm(1) },
+  /** Lift of the inner leaf, short of upright so the stack leans clear. */
+  coverOpenAngle: Math.PI * (82 / 180),
   coverHandleDepth: mm(7),
   /* Touch volume. At the Fold's working framing 1 mm of world is about
      0.9 CSS px, so a comfortable 44 px target needs roughly 50 mm. */
