@@ -68,12 +68,12 @@ function Lighting({ reducedMotion }: { reducedMotion: boolean }) {
   }, [])
   return (
     <>
-      <ambientLight intensity={0.5} color="#ffeccc" />
-      <hemisphereLight intensity={0.5} color="#ffe2b8" groundColor="#2a1a10" />
+      <ambientLight intensity={0.42} color="#ffeccc" />
+      <hemisphereLight intensity={0.44} color="#ffe2b8" groundColor="#2a1a10" />
       <directionalLight
         ref={key}
         position={[0.36, 0.52, 0.34]}
-        intensity={2.6}
+        intensity={1.9}
         color="#fff1d6"
         castShadow={!reducedMotion}
         shadow-mapSize={[1024, 1024]}
@@ -174,7 +174,9 @@ export function SpatialArca(props: SpatialArcaProps) {
         camera={{ fov: 34, near: 0.01, far: 12, position: [0.34, 0.26, 0.5] }}
         onCreated={({ gl, scene }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping
-          gl.toneMappingExposure = 1.05
+          // Walnut should stay walnut at a glancing angle: at a higher exposure
+          // the lid's specular blew out to near-white from behind.
+          gl.toneMappingExposure = 0.94
           scene.background = new THREE.Color('#120c09')
           scene.fog = new THREE.Fog('#120c09', 0.9, 2.2)
         }}

@@ -40,7 +40,7 @@ const FRAMING: Record<InstrumentView, Framing> = {
   // Consulting the Tone: include the lid so the Mensa and the rule are both read.
   tone: { azimuth: 0.26, elevation: 0.6, distance: 0.66, target: [0, 0.06, 0.105] },
   // The folio: reveal the result without losing the carriage that printed it.
-  revelation: { azimuth: 0.12, elevation: 0.66, distance: 0.52, target: [0, 0.035, 0.225] },
+  revelation: { azimuth: 0.1, elevation: 0.72, distance: 0.56, target: [0, 0.03, 0.245] },
 }
 
 /** Aspect the framings above were composed at. */

@@ -37,16 +37,18 @@ export function useArcaMaterials(): ArcaMaterials {
     const wood = new THREE.MeshStandardMaterial({
       map: grain,
       roughnessMap: grainRough,
-      roughness: 0.62,
-      metalness: 0.04,
-      color: new THREE.Color('#c8a888'),
+      roughness: 0.72,
+      metalness: 0.03,
+      color: new THREE.Color('#bb9a7b'),
+      envMapIntensity: 0.45,
     })
     const woodDark = new THREE.MeshStandardMaterial({
       map: grain,
       roughnessMap: grainRough,
-      roughness: 0.72,
+      roughness: 0.8,
       metalness: 0.03,
-      color: new THREE.Color('#8a6e58'),
+      color: new THREE.Color('#7e6450'),
+      envMapIntensity: 0.4,
     })
     // Cast brass. High metalness, low-ish roughness: it should pick up the key
     // light as a specular streak, which is what makes it read as metal.

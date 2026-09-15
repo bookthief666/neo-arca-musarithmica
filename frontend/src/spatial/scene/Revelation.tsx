@@ -154,7 +154,9 @@ export function Revelation({
     const node = group.current
     if (!node) return
     const travel = travelRef.current ?? 0
-    const outZ = CARRIAGE.depth / 2 + FOLIO.height * 0.42
+    // Far enough forward that the drawer front and its knobs stop clipping the
+    // top voice lane — the sheet has to be readable, not merely present.
+    const outZ = CARRIAGE.depth / 2 + FOLIO.height * 0.66
     const goalZ = travel + (shown ? outZ : CARRIAGE.depth / 2 - 0.02)
     const goalY = CARRIAGE.y + (shown ? 0.004 : -0.02)
     if (reducedMotion) {
@@ -171,7 +173,7 @@ export function Revelation({
   return (
     <group ref={group} position={[0, CARRIAGE.y - 0.02, CARRIAGE.depth / 2]}>
       {/* The sheet, lying almost flat as it slides out of the machine. */}
-      <mesh rotation={[-Math.PI / 2 + 0.16, 0, 0]} castShadow receiveShadow>
+      <mesh rotation={[-Math.PI / 2 + 0.08, 0, 0]} castShadow receiveShadow>
         <planeGeometry args={[FOLIO.width, FOLIO.height]} />
         <meshStandardMaterial map={texture} roughness={0.9} metalness={0} side={THREE.DoubleSide} />
       </mesh>
