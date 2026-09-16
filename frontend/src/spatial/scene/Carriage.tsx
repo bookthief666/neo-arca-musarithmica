@@ -156,12 +156,30 @@ export function Carriage({
                 <mesh
                   key={side}
                   material={awaiting ? materials.brassLit : materials.brassDark}
-                  position={[side * (CARRIAGE.channelWidth / 2 + 0.002), LIP_HEIGHT * 0.9, -0.004]}
+                  position={[
+                    side * (CARRIAGE.channelWidth / 2 + 0.002),
+                    awaiting ? 0.009 : LIP_HEIGHT * 0.9,
+                    -0.004,
+                  ]}
                   castShadow
                 >
-                  <boxGeometry args={[0.005, LIP_HEIGHT * 0.8, 0.016]} />
+                  <boxGeometry args={[0.005, awaiting ? 0.018 : LIP_HEIGHT * 0.8, 0.016]} />
                 </mesh>
               ))}
+
+              {/* The waking channel raises a gate over its mouth. At the Fold's
+                  working framing a lit throat lying flat in the drawer floor is
+                  a few pixels of slightly brighter brass; a standing arch is
+                  the destination, findable without looking for it. */}
+              {awaiting && (
+                <mesh
+                  material={materials.brassLit}
+                  position={[0, 0.019, -0.004]}
+                  castShadow
+                >
+                  <boxGeometry args={[CARRIAGE.channelWidth + 0.014, 0.004, 0.009]} />
+                </mesh>
+              )}
               {/* A touch volume over the waking channel, running back along it.
                   Tapping here dispatches the SAME canonical PLACE_HELD_ROD as
                   tapping the carrier: one verb, two affordances. */}
