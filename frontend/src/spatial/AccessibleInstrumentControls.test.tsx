@@ -8,10 +8,10 @@ import { manifestFixture } from '../test/fixtures'
 
 function semanticHarness() {
   let state = createInitialState()
-  let rerender: ReturnType<typeof render>['rerender']
+  const rerenderRef: { current: ReturnType<typeof render>['rerender'] | null } = { current: null }
   const dispatch = (action: InstrumentAction) => {
     state = instrumentReducer(state, action, manifestFixture)
-    rerender(ui())
+    rerenderRef.current?.(ui())
   }
   const ui = () => (
     <AccessibleInstrumentControls
@@ -22,7 +22,7 @@ function semanticHarness() {
     />
   )
   const rendered = render(ui())
-  rerender = rendered.rerender
+  rerenderRef.current = rendered.rerender
   return { user: userEvent.setup(), dispatch, getState: () => state }
 }
 
