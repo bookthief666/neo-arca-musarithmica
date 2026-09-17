@@ -181,4 +181,16 @@ frontend/src/instrument/reading.test.ts
 frontend/src/instrument/reading.ts
 ```
 
-The additional checkpoint-document commit changes only this report. Push and local/remote equality are verified after that commit and reported in the final delivery message.
+The additional checkpoint-document commits change only this report.
+
+## Publication blocker
+
+The authorized push was attempted with `git push origin HEAD:refs/heads/feature/m1.2.1r-historical-computation-rescue` and failed:
+
+```text
+fatal: could not read Username for 'https://github.com': No such device or address
+```
+
+No Git credential helper, GH_TOKEN, GITHUB_TOKEN, GIT_ASKPASS, or SSH agent was configured. The available GitHub commit-creation tool does not expose author/committer timestamps or raw commit upload; replaying the changes through it would create different commit objects. That route was not used to replace this history.
+
+Remote HEAD remains `107bcb8f0326d1a09847c396344bf6696452c6d0`. Local and remote HEAD are therefore **not equal**. Implementation and automated verification are complete, but publication is blocked on workspace GitHub authentication. The final local SHA and a verified Git bundle preserving the complete branch are provided in the delivery message.
