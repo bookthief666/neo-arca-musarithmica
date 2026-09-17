@@ -8,7 +8,7 @@ import { Cabinet } from './scene/Cabinet'
 import { Lid } from './scene/Lid'
 import { StudioEnvironment } from './scene/Environment'
 import { Interior } from './scene/Interior'
-import { Carriage, type ChannelReading } from './scene/Carriage'
+import { Carriage } from './scene/Carriage'
 import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
 import { EventReader } from './scene/EventReader'
@@ -21,14 +21,6 @@ import type {
   InstrumentState,
   InstrumentView,
 } from '../instrument/types'
-
-/**
- * THE SPATIAL ARCA.
- *
- * This renderer is PRESENTATION ONLY. It reads canonical instrument state and
- * dispatches canonical actions; it owns no musical state, no alignment logic
- * and no historical data of its own. Every scene verb dispatches an action to the canonical carrier reducer.
- */
 
 export interface SpatialArcaProps {
   manifest: HistoricalManifest
@@ -46,16 +38,13 @@ export interface SpatialArcaProps {
   onExecute: () => void
 }
 
-/** Height of the reading lever, standing proud of the drawer's front rail. */
 const CARRIAGE_LEVER_Y = CARRIAGE.y + CARRIAGE.height + 0.006
 
-/** Lighting: a warm key, a cool fill, and enough ambient that walnut stays wood. */
 function Lighting({ reducedMotion }: { reducedMotion: boolean }) {
   const key = useRef<THREE.DirectionalLight>(null)
   useEffect(() => {
     const light = key.current
     if (!light) return
-    // A tight shadow camera around a 28 cm object keeps the map sharp cheaply.
     light.shadow.camera.left = -0.3
     light.shadow.camera.right = 0.3
     light.shadow.camera.top = 0.3
@@ -78,15 +67,12 @@ function Lighting({ reducedMotion }: { reducedMotion: boolean }) {
         castShadow={!reducedMotion}
         shadow-mapSize={[1024, 1024]}
       />
-      {/* Fill from the opposite side so the back and left face never go black. */}
       <directionalLight position={[-0.42, 0.24, -0.3]} intensity={0.75} color="#c8d8ff" />
-      {/* A low bounce, standing in for light coming back off the desk. */}
       <directionalLight position={[0, -0.3, 0.2]} intensity={0.25} color="#ffd9a8" />
     </>
   )
 }
 
-/** The desk the instrument stands on. Restrained: the Arca is the hero. */
 function Desk() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
@@ -110,15 +96,11 @@ function SpatialStage(props: SpatialArcaProps) {
     <div className="spatial-stage" {...input}>
       <Canvas
         shadows={!props.state.reducedMotion}
-        // Bounded DPR: the Fold reports 3x, and a 3x framebuffer of this scene
-        // buys nothing visible while costing most of the frame budget.
         dpr={[1, 2]}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: 34, near: 0.01, far: 12, position: [0.34, 0.26, 0.5] }}
         onCreated={({ gl, scene }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping
-          // Walnut should stay walnut at a glancing angle: at a higher exposure
-          // the lid's specular blew out to near-white from behind.
           gl.toneMappingExposure = 0.94
           scene.background = new THREE.Color('#120c09')
           scene.fog = new THREE.Fog('#120c09', 0.9, 2.2)
@@ -135,7 +117,6 @@ function SpatialStage(props: SpatialArcaProps) {
   )
 }
 
-/** Bridges the orbit ref created outside the Canvas into the render loop. */
 function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof useOrbitState> }) {
   const { orbit, ...rest } = props
   const materials = useArcaMaterials()
@@ -143,16 +124,9 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   useCameraDirector(orbit, rest.view, rest.state.reducedMotion)
 
   const isOpen = rest.state.phase !== 'dormant'
-  // The carriage comes out as soon as there is anything to put on it, and stays
-  // out: the reader should never have to re-open the drawer they are working at.
   const carriageOut = rest.state.carriers.length > 0
   const travelRef = useRef(0)
-
-  const readings: ChannelReading[] = useMemo(() => [
-    { occupied: false, verified: false },
-    { occupied: rest.state.carriers[0]?.location === 'workspace', verified: true },
-    { occupied: false, verified: false },
-  ], [rest.state.carriers])
+  const carrierSeated = rest.state.carriers[0]?.location === 'workspace'
 
   return (
     <>
@@ -182,8 +156,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         materials={materials}
         extended={carriageOut}
         reducedMotion={rest.state.reducedMotion}
-        readings={readings}
-        concordant={rest.state.carriers[0]?.location === 'workspace'}
+        occupied={carrierSeated}
         travelRef={travelRef}
       />
       {isOpen && (
@@ -197,7 +170,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           onPlaceCarrier={rest.onPlaceCarrier}
         />
       )}
-      {rest.state.carriers[0]?.location === 'workspace' && rest.state.phase !== 'revealed' && (
+      {carrierSeated && rest.state.phase !== 'revealed' && (
         <EventReader position={rest.state.readingPosition} travelRef={travelRef} onPosition={rest.onReadingPosition} />
       )}
       <Revelation
@@ -207,7 +180,6 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         reducedMotion={rest.state.reducedMotion}
         travelRef={travelRef}
       />
-      {/* The reading lever: the act that sends the reading to the kernel. */}
       {rest.executionReady && (
         <mesh
           position={[0.086, CARRIAGE_LEVER_Y, 0.052]}
