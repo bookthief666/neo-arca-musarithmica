@@ -23,9 +23,9 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
-      - name: Task 6 focused tests
+      - name: Task 7 focused tests
         working-directory: frontend
-        run: npm test -- --run src/spatial/scene/ReadingLens.test.ts src/spatial/interaction.test.ts src/instrument/reading.test.ts src/App.renderer.test.tsx
+        run: npm test -- --run src/spatial/camera.test.ts src/realms/registry.test.ts src/App.renderer.test.tsx
       - name: Typecheck
         working-directory: frontend
         run: npm run typecheck
