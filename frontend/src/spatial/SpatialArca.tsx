@@ -11,10 +11,11 @@ import { Interior } from './scene/Interior'
 import { Carriage } from './scene/Carriage'
 import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
-import { EventReader } from './scene/EventReader'
+import { ReadingLens } from './scene/ReadingLens'
 import { useOrbitInput } from './orbitInput'
 import { createSpatialGrabStore, SpatialGrabProvider } from './grabOwnership'
 import { SpatialTestProbe } from './TestProbe'
+import { getExecutedReadingFrame, getSourceReadingFrame } from '../instrument/reading'
 import type {
   HistoricalManifest,
   InstrumentAffordance,
@@ -127,6 +128,15 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   const carriageOut = rest.state.carriers.length > 0
   const travelRef = useRef(0)
   const carrierSeated = rest.state.carriers[0]?.location === 'workspace'
+  const frame = useMemo(() => {
+    if (!carrierSeated) return null
+    return rest.state.execution
+      ? getExecutedReadingFrame(rest.manifest, rest.state.execution, rest.state.readingPosition)
+      : getSourceReadingFrame(rest.manifest, rest.state.readingPosition)
+  }, [carrierSeated, rest.manifest, rest.state.execution, rest.state.readingPosition])
+  const activeDegrees = frame
+    ? Array.from(new Set(Object.values(frame.voices).map(({ degree }) => degree)))
+    : []
 
   return (
     <>
@@ -141,6 +151,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         open={isOpen}
         reducedMotion={rest.state.reducedMotion}
         cued={rest.nextAffordance === 'open_arca'}
+        activeDegrees={activeDegrees}
         onToggle={() => (isOpen ? rest.onClose() : rest.onOpen())}
       />
       {isOpen && (
@@ -170,11 +181,12 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           onPlaceCarrier={rest.onPlaceCarrier}
         />
       )}
-      {carrierSeated && rest.state.phase !== 'revealed' && (
-        <EventReader position={rest.state.readingPosition} travelRef={travelRef} onPosition={rest.onReadingPosition} />
+      {frame && (
+        <ReadingLens frame={frame} travelRef={travelRef} onPosition={rest.onReadingPosition} />
       )}
       <Revelation
         materials={materials}
+        manifest={rest.manifest}
         execution={rest.state.execution}
         shown={rest.view === 'revelation'}
         reducedMotion={rest.state.reducedMotion}

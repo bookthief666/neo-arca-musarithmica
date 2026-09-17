@@ -3,22 +3,13 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CASE, LID } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
-import { makeMensaTexture } from '../textures'
+import { makeBrassPlateTexture, makeMensaTexture } from '../textures'
 import { Fillet, Hinge } from './Hardware'
 import type { HistoricalManifest } from '../../instrument/types'
 
-/**
- * THE LID.
- *
- * It rotates about a real hinge axis along the top rear edge of the carcass —
- * the group's origin IS that axis, so the lid swings exactly where the brass
- * knuckles are, and the Mensa mounted to its inner face swings with it. It does
- * not fade, translate or cross-dissolve; opening the Arca is one rotation of
- * one rigid body, which is what makes the interior feel revealed rather than
- * switched to.
- */
+/** Rigid hinged lid carrying the fixed printed-p.51 Tone-II witness. */
 export function Lid({
-  materials, manifest, open, reducedMotion, onToggle, cued,
+  materials, manifest, open, reducedMotion, onToggle, cued, activeDegrees = [],
 }: {
   materials: ArcaMaterials
   manifest: HistoricalManifest
@@ -26,6 +17,7 @@ export function Lid({
   reducedMotion: boolean
   onToggle: () => void
   cued: boolean
+  activeDegrees?: readonly number[]
 }) {
   const { width, depth, bodyHeight, plinth, lidHeight, wall } = CASE
   const hingeY = plinth + bodyHeight
@@ -33,10 +25,12 @@ export function Lid({
   const group = useRef<THREE.Group>(null)
 
   const mensa = useMemo(() => makeMensaTexture(manifest), [manifest])
-  useEffect(() => () => mensa.dispose(), [mensa])
+  const policy = useMemo(() => makeBrassPlateTexture([
+    { text: 'PRINTED p.51 WITNESS', size: 22, gap: 6 },
+    { text: 'H0 TRANSCRIPTION / H1 OPERATING POLICY', size: 16 },
+  ], { width: 760, height: 150, tarnished: false }), [])
+  useEffect(() => () => { mensa.dispose(); policy.dispose() }, [mensa, policy])
 
-  // The lid is animated outside React: a spring here would re-render the whole
-  // scene on every frame of the swing.
   useFrame((_, delta) => {
     const node = group.current
     if (!node) return
@@ -51,10 +45,12 @@ export function Lid({
 
   const innerW = width - LID.frame * 2
   const innerD = depth - LID.frame * 2
+  const tableW = innerW * 0.84
+  const toneCellW = tableW / 8
+  const active = new Set(activeDegrees)
 
   return (
     <group position={[0, hingeY, hingeZ]} ref={group}>
-      {/* The lid board itself, hanging forward of the hinge axis. */}
       <group position={[0, lidHeight / 2, depth / 2 - LID.hingeRadius]}>
         <mesh
           material={materials.wood}
@@ -67,7 +63,6 @@ export function Lid({
           <boxGeometry args={[width, lidHeight, depth]} />
         </mesh>
 
-        {/* Inlaid fillet on the outer face of the lid. */}
         <Fillet
           width={width} height={depth}
           position={[0, lidHeight / 2 + 0.0006, 0]}
@@ -75,21 +70,34 @@ export function Lid({
           materials={materials} inset={0.016}
         />
 
-        {/* ---- the Mensa Tonographica, let into the INNER face ---- */}
-        {/* A routed recess so the sheet sits below the lid's frame members. */}
         <mesh material={materials.void} position={[0, -lidHeight / 2 - 0.0004, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <planeGeometry args={[innerW + 0.005, innerD + 0.005]} />
         </mesh>
-        <mesh
-          position={[0, -lidHeight / 2 - 0.0011, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          receiveShadow
-        >
+        <mesh position={[0, -lidHeight / 2 - 0.0011, 0]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[innerW, innerD]} />
           <meshStandardMaterial map={mensa} roughness={0.88} metalness={0} />
         </mesh>
 
-        {/* Brass corner nails holding the sheet down. */}
+        {/* Event-driven emphasis only: the Tone witness is always present and never an unlock gate. */}
+        {Array.from({ length: 8 }, (_, index) => index + 1).map((degree) => {
+          if (!active.has(degree)) return null
+          const x = -tableW / 2 + toneCellW * (degree - 0.5)
+          return (
+            <mesh key={degree} position={[x, -lidHeight / 2 - 0.0019, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[toneCellW * 0.88, innerD * 0.25]} />
+              <meshBasicMaterial color="#ffd16a" transparent opacity={0.27} depthWrite={false} />
+            </mesh>
+          )
+        })}
+
+        <mesh
+          position={[0, -lidHeight / 2 - 0.002, innerD / 2 - 0.014]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[innerW * 0.86, 0.018]} />
+          <meshStandardMaterial map={policy} metalness={0.62} roughness={0.42} />
+        </mesh>
+
         {([
           [-innerW / 2 + 0.006, -innerD / 2 + 0.006],
           [innerW / 2 - 0.006, -innerD / 2 + 0.006],
@@ -101,17 +109,14 @@ export function Lid({
           </mesh>
         ))}
 
-        {/* Fixed witness medallion; there is no single-option unlock control. */}
         <mesh material={materials.brass} position={[innerW / 2 - 0.026, -lidHeight / 2 - 0.004, innerD / 2 - 0.02]}>
           <cylinderGeometry args={[0.011, 0.012, 0.007, 20]} />
         </mesh>
       </group>
 
-      {/* ---- the hinges, on the axis the lid actually turns about ---- */}
       <Hinge position={[-width * 0.28, 0, 0]} materials={materials} />
       <Hinge position={[width * 0.28, 0, 0]} materials={materials} />
 
-      {/* A subtle catch of light on the lid seam while the Arca is shut. */}
       {cued && !open && (
         <mesh material={materials.brassLit} position={[0, 0.001, depth - LID.hingeRadius * 2 - wall]}>
           <boxGeometry args={[width * 0.5, 0.0012, 0.0012]} />

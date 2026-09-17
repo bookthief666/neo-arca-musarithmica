@@ -1,24 +1,10 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CARRIAGE, FOLIO } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
-import type { HistoricalExecution, VoiceName } from '../../instrument/types'
-
-/**
- * THE REVELATION FOLIO.
- *
- * A sheet the machine prints and pushes out of the front of the carriage. It
- * rides with the drawer, because the drawer is what produced it.
- *
- * WHAT IS ON IT, AND WHAT IS NOT. The four voices are printed as the kernel
- * returns them: a symbolic pitch class and the degree it came from, in event
- * order, with the relative minim count beneath. The construction sheet shows
- * staff notation on this panel; that is generated decoration, and drawing
- * staves here would assert a register, a clef and a metre that the historical
- * fragment explicitly does not carry. So the folio prints four ruled ink lanes
- * and says so.
- */
+import type { HistoricalExecution, HistoricalManifest, VoiceName } from '../../instrument/types'
+import { getReadingFrames, type ReadingFrame } from '../../instrument/reading'
 
 const VOICE_ORDER: VoiceName[] = ['cantus', 'altus', 'tenor', 'bassus']
 const VOICE_TITLE: Record<VoiceName, string> = {
@@ -28,7 +14,8 @@ const LANE_INK: Record<VoiceName, string> = {
   cantus: '#8d3a28', altus: '#7d5c1e', tenor: '#35544c', bassus: '#413859',
 }
 
-function makeFolioTexture(execution: HistoricalExecution) {
+/** Folio values come only from execution-parity frames, never a parallel computation path. */
+function makeFolioTexture(execution: HistoricalExecution, frames: ReadingFrame[]) {
   const W = 1024
   const H = 640
   const element = document.createElement('canvas')
@@ -44,8 +31,7 @@ function makeFolioTexture(execution: HistoricalExecution) {
 
   const DISPLAY = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif'
   const MONO = 'ui-monospace, "DejaVu Sans Mono", Menlo, monospace'
-  const events = execution.fragment.events
-  const glyph = (p: string) => p.replace('b', '♭').replace('#', '♯')
+  const glyph = (pitch: string) => pitch.replace('b', '♭').replace('#', '♯')
 
   c.textAlign = 'left'
   c.fillStyle = '#6f5a3b'
@@ -53,7 +39,6 @@ function makeFolioTexture(execution: HistoricalExecution) {
   c.letterSpacing = '4px'
   c.fillText('PRINT_1650 · VERIFIED HISTORICAL FRAGMENT', 52, 56)
   c.letterSpacing = '0px'
-
   c.fillStyle = '#241705'
   c.font = `600 44px ${DISPLAY}`
   c.fillText('REVELATIO IV VOCVM', 52, 106)
@@ -62,7 +47,7 @@ function makeFolioTexture(execution: HistoricalExecution) {
   c.font = `20px ${MONO}`
   c.textAlign = 'right'
   c.fillText(
-    `${events.length} events · ${execution.fragment.total_duration_minim_units} relative minim units`,
+    `${frames.length} events · ${execution.fragment.total_duration_minim_units} relative minim units`,
     W - 52, 104,
   )
 
@@ -74,7 +59,7 @@ function makeFolioTexture(execution: HistoricalExecution) {
   const nameW = 132
   const laneTop = 160
   const laneH = 84
-  const cellW = (W - left - nameW - 52) / events.length
+  const cellW = (W - left - nameW - 52) / frames.length
 
   VOICE_ORDER.forEach((voice, row) => {
     const y = laneTop + laneH * row
@@ -86,26 +71,23 @@ function makeFolioTexture(execution: HistoricalExecution) {
     c.letterSpacing = '3px'
     c.fillText(VOICE_TITLE[voice], left + 16, y + 6)
     c.letterSpacing = '0px'
-
-    // The ruled lane the events sit on.
     c.strokeStyle = 'rgba(58,42,24,0.22)'
     c.lineWidth = 1
     c.beginPath(); c.moveTo(left + nameW, y + 10); c.lineTo(W - 52, y + 10); c.stroke()
 
-    events.forEach((event, index) => {
+    frames.forEach((frame, index) => {
       const x = left + nameW + cellW * (index + 0.5)
-      const v = event.voices[voice]
+      const value = frame.voices[voice]
       c.textAlign = 'center'
       c.fillStyle = LANE_INK[voice]
       c.font = `600 34px ${DISPLAY}`
-      c.fillText(glyph(v.pitch_class), x, y + 2)
+      c.fillText(glyph(value.pitchClass), x, y + 2)
       c.fillStyle = '#6f5a3b'
       c.font = `17px ${MONO}`
-      c.fillText(String(v.degree), x, y + 26)
+      c.fillText(String(value.degree), x, y + 26)
     })
   })
 
-  // TEMPVS: relative duration only.
   const ty = laneTop + laneH * 4
   c.fillStyle = '#6f5a3b'
   c.font = `20px ${MONO}`
@@ -113,22 +95,22 @@ function makeFolioTexture(execution: HistoricalExecution) {
   c.letterSpacing = '3px'
   c.fillText('TEMPVS', left + 16, ty + 6)
   c.letterSpacing = '0px'
-  events.forEach((event, index) => {
+  frames.forEach((frame, index) => {
     const x = left + nameW + cellW * (index + 0.5)
     c.textAlign = 'center'
     c.fillStyle = '#43301c'
-    c.font = `30px ${DISPLAY}`
-    c.fillText(event.duration_symbol === 'minim' ? '♩' : '\u{1D15D}', x, ty + 2)
+    c.font = `25px ${DISPLAY}`
+    c.fillText(frame.duration.glyph, x, ty)
     c.fillStyle = '#6f5a3b'
     c.font = `17px ${MONO}`
-    c.fillText(String(event.duration_minim_units), x, ty + 26)
+    c.fillText(String(frame.duration.relativeMinimUnits), x, ty + 26)
   })
 
   c.fillStyle = '#6f5a3b'
   c.font = `italic 19px ${DISPLAY}`
   c.textAlign = 'center'
   c.fillText(
-    'Symbolic pitch classes and relative durations only — no octave, register or metre is inferred.',
+    'Kernel-parity symbolic pitch classes and relative durations — no octave, register or metre inferred.',
     W / 2, H - 38,
   )
 
@@ -139,23 +121,30 @@ function makeFolioTexture(execution: HistoricalExecution) {
 }
 
 export function Revelation({
-  materials, execution, shown, reducedMotion, travelRef,
+  materials, manifest, execution, shown, reducedMotion, travelRef,
 }: {
   materials: ArcaMaterials
+  manifest: HistoricalManifest
   execution: HistoricalExecution | null
   shown: boolean
   reducedMotion: boolean
   travelRef: React.RefObject<number>
 }) {
   const group = useRef<THREE.Group>(null)
-  const texture = useMemo(() => (execution ? makeFolioTexture(execution) : null), [execution])
+  const frames = useMemo(
+    () => (execution ? getReadingFrames(manifest, execution) : null),
+    [manifest, execution],
+  )
+  const texture = useMemo(
+    () => (execution && frames ? makeFolioTexture(execution, frames) : null),
+    [execution, frames],
+  )
+  useEffect(() => () => texture?.dispose(), [texture])
 
   useFrame((_, delta) => {
     const node = group.current
     if (!node) return
     const travel = travelRef.current ?? 0
-    // Far enough forward that the drawer front and its knobs stop clipping the
-    // top voice lane — the sheet has to be readable, not merely present.
     const outZ = CARRIAGE.depth / 2 + FOLIO.height * 0.66
     const goalZ = travel + (shown ? outZ : CARRIAGE.depth / 2 - 0.02)
     const goalY = CARRIAGE.y + (shown ? 0.004 : -0.02)
@@ -172,12 +161,10 @@ export function Revelation({
 
   return (
     <group ref={group} position={[0, CARRIAGE.y - 0.02, CARRIAGE.depth / 2]}>
-      {/* The sheet, lying almost flat as it slides out of the machine. */}
       <mesh rotation={[-Math.PI / 2 + 0.08, 0, 0]} castShadow receiveShadow>
         <planeGeometry args={[FOLIO.width, FOLIO.height]} />
         <meshStandardMaterial map={texture} roughness={0.9} metalness={0} side={THREE.DoubleSide} />
       </mesh>
-      {/* A brass bar along its head, as if the machine gripped it to push. */}
       <mesh material={materials.brass} position={[0, 0.001, -FOLIO.height * 0.47]} castShadow>
         <boxGeometry args={[FOLIO.width * 0.98, 0.003, 0.006]} />
       </mesh>
