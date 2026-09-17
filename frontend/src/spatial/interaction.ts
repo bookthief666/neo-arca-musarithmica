@@ -80,3 +80,16 @@ export function snapToDetent(value: number, min: number, max: number, count: num
   const normalised = span === 0 ? 0 : (value - min) / span
   return THREE.MathUtils.clamp(Math.round(normalised * (count - 1)), 0, count - 1)
 }
+
+/** The origin is world-space; the projected scalar and limits stay local. */
+export function projectRayToLocalDetent(
+  ray: THREE.Ray,
+  worldOrigin: THREE.Vector3,
+  worldAxis: THREE.Vector3,
+  minLocal: number,
+  maxLocal: number,
+  count: number,
+): number {
+  const local = projectRayOntoAxis(ray, worldOrigin, worldAxis, minLocal, maxLocal)
+  return snapToDetent(local, minLocal, maxLocal, count)
+}
