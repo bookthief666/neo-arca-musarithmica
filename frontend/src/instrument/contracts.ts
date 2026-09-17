@@ -13,9 +13,10 @@ const object = (v: unknown, p: string): Record<string, unknown> => {
 }
 const shape = (fields: Record<string, Check>, optional: string[] = []): Check => (v, p) => {
   const obj = object(v, p)
-  if (Object.keys(obj).some(k => !(k in fields))) fail(p + ': unexpected fields')
+  if (Object.keys(obj).some(k => !Object.hasOwn(fields, k))) fail(p + ': unexpected fields')
   for (const [key, check] of Object.entries(fields)) {
-    if (optional.includes(key) && !(key in obj)) continue
+    if (optional.includes(key) && !Object.hasOwn(obj, key)) continue
+    if (!Object.hasOwn(obj, key)) fail(p + '.' + key + ': missing field')
     check(obj[key], p + '.' + key)
   }
 }

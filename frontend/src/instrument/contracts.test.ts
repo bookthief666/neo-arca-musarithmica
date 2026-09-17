@@ -30,3 +30,9 @@ describe('runtime v2 boundary', () => {
     expect(() => decodeHistoricalExecution(missing)).toThrow()
   })
 })
+
+it.each(['toString','constructor','__proto__'])('rejects prototype-named unknown field %s',key => {
+  const value=JSON.parse(JSON.stringify(manifestFixture))
+  Object.defineProperty(value,key,{value:'unexpected',enumerable:true})
+  expect(() => decodeHistoricalManifest(value)).toThrow()
+})

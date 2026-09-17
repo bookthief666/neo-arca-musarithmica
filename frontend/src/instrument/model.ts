@@ -1,3 +1,4 @@
+import { assertExecutionMatchesManifest } from './reading'
 import type { HistoricalManifest, HistoricalReadingRequest, InstrumentAction, InstrumentAffordance, InstrumentState, InstrumentView } from './types'
 
 export function createInitialState(reducedMotion = false): InstrumentState {
@@ -49,6 +50,12 @@ export function instrumentReducer(state: InstrumentState, action: InstrumentActi
       return isReadingReady(state, manifest) ? { ...state, phase: 'executing', error: null } : state
     case 'EXECUTION_SUCCESS': {
       if (state.phase !== 'executing' || !manifest) return state
+      try {
+        assertExecutionMatchesManifest(manifest, action.execution)
+      } catch (error) {
+        return { ...state, phase: 'error', execution: null,
+          error: error instanceof Error ? error.message : 'Historical reading parity failed.' }
+      }
       const r = action.execution.reading, c = state.carriers[0]
       if (!c || r.manifest_id !== manifest.manifest_id || r.content_digest !== manifest.content_digest ||
           r.carrier_instance.instance_id !== c.instance_id || r.carrier_instance.carrier_id !== c.carrier_id ||

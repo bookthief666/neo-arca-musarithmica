@@ -71,3 +71,13 @@ describe('one-carrier instrument', () => {
     expect(reduce(closed, { type: 'EXECUTION_SUCCESS', execution: executionFixture })).toBe(closed)
   })
 })
+
+it('rejects a mismatched kernel result before exposing the folio or provenance',() => {
+  const pending=reduce(seated(),{type:'EXECUTE'})
+  const bad=structuredClone(executionFixture)
+  bad.fragment.events[5].voices.bassus.degree=4
+  const next=reduce(pending,{type:'EXECUTION_SUCCESS',execution:bad})
+  expect(next.phase).toBe('error')
+  expect(next.execution).toBeNull()
+  expect(next.carriers).toEqual(pending.carriers)
+})
