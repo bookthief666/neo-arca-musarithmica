@@ -34,8 +34,15 @@ describe('Arca presentation realms', () => {
     })
     expect(getRealmGuidance('historica', 'inspect_event', 'scholia')).toEqual({
       affordance: 'inspect_event',
-      text: 'Each event combines four scale degrees with one mensural duration.',
+      text: 'One event joins four degrees, the fixed Tone-II lookup, and one historical duration.',
     })
+  })
+
+  it('keeps event inspection as the standing emphasis when LECTIO is available', () => {
+    const guidance = getRealmGuidance('historica', 'read_fragment', 'scholia')
+    expect(guidance?.text).toContain('One event joins four degrees, the fixed Tone-II lookup, and one historical duration.')
+    expect(guidance?.text).toContain('LECTIO remains available')
+    expect(guidance?.text.toLowerCase()).not.toContain('next step')
   })
 
   it('suppresses visible scholia in quiet mode and for future realms', () => {
