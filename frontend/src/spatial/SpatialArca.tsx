@@ -1,8 +1,8 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CARRIAGE } from './dimensions'
-import { dollyBy, orbitBy, useCameraDirector, useOrbitState, useResetView } from './camera'
+import { useCameraDirector, useOrbitState, useResetView } from './camera'
 import { useArcaMaterials } from './materials'
 import { Cabinet } from './scene/Cabinet'
 import { Lid } from './scene/Lid'
@@ -11,6 +11,9 @@ import { Interior } from './scene/Interior'
 import { Carriage, type ChannelReading } from './scene/Carriage'
 import { Virgae } from './scene/Virgae'
 import { Revelation } from './scene/Revelation'
+import { EventReader } from './scene/EventReader'
+import { useOrbitInput } from './orbitInput'
+import { createSpatialGrabStore, SpatialGrabProvider } from './grabOwnership'
 import { SpatialTestProbe } from './TestProbe'
 import type {
   HistoricalManifest,
@@ -93,69 +96,12 @@ function Desk() {
   )
 }
 
-/**
- * Orbit input. Gesture ownership is explicit: a drag that begins on an
- * interactive part of the instrument marks itself handled and the camera
- * ignores it, so dragging a virga never spins the cabinet.
- */
-function useOrbitInput(orbit: ReturnType<typeof useOrbitState>) {
-  const drag = useRef<{ id: number; x: number; y: number } | null>(null)
-  const pinch = useRef<{ distance: number } | null>(null)
-  const points = useRef(new Map<number, { x: number; y: number }>())
-
-  const onPointerDown = useCallback((event: React.PointerEvent) => {
-    points.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    if (points.current.size === 2) {
-      const [a, b] = [...points.current.values()]
-      pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y) }
-      drag.current = null
-      return
-    }
-    // `data-arca-grab` is set by any scene part that is handling this gesture.
-    if (document.body.dataset.arcaGrab === 'active') return
-    drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY }
-  }, [])
-
-  const onPointerMove = useCallback((event: React.PointerEvent) => {
-    if (points.current.has(event.pointerId)) {
-      points.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
-    }
-    const state = orbit.current
-    if (!state) return
-
-    if (pinch.current && points.current.size === 2) {
-      const [a, b] = [...points.current.values()]
-      const distance = Math.hypot(a.x - b.x, a.y - b.y)
-      if (pinch.current.distance > 0) dollyBy(state, pinch.current.distance / distance)
-      pinch.current.distance = distance
-      return
-    }
-    const active = drag.current
-    if (!active || active.id !== event.pointerId) return
-    if (document.body.dataset.arcaGrab === 'active') { drag.current = null; return }
-    orbitBy(state, (event.clientX - active.x) * -0.0085, (event.clientY - active.y) * 0.0065)
-    active.x = event.clientX
-    active.y = event.clientY
-  }, [orbit])
-
-  const onPointerUp = useCallback((event: React.PointerEvent) => {
-    points.current.delete(event.pointerId)
-    if (points.current.size < 2) pinch.current = null
-    if (drag.current?.id === event.pointerId) drag.current = null
-  }, [])
-
-  // Desktop dolly. Touch uses the pinch above; both end up calling dollyBy, so
-  // an XR thumbstick later has exactly one function to drive.
-  const onWheel = useCallback((event: React.WheelEvent) => {
-    const state = orbit.current
-    if (!state) return
-    dollyBy(state, event.deltaY > 0 ? 1.08 : 1 / 1.08)
-  }, [orbit])
-
-  return { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp, onWheel }
+export function SpatialArca(props: SpatialArcaProps) {
+  const store=useMemo(() => createSpatialGrabStore(),[])
+  return <SpatialGrabProvider store={store}><SpatialStage {...props} /></SpatialGrabProvider>
 }
 
-export function SpatialArca(props: SpatialArcaProps) {
+function SpatialStage(props: SpatialArcaProps) {
   const orbit = useOrbitState()
   const reset = useResetView(orbit)
   const input = useOrbitInput(orbit)
@@ -250,6 +196,9 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           onRetrieveCarrier={rest.onRetrieveCarrier}
           onPlaceCarrier={rest.onPlaceCarrier}
         />
+      )}
+      {rest.state.carriers[0]?.location === 'workspace' && rest.state.phase !== 'revealed' && (
+        <EventReader position={rest.state.readingPosition} travelRef={travelRef} onPosition={rest.onReadingPosition} />
       )}
       <Revelation
         materials={materials}
