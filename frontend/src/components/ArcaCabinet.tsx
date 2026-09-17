@@ -11,9 +11,9 @@ export function ArcaCabinet({ manifest, state, dispatch }: {
     {open && <div className="machine-interior" data-focus={state.carriers.length ? 'receded' : 'near'}>
       <div className="mensa-tonographica" aria-label="Fixed Tone witness">
         <h2>Tone {manifest.tone.number} · {manifest.tone.name}</h2>
-        <p>{manifest.tone.witness} · fixed edition policy</p>
+        <p>{manifest.tone.witness} · H0 witness; H1 fixed operating policy</p>
         <dl>{Object.entries(manifest.tone.degree_to_pitch_class).map(([degree,pitch]) =>
-          <div key={degree}><dt>{degree}</dt><dd>{pitch}</dd></div>)}</dl>
+          <div key={degree}><dt>{degree}</dt><dd>{pitch}</dd></div>)}</dl><p>{manifest.tone.known_conflict}</p>
       </div>
       <button className="bank-plate" disabled={state.phase !== 'open'} onClick={() => dispatch({type:'FOCUS_BANK',bank:1})}>Bank I, DODECAMORIVM</button>
       {state.focusedBank === 1 && <button className="socket" disabled={state.phase !== 'bank_focus'}

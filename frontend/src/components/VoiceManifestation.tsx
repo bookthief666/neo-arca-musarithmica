@@ -33,7 +33,7 @@ export function VoiceManifestation({ execution, onReturn }: VoiceManifestationPr
 
         <header className="voice-manifestation__plate">
           <div>
-            <p className="eyebrow">PRINT_1650 · VERIFIED HISTORICAL FRAGMENT</p>
+            <p className="eyebrow">PRINT_1650 · SOURCE-BACKED SYMBOLIC CONTENT · H1 EDITORIAL PAIRING</p>
             <h2 id="voices-title">Four voices manifest</h2>
           </div>
           <p className="voice-manifestation__tally">
@@ -75,7 +75,7 @@ export function VoiceManifestation({ execution, onReturn }: VoiceManifestationPr
             <span role="rowheader">TEMPVS</span>
             {fragment.events.map((event) => (
               <span role="cell" key={event.index} data-units={event.duration_minim_units}>
-                <b>{event.duration_symbol === 'minim' ? '♩' : '\u{1D15D}'}</b>
+                <b>{event.duration_symbol}</b>
                 <i>{event.duration_minim_units}</i>
               </span>
             ))}
@@ -88,7 +88,7 @@ export function VoiceManifestation({ execution, onReturn }: VoiceManifestationPr
           </p>
           <button type="button" className="return-to-rule" onClick={onReturn}>
             <span className="return-to-rule__pull" aria-hidden="true" />
-            Return to the rods
+            Return to the carrier
           </button>
         </div>
       </div>

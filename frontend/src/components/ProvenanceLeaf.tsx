@@ -55,7 +55,9 @@ export function ProvenanceLeaf({ manifest, execution, open, onToggle }: Provenan
               <div><dt>Pitch record</dt><dd>{manifest.critical_edition_carrier.pitch_source.immutable_record}</dd></div>
               <div><dt>Rhythm record</dt><dd>{manifest.critical_edition_carrier.rhythm_source.immutable_record}</dd></div>
               <div><dt>Tone witness</dt><dd>{manifest.tone.witness}</dd></div>
-              <div><dt>Carrier body</dt><dd>H1 restrained reconstruction</dd></div>
+              <div><dt>Carrier and pairing</dt><dd>{manifest.critical_edition_carrier.editorial_pairing.note}</dd></div>
+              <div><dt>Tone authority</dt><dd>H0 witness transcription; H1 operating policy. {manifest.tone.known_conflict}</dd></div>
+              <div><dt>Rhythm authority</dt><dd>H0 mensural identities; relative minim integers are derived project normalization.</dd></div>
               {execution && <div><dt>Request seal</dt><dd>{execution.request_fingerprint.slice(0, 16)}…</dd></div>}
             </dl>
             {execution ? (

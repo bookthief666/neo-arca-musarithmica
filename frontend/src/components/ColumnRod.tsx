@@ -1,12 +1,15 @@
-import type { CriticalEditionCarrier, CarrierInstance, VoiceName } from '../instrument/types'
-const voices: VoiceName[] = ['cantus','altus','tenor','bassus']
+import type { CriticalEditionCarrier, CarrierInstance } from '../instrument/types'
+import { carrierInscription } from './carrierInscription'
 export function ColumnRod({ carrier, instance }: { carrier: CriticalEditionCarrier; instance?: CarrierInstance }) {
+  const text=carrierInscription(carrier)
   return <article className="critical-carrier" data-instance-id={instance?.instance_id} data-location={instance?.location}>
-    <h3>{carrier.label} · H1</h3>
-    <p>Vperm 01</p>
-    {voices.map(voice => <p key={voice}>{voice[0].toUpperCase()} {carrier.pitch_source.content.rows[voice].join(' ')}</p>)}
-    <p>Rperm 03</p>
-    <p>{carrier.rhythm_source.content.glyphs.join(' ')}</p>
-    <p>Relative minim units: {carrier.rhythm_source.content.relative_minim_units.join(' ')}</p>
+    <h3>{text.title}</h3>
+    <section aria-label="Verified pitch degrees"><h4>{text.pitch}</h4>
+      {text.rows.map(row => <p key={row}>{row}</p>)}
+    </section>
+    <section aria-label="Verified mensural identities"><h4>{text.rhythm}</h4>
+      <p>{text.glyphs}</p><p>{text.normalization}</p>
+    </section>
+    <p>{text.pairing}</p><p>{carrier.editorial_pairing.note}</p>
   </article>
 }

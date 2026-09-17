@@ -26,15 +26,15 @@ describe('Arca presentation realms', () => {
   it('derives terse Historica scholia from canonical affordances', () => {
     expect(getRealmGuidance('historica', 'open_arca', 'scholia')).toEqual({
       affordance: 'open_arca',
-      text: 'Open the instrument.',
+      text: 'The cabinet carries a critical edition of one Pinax-IV computation.',
     })
     expect(getRealmGuidance('historica', 'retrieve_carrier', 'scholia')).toEqual({
       affordance: 'retrieve_carrier',
-      text: 'Lift the critical-edition carrier.',
+      text: 'This H1 carrier joins separately verified pitch degrees and mensural identities.',
     })
     expect(getRealmGuidance('historica', 'inspect_event', 'scholia')).toEqual({
       affordance: 'inspect_event',
-      text: 'Inspect an event.',
+      text: 'Each event combines four scale degrees with one mensural duration.',
     })
   })
 

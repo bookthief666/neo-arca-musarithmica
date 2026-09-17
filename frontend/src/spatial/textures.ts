@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import type { HistoricalManifest, CriticalEditionCarrier, VoiceName } from '../instrument/types'
+import { carrierInscription } from '../components/carrierInscription'
+import type { HistoricalManifest, CriticalEditionCarrier } from '../instrument/types'
 
 /**
  * Every texture in the spatial Arca is drawn here, procedurally, onto a canvas.
@@ -213,8 +214,6 @@ export function makeMensaTexture(manifest: HistoricalManifest) {
   return finish(element, 16)
 }
 
-const VOICE_ORDER: VoiceName[] = ['cantus', 'altus', 'tenor', 'bassus']
-const VOICE_MARK: Record<VoiceName, string> = { cantus: 'C', altus: 'A', tenor: 'T', bassus: 'B' }
 
 /** One editorial extract; no implied untranscribed musical choices. */
 export function makeVirgaTexture(source: CriticalEditionCarrier) {
@@ -224,16 +223,9 @@ export function makeVirgaTexture(source: CriticalEditionCarrier) {
   context.fillStyle = INK
   context.textAlign = 'left'
   context.font = `24px ${ENGRAVED}`
-  const lines = [
-    'PINAX IV · H1 EXTRACT',
-    'VPERM 01',
-    ...VOICE_ORDER.map(voice => VOICE_MARK[voice] + ' ' + source.pitch_source.content.rows[voice].join(' ')),
-    'RPERM 03',
-    ...source.rhythm_source.content.glyphs,
-    'RELATIVE MINIM UNITS',
-    source.rhythm_source.content.relative_minim_units.join(' '),
-  ]
-  lines.forEach((line,index) => context.fillText(line,18,48+index*58,W-36))
+  const text = carrierInscription(source)
+  const lines = [text.title, text.pitch, ...text.rows, text.rhythm, text.glyphs, text.normalization, text.pairing]
+  lines.forEach((line,index) => context.fillText(line,18,48+index*90,W-36))
   return finish(element,16)
 }
 
