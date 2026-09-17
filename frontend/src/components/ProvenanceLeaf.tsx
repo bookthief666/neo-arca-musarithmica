@@ -52,8 +52,8 @@ export function ProvenanceLeaf({ manifest, execution, open, onToggle }: Provenan
               <span>{manifest.cell.cell_label} · printed p. {manifest.cell.printed_page}</span>
             </header>
             <dl>
-              <div><dt>Pitch record</dt><dd>{manifest.source_columns[0].record}</dd></div>
-              <div><dt>Rhythm record</dt><dd>{manifest.source_columns[1].record}</dd></div>
+              <div><dt>Pitch record</dt><dd>{manifest.critical_edition_carrier.pitch_source.immutable_record}</dd></div>
+              <div><dt>Rhythm record</dt><dd>{manifest.critical_edition_carrier.rhythm_source.immutable_record}</dd></div>
               <div><dt>Tone witness</dt><dd>{manifest.tone.witness}</dd></div>
               <div><dt>Carrier body</dt><dd>H1 restrained reconstruction</dd></div>
               {execution && <div><dt>Request seal</dt><dd>{execution.request_fingerprint.slice(0, 16)}…</dd></div>}
@@ -65,7 +65,7 @@ export function ProvenanceLeaf({ manifest, execution, open, onToggle }: Provenan
                 ))}
               </ul>
             ) : (
-              <p className="provenance-copy__note">Execute the verified alignment to reveal the exact witnesses carried into the result.</p>
+              <p className="provenance-copy__note">Read the critical edition to reveal the exact witnesses carried into the result.</p>
             )}
             <button type="button" className="provenance-close" onClick={onToggle}>Close the apparatus</button>
           </div>

@@ -28,13 +28,13 @@ describe('Arca presentation realms', () => {
       affordance: 'open_arca',
       text: 'Open the instrument.',
     })
-    expect(getRealmGuidance('historica', 'deploy_rods', 'scholia')).toEqual({
-      affordance: 'deploy_rods',
-      text: 'Take a virga.',
+    expect(getRealmGuidance('historica', 'retrieve_carrier', 'scholia')).toEqual({
+      affordance: 'retrieve_carrier',
+      text: 'Lift the critical-edition carrier.',
     })
-    expect(getRealmGuidance('historica', 'align_rods', 'scholia')).toEqual({
-      affordance: 'align_rods',
-      text: 'Bring the first bands into concord.',
+    expect(getRealmGuidance('historica', 'inspect_event', 'scholia')).toEqual({
+      affordance: 'inspect_event',
+      text: 'Inspect an event.',
     })
   })
 
@@ -49,7 +49,7 @@ describe('Arca presentation realms', () => {
     const snapshot = structuredClone(state)
 
     getRealmGuidance('historica', 'focus_bank_i', 'scholia')
-    getRealmGuidance('historica', 'align_rods', 'quiet')
+    getRealmGuidance('historica', 'inspect_event', 'quiet')
 
     expect(state).toEqual(snapshot)
     expect('realm' in state).toBe(false)

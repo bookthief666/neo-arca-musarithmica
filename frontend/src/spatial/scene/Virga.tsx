@@ -1,10 +1,10 @@
-import { forwardRef, useMemo } from 'react'
+import { forwardRef, useEffect, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { VIRGA } from '../dimensions'
 import type { ArcaMaterials } from '../materials'
 import { makeVirgaTexture } from '../textures'
-import type { HistoricalSourceColumn } from '../../instrument/types'
+import type { CriticalEditionCarrier } from '../../instrument/types'
 
 /**
  * A VIRGA — the hero object of the whole instrument.
@@ -20,7 +20,7 @@ import type { HistoricalSourceColumn } from '../../instrument/types'
  * a band the kernel would not execute.
  */
 export const Virga = forwardRef<THREE.Group, {
-  source: HistoricalSourceColumn
+  source: CriticalEditionCarrier
   materials: ArcaMaterials
   /** Lit while this carrier is the instrument's next affordance. */
   cued?: boolean
@@ -37,6 +37,8 @@ export const Virga = forwardRef<THREE.Group, {
     () => new THREE.MeshStandardMaterial({ map: face, roughness: 0.86, metalness: 0 }),
     [face],
   )
+
+  useEffect(() => () => { faceMaterial.dispose(); face.dispose() }, [faceMaterial, face])
 
   return (
     <group

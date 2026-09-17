@@ -17,7 +17,6 @@ import type {
   InstrumentAffordance,
   InstrumentState,
   InstrumentView,
-  RodTemplate,
 } from '../instrument/types'
 
 /**
@@ -25,8 +24,7 @@ import type {
  *
  * This renderer is PRESENTATION ONLY. It reads canonical instrument state and
  * dispatches canonical actions; it owns no musical state, no alignment logic
- * and no historical data of its own. Every verb the reader performs in the
- * scene resolves to an action the M1.1 reducer already understood.
+ * and no historical data of its own. Every scene verb dispatches an action to the canonical carrier reducer.
  */
 
 export interface SpatialArcaProps {
@@ -34,15 +32,14 @@ export interface SpatialArcaProps {
   state: InstrumentState
   view: InstrumentView
   nextAffordance: InstrumentAffordance
-  alignmentReady: boolean
   executionReady: boolean
   onOpen: () => void
   onClose: () => void
   onFocusBank: (bank: 1 | 2 | 3) => void
   onFocusCell: (cell: number) => void
-  onDeployRod: (template: RodTemplate) => void
-  onMoveRod: (instanceId: string, offset: number) => void
-  onEngageTone: () => void
+  onRetrieveCarrier: () => void
+  onPlaceCarrier: () => void
+  onReadingPosition: (position: number) => void
   onExecute: () => void
 }
 
@@ -202,30 +199,14 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
   const isOpen = rest.state.phase !== 'dormant'
   // The carriage comes out as soon as there is anything to put on it, and stays
   // out: the reader should never have to re-open the drawer they are working at.
-  const carriageOut = rest.state.rods.length > 0
+  const carriageOut = rest.state.carriers.length > 0
   const travelRef = useRef(0)
 
-  const sources = useMemo(
-    () => new Map(rest.manifest.source_columns.map((source) => [source.id, source])),
-    [rest.manifest],
-  )
-
-  /**
-   * What the reader presents to each channel. This is READ from canonical
-   * state — the scene asks the model what is under the rule, it never decides.
-   */
-  const readings: ChannelReading[] = useMemo(
-    () => rest.manifest.rod_templates.map((template) => {
-      const seated = rest.state.rods.find(
-        (rod) => rod.template_id === template.template_id && rod.location === 'workspace',
-      )
-      if (!seated) return { occupied: false, verified: false }
-      const source = sources.get(seated.source_column_id)
-      const band = source?.bands[seated.vertical_offset]
-      return { occupied: true, verified: band?.status === 'verified' }
-    }),
-    [rest.manifest, rest.state.rods, sources],
-  )
+  const readings: ChannelReading[] = useMemo(() => [
+    { occupied: false, verified: false },
+    { occupied: rest.state.carriers[0]?.location === 'workspace', verified: true },
+    { occupied: false, verified: false },
+  ], [rest.state.carriers])
 
   return (
     <>
@@ -239,12 +220,8 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         manifest={rest.manifest}
         open={isOpen}
         reducedMotion={rest.state.reducedMotion}
-        toneEngaged={rest.state.toneEngaged}
         cued={rest.nextAffordance === 'open_arca'}
         onToggle={() => (isOpen ? rest.onClose() : rest.onOpen())}
-        onEngageTone={rest.onEngageTone}
-        toneAvailable={rest.alignmentReady || rest.state.toneEngaged}
-        toneCued={rest.nextAffordance === 'engage_tone_ii'}
       />
       {isOpen && (
         <Interior
@@ -260,7 +237,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         extended={carriageOut}
         reducedMotion={rest.state.reducedMotion}
         readings={readings}
-        concordant={rest.alignmentReady}
+        concordant={rest.state.carriers[0]?.location === 'workspace'}
         travelRef={travelRef}
       />
       {isOpen && (
@@ -270,8 +247,8 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           materials={materials}
           nextAffordance={rest.nextAffordance}
           travelRef={travelRef}
-          onDeployRod={rest.onDeployRod}
-          onMoveRod={rest.onMoveRod}
+          onRetrieveCarrier={rest.onRetrieveCarrier}
+          onPlaceCarrier={rest.onPlaceCarrier}
         />
       )}
       <Revelation
@@ -281,7 +258,7 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
         reducedMotion={rest.state.reducedMotion}
         travelRef={travelRef}
       />
-      {/* The reading lever: the act that sends the alignment to the kernel. */}
+      {/* The reading lever: the act that sends the reading to the kernel. */}
       {rest.executionReady && (
         <mesh
           position={[0.086, CARRIAGE_LEVER_Y, 0.052]}
@@ -293,8 +270,8 @@ function SceneWithOrbit(props: SpatialArcaProps & { orbit: ReturnType<typeof use
           <cylinderGeometry args={[0.009, 0.011, 0.016, 18]} />
           <meshStandardMaterial
             color="#e8cb87" metalness={0.9} roughness={0.2}
-            emissive={rest.nextAffordance === 'read_transverse' ? '#5a3f12' : '#000000'}
-            emissiveIntensity={rest.nextAffordance === 'read_transverse' ? 0.7 : 0}
+            emissive={rest.nextAffordance === 'read_fragment' ? '#5a3f12' : '#000000'}
+            emissiveIntensity={rest.nextAffordance === 'read_fragment' ? 0.7 : 0}
           />
         </mesh>
       )}

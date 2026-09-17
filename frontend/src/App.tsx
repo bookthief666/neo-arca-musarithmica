@@ -1,361 +1,84 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
 import { ArcaCabinet } from './components/ArcaCabinet'
-import { ProvenanceLeaf } from './components/ProvenanceLeaf'
-import { VoiceManifestation } from './components/VoiceManifestation'
 import { WorkingRule } from './components/WorkingRule'
+import { VoiceManifestation } from './components/VoiceManifestation'
+import { ProvenanceLeaf } from './components/ProvenanceLeaf'
 import { Scholium } from './components/Scholium'
-import { executeHistoricalAlignment, loadHistoricalManifest } from './instrument/client'
-import {
-  createAlignmentRequest,
-  createInitialState,
-  deriveInstrumentView,
-  getNextAffordance,
-  instrumentReducer,
-  isAlignmentReady,
-} from './instrument/model'
-import type {
-  HistoricalManifest,
-  InstrumentAction,
-  InstrumentState,
-  RodTemplate,
-} from './instrument/types'
-import { lazy, Suspense } from 'react'
-/**
- * three.js is by far the heaviest thing this application ships. Loading it
- * lazily keeps it out of the initial parse, off the critical path for the
- * fallback renderer entirely, and in its own cacheable chunk.
- */
-const SpatialArca = lazy(() =>
-  import('./spatial/SpatialArca').then((m) => ({ default: m.SpatialArca })),
-)
 import { AccessibleInstrumentControls } from './spatial/AccessibleInstrumentControls'
+import { executeHistoricalReading, loadHistoricalManifest } from './instrument/client'
+import { createInitialState, createReadingRequest, deriveInstrumentView, getNextAffordance, instrumentReducer, isReadingReady } from './instrument/model'
+import type { HistoricalManifest, InstrumentAction, InstrumentState } from './instrument/types'
 import { resolveRenderer, supportsWebGL } from './renderer'
 import { getRealmGuidance } from './realms/guidance'
 import { DEFAULT_REALM_ID, getRealmDefinition } from './realms/registry'
-import type { GuidanceMode } from './realms/types'
-
-const GUIDANCE_MODE: GuidanceMode = 'scholia'
-
-interface RodTransfer {
-  origin: { top: number; left: number; width: number; height: number }
-  kind: 'pitch' | 'rhythm'
-  copy: number
-  key: number
-}
-
-/**
- * The flying carrier: a short, literal statement that THIS rod came OUT of
- * Cell IV and travelled to the rule. It carries no state and never blocks the
- * reducer — the rod is already seated in the rail behind it.
- */
-function TransferGhost({ transfer, railRef, onDone }: {
-  transfer: RodTransfer
-  railRef: React.RefObject<HTMLDivElement | null>
-  onDone: () => void
-}) {
-  const ghostRef = useRef<HTMLDivElement>(null)
-
-  useLayoutEffect(() => {
-    const node = ghostRef.current
-    const rail = railRef.current
-    if (!node) { onDone(); return }
-    if (!rail || typeof node.animate !== 'function') { onDone(); return }
-    const target = rail.getBoundingClientRect()
-    const dx = target.left + target.width / 2 - (transfer.origin.left + transfer.origin.width / 2)
-    const dy = target.top + target.height * 0.42 - (transfer.origin.top + transfer.origin.height / 2)
-    const animation = node.animate(
-      [
-        { transform: 'translate3d(0,0,0) rotate(0deg)', opacity: 1 },
-        { transform: `translate3d(${dx * 0.45}px, ${dy * 0.28 - 46}px, 0) rotate(-5deg)`, opacity: 1, offset: 0.45 },
-        { transform: `translate3d(${dx}px, ${dy}px, 0) rotate(0deg)`, opacity: 0.12 },
-      ],
-      { duration: 430, easing: 'cubic-bezier(0.32, 0.08, 0.24, 1)', fill: 'forwards' },
-    )
-    const finish = () => onDone()
-    animation.addEventListener('finish', finish)
-    animation.addEventListener('cancel', finish)
-    return () => {
-      animation.removeEventListener('finish', finish)
-      animation.removeEventListener('cancel', finish)
-      animation.cancel()
-    }
-  }, [transfer, railRef, onDone])
-
-  return (
-    <div
-      ref={ghostRef}
-      className="transfer-ghost"
-      data-kind={transfer.kind}
-      aria-hidden="true"
-      style={{
-        top: transfer.origin.top,
-        left: transfer.origin.left,
-        width: transfer.origin.width,
-        height: transfer.origin.height,
-      }}
-    >
-      <span className="transfer-ghost__head" />
-      <span className="transfer-ghost__shaft" />
-    </div>
-  )
-}
+const SpatialArca = lazy(() => import('./spatial/SpatialArca').then(m => ({default:m.SpatialArca})))
 
 export default function App() {
-  const [manifest, setManifest] = useState<HistoricalManifest | null>(null)
-  const [manifestError, setManifestError] = useState<string | null>(null)
-  const [transfer, setTransfer] = useState<RodTransfer | null>(null)
-  const railRef = useRef<HTMLDivElement>(null)
-  const transferKey = useRef(0)
-
-  // Resolved once: a renderer that changed under the reader mid-session would
-  // discard the instrument's state for no reason they could see.
-  const [renderer] = useState(() => (supportsWebGL() ? resolveRenderer() : 'legacy'))
-
-  const [state, dispatch] = useReducer(
-    (current: InstrumentState, action: InstrumentAction) =>
-      instrumentReducer(current, action, manifest ?? undefined),
-    undefined,
-    () => createInitialState(false),
-  )
-
+  const [manifest,setManifest] = useState<HistoricalManifest>()
+  const [manifestError,setManifestError] = useState<string>()
+  const [renderer] = useState(() => supportsWebGL() ? resolveRenderer() : 'legacy')
+  const [state,dispatch] = useReducer((s:InstrumentState,a:InstrumentAction) => instrumentReducer(s,a,manifest),undefined,() => createInitialState())
+  const pending = useRef<AbortController | null>(null)
   useEffect(() => {
-    let live = true
-    loadHistoricalManifest()
-      .then((value) => { if (live) setManifest(value) })
-      .catch((error: unknown) => {
-        if (live) setManifestError(error instanceof Error ? error.message : 'Historical manifest unavailable.')
-      })
-    return () => { live = false }
-  }, [])
-
+    const controller = new AbortController()
+    loadHistoricalManifest(controller.signal).then(m => { if(!controller.signal.aborted) setManifest(m) })
+      .catch((e:unknown) => { if(!controller.signal.aborted) setManifestError(e instanceof Error ? e.message : 'Source ledger unavailable.') })
+    return () => { controller.abort(); pending.current?.abort() }
+  },[])
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => dispatch({ type: 'SET_REDUCED_MOTION', value: query.matches })
-    sync()
-    query.addEventListener('change', sync)
-    return () => query.removeEventListener('change', sync)
-  }, [])
-
-  const alignmentReady = useMemo(
-    () => isAlignmentReady(state, manifest ?? undefined),
-    [manifest, state],
-  )
-  const view = deriveInstrumentView(state)
-  const nextAffordance = getNextAffordance(state, manifest ?? undefined)
-  const realm = getRealmDefinition(DEFAULT_REALM_ID)
-  const realmGuidance = getRealmGuidance(realm.id, nextAffordance, GUIDANCE_MODE)
-  // Presentation-only. The realm derived this from the canonical affordance;
-  // each part of the machine renders it beside the mechanism it describes.
-  const scholium = realmGuidance?.text ?? null
-
-  const deployRod = useCallback((template: RodTemplate, origin: DOMRect | null) => {
-    if (origin && !state.reducedMotion) {
-      transferKey.current += 1
-      setTransfer({
-        origin: { top: origin.top, left: origin.left, width: origin.width, height: origin.height },
-        kind: template.source_column_id.includes('RPERM') ? 'rhythm' : 'pitch',
-        copy: template.copy_index,
-        key: transferKey.current,
-      })
-    }
-    dispatch({ type: 'DEPLOY_ROD', template })
-  }, [state.reducedMotion])
-
+    const sync = () => dispatch({type:'SET_REDUCED_MOTION',value:query.matches})
+    sync(); query.addEventListener('change',sync)
+    return () => query.removeEventListener('change',sync)
+  },[])
+  const act = (action:InstrumentAction) => {
+    if(action.type === 'CLOSE_ARCA') { pending.current?.abort(); pending.current=null }
+    dispatch(action)
+  }
   const execute = async () => {
-    if (!manifest || !alignmentReady || !state.toneEngaged) return
-    dispatch({ type: 'EXECUTE' })
-    const request = createAlignmentRequest(state, manifest)
+    if (!manifest || !isReadingReady(state,manifest) || pending.current) return
+    const controller=new AbortController()
+    pending.current=controller
+    const request=createReadingRequest(state,manifest)
+    dispatch({type:'EXECUTE'})
     try {
-      const execution = await executeHistoricalAlignment(request)
-      dispatch({ type: 'EXECUTION_SUCCESS', execution })
-    } catch (error) {
-      dispatch({
-        type: 'EXECUTION_ERROR',
-        message: error instanceof Error ? error.message : 'The historical alignment was rejected.',
-      })
-    }
+      const execution=await executeHistoricalReading(request,controller.signal)
+      if(!controller.signal.aborted) dispatch({type:'EXECUTION_SUCCESS',execution})
+    } catch(e) {
+      if(!controller.signal.aborted) dispatch({type:'EXECUTION_ERROR',message:e instanceof Error ? e.message : 'Reading rejected.'})
+    } finally { if(pending.current===controller) pending.current=null }
   }
-
-  if (manifestError) {
-    return (
-      <main className="loading-folio loading-folio--error">
-        <p>ARCA HISTORICA could not open its source ledger.</p>
-        <pre>{manifestError}</pre>
-      </main>
-    )
-  }
-
-  if (!manifest) {
-    return <main className="loading-folio" aria-live="polite">Opening the source ledger…</main>
-  }
-
-  // The carriage stays present once rods exist: semantic focus moves to the
-  // Mensa and then to the folio, but the mechanism the reader just aligned must
-  // not be erased — the revelation is printed BY this carriage, so it emerges
-  // from underneath the rods that produced it rather than replacing them.
-  const carriageMounted = view === 'working' || view === 'tone' || view === 'revelation'
-
-  // M1.2: the spatial instrument is the default presentation. The M1.1 DOM
-  // renderer stays reachable at ?renderer=legacy as rollback and as the
-  // fallback wherever WebGL is unavailable.
-  if (renderer === 'spatial') {
-    return (
-      <main
-        className="instrument-shell instrument-shell--spatial"
-        data-phase={state.phase}
-        data-view={view}
-        data-next-affordance={nextAffordance}
-        data-reduced-motion={state.reducedMotion}
-        data-realm={realm.id}
-        data-renderer="spatial"
-        data-guidance-mode={GUIDANCE_MODE}
-        data-realm-guidance={realmGuidance?.affordance ?? 'none'}
-      >
-        <p className="visually-hidden" aria-live="polite">
-          Current instrument state: {nextAffordance.replaceAll('_', ' ')}.
-        </p>
-        <Suspense fallback={<p className="spatial-loading">Setting the instrument on the desk…</p>}>
-          <SpatialArca
-              manifest={manifest}
-            state={state}
-            view={view}
-            nextAffordance={nextAffordance}
-            alignmentReady={alignmentReady}
-            executionReady={alignmentReady && state.toneEngaged}
-            onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-            onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-            onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-            onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-            onDeployRod={(template) => dispatch({ type: 'DEPLOY_ROD', template })}
-            onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-              onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-              onExecute={execute}
-          />
-        </Suspense>
-        {scholium && <Scholium text={scholium} place="cornice" />}
-        {/* The same canonical actions, as real buttons in the real tab order. */}
-        <AccessibleInstrumentControls
-          manifest={manifest}
-          state={state}
-          nextAffordance={nextAffordance}
-          alignmentReady={alignmentReady}
-          executionReady={alignmentReady && state.toneEngaged}
-          onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-          onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-          onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-          onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-          onDeployRod={(templateId) => {
-            const template = manifest.rod_templates.find((t) => t.template_id === templateId)
-            if (template) dispatch({ type: 'DEPLOY_ROD', template })
-          }}
-          onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-          onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-          onExecute={execute}
-          onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
-        />
-      </main>
-    )
-  }
-
-  return (
-    <main
-      className="instrument-shell"
-      data-renderer="legacy"
-      data-phase={state.phase}
-      data-view={view}
-      data-next-affordance={nextAffordance}
-      data-reduced-motion={state.reducedMotion}
-      data-realm={realm.id}
-      data-guidance-mode={GUIDANCE_MODE}
-      data-realm-guidance={realmGuidance?.affordance ?? 'none'}
-    >
-      <p className="visually-hidden" aria-live="polite">
-        Current instrument state: {nextAffordance.replaceAll('_', ' ')}.
-      </p>
-
-      <div className="arca-machine" data-view={view} data-phase={state.phase}>
-        {/* Two continuous stiles and a cornice: every part below hangs inside
-            the SAME carcass, which is what stops the instrument reading as a
-            stack of independently styled panels. */}
-        <span className="carcass-stile carcass-stile--left" aria-hidden="true" />
-        <span className="carcass-stile carcass-stile--right" aria-hidden="true" />
-
-        <header className="instrument-masthead">
-          <p className="instrument-masthead__line">
-            <span className="instrument-masthead__title">Neo-Arca Musarithmica</span>
-            <span className="instrument-masthead__sub">ARCA MECHANICA · PRIMVM INSTRVMENTVM</span>
-          </p>
-          <span className="authority-mark" aria-label="Historical authority: Pinax IV fragment, PRINT_1650, verified">
-            <b>H0</b>
-            <small>PINAX IV<br />PRINT_1650</small>
-          </span>
-        </header>
-
-        <div className="arca-machine__column">
-          <ArcaCabinet
-            manifest={manifest}
-            state={state}
-            view={view}
-            nextAffordance={nextAffordance}
-            scholium={scholium}
-            onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-            onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-            onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-            onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-            onDeployRod={deployRod}
-            onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-          />
-
-          {carriageMounted && (
-            <WorkingRule
-              ref={railRef}
-              manifest={manifest}
-              state={state}
-              view={view}
-              alignmentReady={alignmentReady}
-              executionReady={alignmentReady && state.toneEngaged}
-              nextAffordance={nextAffordance}
-              scholium={scholium}
-              onPlaceHeld={() => dispatch({ type: 'PLACE_HELD_ROD' })}
-              onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-              onExecute={execute}
-            />
-          )}
-
-          {state.error && (
-            <p className="instrument-error" role="alert">
-              {state.error}
-              {scholium && nextAffordance === 'recover' && <em>{scholium}</em>}
-            </p>
-          )}
-
-          {view === 'revelation' && state.execution && (
-            <VoiceManifestation
-              execution={state.execution}
-              onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
-            />
-          )}
-        </div>
-
-        <div className="machine-plinth">
-          {view === 'revelation' && <Scholium text={scholium} place="cornice" />}
-          <ProvenanceLeaf
-            manifest={manifest}
-            execution={state.execution}
-            open={state.provenanceOpen}
-            onToggle={() => dispatch({ type: 'TOGGLE_PROVENANCE' })}
-          />
-        </div>
+  if(manifestError) return <main className="loading-folio" role="alert">{manifestError}</main>
+  if(!manifest) return <main className="loading-folio" aria-live="polite">Opening the source ledger…</main>
+  const view=deriveInstrumentView(state), nextAffordance=getNextAffordance(state,manifest)
+  const realm=getRealmDefinition(DEFAULT_REALM_ID)
+  const guidance=getRealmGuidance(realm.id,nextAffordance,'scholia')
+  return <main className={'instrument-shell'+(renderer==='spatial'?' instrument-shell--spatial':'')}
+    data-renderer={renderer} data-realm={realm.id} data-phase={state.phase} data-view={view}
+    data-next-affordance={nextAffordance} data-guidance-mode="scholia" data-realm-guidance={guidance?.affordance}
+    data-reduced-motion={state.reducedMotion}>
+    {renderer==='spatial' ? <>
+      <Suspense fallback={<p>Setting the instrument on the desk…</p>}>
+        <SpatialArca manifest={manifest} state={state} view={view} nextAffordance={nextAffordance}
+          executionReady={isReadingReady(state,manifest)}
+          onOpen={() => act({type:'OPEN_ARCA'})} onClose={() => act({type:'CLOSE_ARCA'})}
+          onFocusBank={bank => act({type:'FOCUS_BANK',bank})} onFocusCell={cell => act({type:'FOCUS_CELL',cell})}
+          onRetrieveCarrier={() => act({type:'RETRIEVE_CARRIER'})} onPlaceCarrier={() => act({type:'PLACE_HELD_CARRIER'})}
+          onReadingPosition={position => act({type:'SET_READING_POSITION',position})} onExecute={execute} />
+      </Suspense>
+      <AccessibleInstrumentControls manifest={manifest} state={state} dispatch={act} onExecute={execute} />
+    </> : <div className="arca-machine" data-view={view} data-phase={state.phase}>
+      <span className="carcass-stile carcass-stile--left" aria-hidden="true" />
+      <span className="carcass-stile carcass-stile--right" aria-hidden="true" />
+      <header className="instrument-masthead"><h1>Neo-Arca Musarithmica</h1></header>
+      <div className="arca-machine__column">
+        <ArcaCabinet manifest={manifest} state={state} dispatch={act} />
+        {state.carriers.length > 0 && <WorkingRule manifest={manifest} state={state} dispatch={act} onExecute={execute} />}
+        {state.phase==='revealed' && state.execution && <VoiceManifestation execution={state.execution} onReturn={() => act({type:'RETURN_TO_WORKING'})} />}
       </div>
-
-      {transfer && (
-        <TransferGhost
-          key={transfer.key}
-          transfer={transfer}
-          railRef={railRef}
-          onDone={() => setTransfer(null)}
-        />
-      )}
-    </main>
-  )
+    </div>}
+    <Scholium text={guidance?.text ?? null} place="cornice" />
+    {state.error && <p className="instrument-error" role="alert">{state.error}</p>}
+    <ProvenanceLeaf manifest={manifest} execution={state.execution} open={state.provenanceOpen} onToggle={() => act({type:'TOGGLE_PROVENANCE'})} />
+  </main>
 }

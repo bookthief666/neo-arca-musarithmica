@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CASE, LID } from '../dimensions'
@@ -18,20 +18,14 @@ import type { HistoricalManifest } from '../../instrument/types'
  * switched to.
  */
 export function Lid({
-  materials, manifest, open, reducedMotion, toneEngaged, onToggle, cued,
-  onEngageTone, toneAvailable, toneCued,
+  materials, manifest, open, reducedMotion, onToggle, cued,
 }: {
   materials: ArcaMaterials
   manifest: HistoricalManifest
   open: boolean
   reducedMotion: boolean
-  toneEngaged: boolean
   onToggle: () => void
   cued: boolean
-  onEngageTone: () => void
-  /** The Tone can only be taken once the rule reads a continuous band. */
-  toneAvailable: boolean
-  toneCued: boolean
 }) {
   const { width, depth, bodyHeight, plinth, lidHeight, wall } = CASE
   const hingeY = plinth + bodyHeight
@@ -39,6 +33,7 @@ export function Lid({
   const group = useRef<THREE.Group>(null)
 
   const mensa = useMemo(() => makeMensaTexture(manifest), [manifest])
+  useEffect(() => () => mensa.dispose(), [mensa])
 
   // The lid is animated outside React: a spring here would re-render the whole
   // scene on every frame of the swing.
@@ -106,32 +101,10 @@ export function Lid({
           </mesh>
         ))}
 
-        {/* ---- the Tone selector: a real turned control on the lid's inner face ---- */}
-        <group
-          position={[innerW / 2 - 0.026, -lidHeight / 2 - 0.004, innerD / 2 - 0.02]}
-          onClick={toneAvailable ? (event) => { event.stopPropagation(); onEngageTone() } : undefined}
-          onPointerOver={toneAvailable ? (event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' } : undefined}
-          onPointerOut={() => { document.body.style.cursor = 'auto' }}
-        >
-          <mesh castShadow>
-            <cylinderGeometry args={[0.011, 0.012, 0.007, 20]} />
-            <meshStandardMaterial
-              color={toneAvailable ? '#c3a25c' : '#6b5a3a'}
-              metalness={toneAvailable ? 0.92 : 0.5}
-              roughness={toneAvailable ? 0.26 : 0.66}
-              emissive={toneCued || toneEngaged ? '#5a3f12' : '#000000'}
-              emissiveIntensity={toneCued ? 0.75 : toneEngaged ? 0.4 : 0}
-            />
-          </mesh>
-          {/* The pointer swings when the Tone is taken. */}
-          <mesh
-            material={materials.brassDark}
-            position={[0, 0.004, 0]}
-            rotation={[0, toneEngaged ? Math.PI * 0.28 : -Math.PI * 0.28, 0]}
-          >
-            <boxGeometry args={[0.0022, 0.0016, 0.016]} />
-          </mesh>
-        </group>
+        {/* Fixed witness medallion; there is no single-option unlock control. */}
+        <mesh material={materials.brass} position={[innerW / 2 - 0.026, -lidHeight / 2 - 0.004, innerD / 2 - 0.02]}>
+          <cylinderGeometry args={[0.011, 0.012, 0.007, 20]} />
+        </mesh>
       </group>
 
       {/* ---- the hinges, on the axis the lid actually turns about ---- */}

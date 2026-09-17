@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import type { HistoricalManifest, HistoricalSourceColumn, VoiceName } from '../instrument/types'
-import { VIRGA } from './dimensions'
+import type { HistoricalManifest, CriticalEditionCarrier, VoiceName } from '../instrument/types'
 
 /**
  * Every texture in the spatial Arca is drawn here, procedurally, onto a canvas.
@@ -208,7 +207,7 @@ export function makeMensaTexture(manifest: HistoricalManifest) {
   context.fillStyle = INK_MUTED
   context.font = `21px ${ENGRAVED}`
   context.letterSpacing = '3px'
-  context.fillText(`TESTIS IMPRESSVS · p. ${manifest.cell.printed_page}`, W / 2, H - 62)
+  context.fillText(manifest.tone.witness, W / 2, H - 62)
   context.letterSpacing = '0px'
 
   return finish(element, 16)
@@ -217,109 +216,25 @@ export function makeMensaTexture(manifest: HistoricalManifest) {
 const VOICE_ORDER: VoiceName[] = ['cantus', 'altus', 'tenor', 'bassus']
 const VOICE_MARK: Record<VoiceName, string> = { cantus: 'C', altus: 'A', tenor: 'T', bassus: 'B' }
 
-/**
- * THE FACE OF A VIRGA, drawn from that column's own bands.
- *
- * Ten bands run down the strip in canonical order. A verified band prints its
- * real content — the four voice rows for a pitch column, glyphs and relative
- * minim units for the rhythm column. An untranscribed band prints as ruled but
- * empty scholarship: crosshatched, stamped NON TRANSCRIPTVM. Nothing is
- * invented to fill the gap, because the gap is the historical fact.
- */
-export function makeVirgaTexture(source: HistoricalSourceColumn) {
-  const BAND = 172
-  const W = 320
-  const H = BAND * VIRGA.bandCount
-  const { element, context } = canvas(W, H)
-  layVellum(context, W, H)
-
-  source.bands.forEach((band, index) => {
-    const top = index * BAND
-    const mid = top + BAND / 2
-
-    // Band rule.
-    context.strokeStyle = RULE
-    context.lineWidth = 2
-    context.beginPath()
-    context.moveTo(0, top + 0.5)
-    context.lineTo(W, top + 0.5)
-    context.stroke()
-
-    // The band's own index, running down the left margin.
-    context.save()
-    context.translate(22, mid)
-    context.rotate(-Math.PI / 2)
-    context.fillStyle = INK_MUTED
-    context.font = `20px ${ENGRAVED}`
-    context.textAlign = 'center'
-    context.fillText(String(band.index).padStart(2, '0'), 0, 0)
-    context.restore()
-
-    if (band.status !== 'verified' || !band.content) {
-      // Archival crosshatch: ruled, empty, and plainly not yet transcribed.
-      context.save()
-      context.beginPath()
-      context.rect(44, top + 6, W - 56, BAND - 12)
-      context.clip()
-      context.strokeStyle = 'rgba(112, 88, 52, 0.22)'
-      context.lineWidth = 1
-      for (let d = -BAND; d < W + BAND; d += 13) {
-        context.beginPath()
-        context.moveTo(44 + d, top)
-        context.lineTo(44 + d + BAND, top + BAND)
-        context.stroke()
-        context.beginPath()
-        context.moveTo(44 + d + BAND, top)
-        context.lineTo(44 + d, top + BAND)
-        context.stroke()
-      }
-      context.restore()
-      context.fillStyle = 'rgba(86, 68, 44, 0.92)'
-      context.font = `19px ${ENGRAVED}`
-      context.textAlign = 'center'
-      context.letterSpacing = '2px'
-      context.fillText('NON', W / 2 + 20, mid - 8)
-      context.fillText('TRANSCRIPTVM', W / 2 + 20, mid + 18)
-      context.letterSpacing = '0px'
-      return
-    }
-
-    context.textAlign = 'center'
-    if (source.kind === 'pitch' && 'rows' in band.content) {
-      const rows = band.content.rows
-      const voices = VOICE_ORDER.filter((voice) => rows[voice])
-      const rowH = (BAND - 22) / voices.length
-      voices.forEach((voice, r) => {
-        const y = top + 26 + rowH * r
-        context.fillStyle = INK_MUTED
-        context.font = `17px ${ENGRAVED}`
-        context.textAlign = 'left'
-        context.fillText(VOICE_MARK[voice], 46, y)
-        context.fillStyle = INK
-        context.font = `27px ${ENGRAVED}`
-        context.textAlign = 'center'
-        const values = rows[voice]
-        values.forEach((value, c) => {
-          const x = 84 + ((W - 104) / values.length) * (c + 0.5)
-          context.fillText(String(value), x, y)
-        })
-      })
-    } else if ('glyphs' in band.content) {
-      const { glyphs, relative_minim_units: units } = band.content
-      const step = (W - 104) / glyphs.length
-      glyphs.forEach((g, c) => {
-        const x = 84 + step * (c + 0.5)
-        context.fillStyle = INK
-        context.font = `34px ${DISPLAY}`
-        context.fillText(g === 'minim' ? '♩' : '\u{1D15D}', x, mid - 6)
-        context.fillStyle = INK_MUTED
-        context.font = `20px ${ENGRAVED}`
-        context.fillText(String(units[c]), x, mid + 30)
-      })
-    }
-  })
-
-  return finish(element, 16)
+/** One editorial extract; no implied untranscribed musical choices. */
+export function makeVirgaTexture(source: CriticalEditionCarrier) {
+  const W = 512, H = 1024
+  const { element, context } = canvas(W,H)
+  layVellum(context,W,H)
+  context.fillStyle = INK
+  context.textAlign = 'left'
+  context.font = `24px ${ENGRAVED}`
+  const lines = [
+    'PINAX IV · H1 EXTRACT',
+    'VPERM 01',
+    ...VOICE_ORDER.map(voice => VOICE_MARK[voice] + ' ' + source.pitch_source.content.rows[voice].join(' ')),
+    'RPERM 03',
+    ...source.rhythm_source.content.glyphs,
+    'RELATIVE MINIM UNITS',
+    source.rhythm_source.content.relative_minim_units.join(' '),
+  ]
+  lines.forEach((line,index) => context.fillText(line,18,48+index*58,W-36))
+  return finish(element,16)
 }
 
 /** An engraved brass plate: the bank nameplates and the cabinet's identity. */

@@ -1,167 +1,30 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { AccessibleInstrumentControls } from './AccessibleInstrumentControls'
-import {
-  createInitialState, instrumentReducer, isAlignmentReady, MAX_VERTICAL_OFFSET,
-} from '../instrument/model'
-import type { InstrumentAction, InstrumentState } from '../instrument/types'
+import { createInitialState, instrumentReducer } from '../instrument/model'
+import type { InstrumentAction } from '../instrument/types'
 import { manifestFixture } from '../test/fixtures'
-
-/**
- * The semantic layer is the instrument for anyone who cannot use a canvas. It
- * must therefore drive the SAME machine — not a parallel one — so these tests
- * check that its controls produce canonical actions and that replaying those
- * actions through the real reducer moves the real instrument.
- */
-function harness(state: InstrumentState, dispatch: (action: InstrumentAction) => void) {
-  const alignmentReady = isAlignmentReady(state, manifestFixture)
-  return (
-    <AccessibleInstrumentControls
-      manifest={manifestFixture}
-      state={state}
-      nextAffordance="open_arca"
-      alignmentReady={alignmentReady}
-      executionReady={alignmentReady && state.toneEngaged}
-      onOpen={() => dispatch({ type: 'OPEN_ARCA' })}
-      onClose={() => dispatch({ type: 'CLOSE_ARCA' })}
-      onFocusBank={(bank) => dispatch({ type: 'FOCUS_BANK', bank })}
-      onFocusCell={(cell) => dispatch({ type: 'FOCUS_CELL', cell })}
-      onDeployRod={(id) => {
-        const template = manifestFixture.rod_templates.find((t) => t.template_id === id)
-        if (template) dispatch({ type: 'DEPLOY_ROD', template })
-      }}
-      onMoveRod={(instanceId, offset) => dispatch({ type: 'MOVE_ROD', instanceId, offset })}
-      onEngageTone={() => dispatch({ type: 'ENGAGE_TONE' })}
-      onExecute={() => dispatch({ type: 'EXECUTE' })}
-      onReturn={() => dispatch({ type: 'RETURN_TO_WORKING' })}
-    />
-  )
-}
-
-const open = async (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(screen.getByRole('button', { name: 'Instrument controls' }))
-
-describe('the semantic instrument', () => {
-  it('is present and discreet, and opens into the tab order', async () => {
-    const user = userEvent.setup()
-    render(harness(createInitialState(), vi.fn()))
-    const toggle = screen.getByRole('button', { name: 'Instrument controls' })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    await open(user)
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('button', { name: 'Open the Arca' })).toBeInTheDocument()
-  })
-
-  it('dispatches the canonical OPEN_ARCA action, not a renderer-local one', async () => {
-    const user = userEvent.setup()
-    const dispatch = vi.fn()
-    render(harness(createInitialState(), dispatch))
-    await open(user)
-    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
-    expect(dispatch).toHaveBeenCalledWith({ type: 'OPEN_ARCA' })
-  })
-
-  it('drives the real reducer all the way to a ready alignment', async () => {
-    const user = userEvent.setup()
-    let state = createInitialState()
-    const dispatch = (action: InstrumentAction) => {
-      state = instrumentReducer(state, action, manifestFixture)
-      rerender(harness(state, dispatch))
-    }
-    const { rerender } = render(harness(state, dispatch))
-
-    await open(user)
-    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
-    expect(state.phase).toBe('open')
-    await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
-    await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
-    expect(state.focusedCell).toBe(4)
-
-    for (const template of manifestFixture.rod_templates) {
-      await user.click(screen.getByRole('button', { name: `Deploy ${template.label} to the transverse rule` }))
-    }
-    // Exactly three carriers exist, each once: a transfer must not clone.
-    expect(state.rods).toHaveLength(3)
-    expect(new Set(state.rods.map((r) => r.instance_id)).size).toBe(3)
-    expect(state.rods.every((rod) => rod.location === 'workspace')).toBe(true)
-
-    for (const slider of screen.getAllByRole('slider')) {
-      slider.focus()
-      await user.keyboard('{Home}')
-    }
-    expect(state.rods.every((rod) => rod.vertical_offset === 0)).toBe(true)
-    expect(isAlignmentReady(state, manifestFixture)).toBe(true)
-
-    await user.click(screen.getByRole('button', { name: /^Engage Tone II/ }))
-    expect(state.toneEngaged).toBe(true)
-  })
-
-  it('never lets a band offset leave the canonical range', async () => {
-    const user = userEvent.setup()
-    let state = createInitialState()
-    const dispatch = (action: InstrumentAction) => {
-      state = instrumentReducer(state, action, manifestFixture)
-      rerender(harness(state, dispatch))
-    }
-    const { rerender } = render(harness(state, dispatch))
-    await open(user)
-    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
-    await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
-    await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
-    await user.click(screen.getByRole('button', {
-      name: `Deploy ${manifestFixture.rod_templates[0].label} to the transverse rule`,
-    }))
-
-    const slider = screen.getAllByRole('slider')[0]
-    slider.focus()
-    for (let i = 0; i < 25; i++) await user.keyboard('{ArrowDown}')
-    expect(state.rods[0].vertical_offset).toBe(MAX_VERTICAL_OFFSET)
-    for (let i = 0; i < 25; i++) await user.keyboard('{ArrowUp}')
-    expect(state.rods[0].vertical_offset).toBe(0)
-  })
-
-  it('keeps no musical state of its own and adds no realm to the instrument', async () => {
-    const user = userEvent.setup()
-    let state = createInitialState()
-    const dispatch = (action: InstrumentAction) => {
-      state = instrumentReducer(state, action, manifestFixture)
-      rerender(harness(state, dispatch))
-    }
-    const { rerender } = render(harness(state, dispatch))
-    await open(user)
-    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
-
-    expect(Object.keys(state).sort()).toEqual([
-      'error', 'execution', 'focusedBank', 'focusedCell', 'heldRodId',
-      'phase', 'provenanceOpen', 'reducedMotion', 'rods', 'toneEngaged',
-    ])
-    expect(JSON.stringify(state)).not.toMatch(/historica|realm|camera|spatial/i)
-  })
-
-  it('reports each band as verified or not transcribed for a screen reader', async () => {
-    const user = userEvent.setup()
-    let state = createInitialState()
-    const dispatch = (action: InstrumentAction) => {
-      state = instrumentReducer(state, action, manifestFixture)
-      rerender(harness(state, dispatch))
-    }
-    const { rerender } = render(harness(state, dispatch))
-    await open(user)
-    await user.click(screen.getByRole('button', { name: 'Open the Arca' }))
-    await user.click(screen.getByRole('button', { name: 'Bank I, DODECAMORIVM' }))
-    await user.click(screen.getByRole('button', { name: /Open Cell IV/ }))
-    await user.click(screen.getByRole('button', {
-      name: `Deploy ${manifestFixture.rod_templates[0].label} to the transverse rule`,
-    }))
-
-    const slider = screen.getAllByRole('slider')[0]
-    slider.focus()
-    await user.keyboard('{Home}')
-    expect(slider).toHaveAttribute('aria-valuetext', 'Stropha I · Vperm 01')
-    expect(screen.getByText('verified')).toBeInTheDocument()
-    await user.keyboard('{ArrowDown}')
-    expect(slider).toHaveAttribute('aria-valuetext', 'Band 2 · sealed')
-    expect(screen.getByText('not transcribed')).toBeInTheDocument()
-  })
+it('operates the same reducer through distinct retrieval, placement and inspection',async () => {
+  let state=createInitialState()
+  const dispatch=(action:InstrumentAction) => { state=instrumentReducer(state,action,manifestFixture);rerender(ui()) }
+  const ui=() => <AccessibleInstrumentControls manifest={manifestFixture} state={state} dispatch={dispatch} onExecute={() => dispatch({type:'EXECUTE'})} />
+  const {rerender}=render(ui())
+  const user=userEvent.setup()
+  expect(screen.getByRole('button',{name:'Instrument controls'})).toHaveAttribute('aria-expanded','false')
+  await user.click(screen.getByRole('button',{name:'Instrument controls'}))
+  for(const name of ['Open the Arca',/DODECAMORIVM/,/Open Cell IV/,/Lift.*critical-edition carrier/i]) await user.click(screen.getByRole('button',{name}))
+  const id=state.heldCarrierId
+  expect(state.carriers).toHaveLength(1)
+  expect(state.carriers[0].location).toBe('hand')
+  expect(screen.getByRole('button',{name:/LECTIO/})).toBeDisabled()
+  await user.click(screen.getByRole('button',{name:/Seat the carrier/i}))
+  expect(state.carriers[0].instance_id).toBe(id)
+  fireEvent.change(screen.getByRole('slider'),{target:{value:'5'}})
+  expect(state.readingPosition).toBe(5)
+  expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext','Event 6 of 6')
+  expect(screen.queryByRole('button',{name:/engage tone/i})).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button',{name:/LECTIO/}))
+  expect(state.phase).toBe('executing')
+  expect(Object.keys(state)).not.toContain('camera')
 })
