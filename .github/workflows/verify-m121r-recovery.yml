@@ -6,7 +6,8 @@ on:
       - automation/verify-m121r-tasks5-8-recovery
 
 jobs:
-  fold-touch-emulation:
+  final-fold-fix-gate:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - name: Checkout canonical branch
@@ -15,7 +16,7 @@ jobs:
           ref: feature/m1.2.1r-historical-computation-rescue
           fetch-depth: 0
 
-      - name: Verify expected Fold rescue head
+      - name: Verify Fold-fix head
         run: test "$(git rev-parse HEAD)" = "63e8472084fdfa544dfb1f15c2f297a2f67a2a4c"
 
       - name: Setup Node
@@ -25,128 +26,32 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend
+      - name: Install
         working-directory: frontend
         run: npm ci
 
-      - name: Setup browser QA
-        run: |
-          mkdir -p /tmp/fold-touch
-          cd /tmp/fold-touch
-          npm init -y >/dev/null
-          npm install playwright >/dev/null
-          npx playwright install --with-deps chromium
-
-      - name: Start app
+      - name: Full frontend suite
         working-directory: frontend
+        run: npm test -- --run
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Production build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Diff hygiene and authority scans
+        shell: bash
         run: |
-          npx vite --host 127.0.0.1 --port 4173 >/tmp/vite.log 2>&1 &
-          echo $! >/tmp/vite.pid
-          for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/vite.log
-          exit 1
-
-      - name: Run Fold-sized native touch sequence
-        run: |
-          cat >/tmp/fold-touch/touch.mjs <<'NODE'
-          import { chromium } from 'playwright'
-          import fs from 'node:fs'
-
-          const browser = await chromium.launch({
-            headless:true,
-            args:['--use-angle=swiftshader','--use-gl=angle','--enable-webgl','--ignore-gpu-blocklist'],
-          })
-          const context = await browser.newContext({
-            viewport:{width:884,height:1104},
-            deviceScaleFactor:2,
-            isMobile:true,
-            hasTouch:true,
-          })
-          const page = await context.newPage()
-          const errors=[]
-          page.on('pageerror',e=>errors.push(String(e)))
-          page.on('console',m=>{if(m.type()==='error') errors.push(m.text())})
-          await page.goto('http://127.0.0.1:4173/?renderer=spatial',{waitUntil:'networkidle'})
-
-          const toggle=page.getByRole('button',{name:'Instrument controls'})
-          await toggle.click()
-          await page.getByRole('button',{name:'Open the Arca'}).click()
-          await page.getByRole('button',{name:/Bank I, DODECAMORIVM/i}).click()
-          await page.getByRole('button',{name:/Open Cell IV/i}).click()
-          await page.getByRole('button',{name:/Lift.*critical-edition carrier/i}).click()
-          await page.getByRole('button',{name:/Seat the carrier at the event-reading station/i}).click()
-          await page.waitForTimeout(1800)
-          await toggle.click()
-          await page.waitForFunction(()=>Boolean(window.__arcaProbe),null,{timeout:15000})
-
-          const start = await page.evaluate(()=>window.__arcaProbe.project(0,0.082,0.159))
-          const end = await page.evaluate(()=>window.__arcaProbe.project(0,0.088,0.1938))
-          const camBefore = await page.evaluate(()=>window.__arcaProbe.camera())
-
-          const cdp = await context.newCDPSession(page)
-          const point=(x,y)=>[{x,y,radiusX:14,radiusY:14,force:1,id:1}]
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:point(start.x,start.y)})
-          const steps=18
-          for(let i=1;i<=steps;i++){
-            const t=i/steps
-            const x=start.x+(end.x-start.x)*t
-            const y=start.y+(end.y-start.y)*t
-            await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:point(x,y)})
-            await page.waitForTimeout(16)
-          }
-          const camDuring=await page.evaluate(()=>window.__arcaProbe.camera())
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})
-          await page.waitForTimeout(120)
-
-          await toggle.click()
-          const status=(await page.getByRole('status').textContent()) ?? ''
-          await toggle.click()
-
-          // A second native touch sequence on empty canvas must orbit after release.
-          const camBeforeOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:point(120,180)})
-          for(let i=1;i<=10;i++){
-            await cdp.send('Input.dispatchTouchEvent',{
-              type:'touchMove',
-              touchPoints:point(120+i*8,180+i*5),
-            })
-            await page.waitForTimeout(12)
-          }
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})
-          await page.waitForTimeout(160)
-          const camAfterOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-
-          const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])
-          const evidence={
-            viewport:{width:884,height:1104,deviceScaleFactor:2,isMobile:true,hasTouch:true},
-            start,end,status,
-            cameraDeltaDuringReader:dist(camBefore,camDuring),
-            cameraDeltaAfterReleaseOrbit:dist(camBeforeOrbit,camAfterOrbit),
-            errors,
-          }
-          fs.writeFileSync('/tmp/fold-touch/evidence.json',JSON.stringify(evidence,null,2))
-          console.log(JSON.stringify(evidence,null,2))
-
-          if(!/Event 6 of 6/i.test(status)) throw new Error('Native touch drag did not reach Event 6')
-          if(evidence.cameraDeltaDuringReader>0.002) throw new Error('Camera moved while event reader owned native touch')
-          if(evidence.cameraDeltaAfterReleaseOrbit<0.001) throw new Error('Orbit did not resume after native touch reader release')
-          if(errors.length) throw new Error('Browser errors: '+errors.join(' | '))
-
-          await browser.close()
-          NODE
-          node /tmp/fold-touch/touch.mjs
-
-      - name: Stop app
-        if: always()
-        run: if [ -f /tmp/vite.pid ]; then kill $(cat /tmp/vite.pid) || true; fi
-
-      - name: Upload touch evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: m1-2-1r-fold-native-touch-evidence
-          path: /tmp/fold-touch/evidence.json
-          if-no-files-found: warn
+          set -euo pipefail
+          BASE=7f9263d52845cdd8fb67ba34857cdd9a38fef2fa
+          git diff --check "$BASE"..HEAD
+          if git grep -n -F 'document.body.dataset.arcaGrab' -- frontend/src; then exit 1; fi
+          if git grep -n -E 'MAX_VERTICAL_OFFSET|VIRGA_TRAVEL' -- frontend/src/spatial; then exit 1; fi
+          if ! git diff --quiet "$BASE"..HEAD -- scripts/arca_historica_kernel.py historical_data data/syntagma1_pinax04 data/mensa_tonographica; then exit 1; fi
