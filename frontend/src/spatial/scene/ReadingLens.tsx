@@ -7,7 +7,8 @@ import { useReaderDrag } from '../readerInteraction'
 import { EVENT_READER_DETENTS, EVENT_READER_LOCAL_MAX, EVENT_READER_LOCAL_MIN } from './stations'
 import { buildReadingLensDisplay } from './readingLensModel'
 
-const HANDLE_LOCAL_Y = 0.006
+const LENS_LOCAL_Y = 0.035
+const HANDLE_LOCAL_Y = 0.041
 
 function makeLensTexture(frame: ReadingFrame) {
   const display = buildReadingLensDisplay(frame)
@@ -50,9 +51,9 @@ function makeLensTexture(frame: ReadingFrame) {
   context.font = '32px ui-monospace, monospace'
   context.fillStyle = '#43301c'
   context.fillText(display.durationLabel, 48, 425)
-  context.font = '22px ui-monospace, monospace'
+  context.font = '20px ui-monospace, monospace'
   context.fillStyle = '#756143'
-  context.fillText('SOURCE → FIXED p.51 TONE-II LOOKUP → PITCH CLASS · H1 EVENT LENS', 48, 470)
+  context.fillText('DRAG READER · EVENTS 1–6 · SOURCE → FIXED p.51 TONE-II → PITCH CLASS', 48, 470)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
@@ -115,6 +116,14 @@ export function ReadingLens({ frame, travelRef, onPosition }: {
 
   const position = Math.max(0, Math.min(5, frame.position))
   const detent = EVENT_READER_DETENTS[position]
+  const startDrag = (event: import('@react-three/fiber').ThreeEvent<PointerEvent>) => {
+    event.stopPropagation()
+    begin(event.nativeEvent)
+  }
+  const showGrabCursor = (event: import('@react-three/fiber').ThreeEvent<PointerEvent>) => {
+    event.stopPropagation()
+    document.body.style.cursor = 'grab'
+  }
 
   return (
     <group
@@ -134,17 +143,31 @@ export function ReadingLens({ frame, travelRef, onPosition }: {
 
       <mesh
         position={[0, HANDLE_LOCAL_Y, detent]}
-        onPointerDown={(event) => {
-          event.stopPropagation()
-          begin(event.nativeEvent)
-        }}
+        onPointerDown={startDrag}
+        onPointerOver={showGrabCursor}
+        onPointerOut={() => { document.body.style.cursor = 'auto' }}
         castShadow
       >
-        <boxGeometry args={[0.04, 0.01, 0.012]} />
-        <meshStandardMaterial color="#d7bb77" metalness={0.78} roughness={0.3} />
+        <boxGeometry args={[0.058, 0.012, 0.018]} />
+        <meshStandardMaterial
+          color="#d7bb77"
+          metalness={0.78}
+          roughness={0.3}
+          emissive="#5a3f12"
+          emissiveIntensity={0.35}
+        />
       </mesh>
 
-      <mesh position={[0, 0.035, -0.006]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Fold-first direct manipulation: the event folio itself is a generous
+          drag surface. The gold grip remains the mechanical cue, but the user
+          does not need pixel-perfect contact with it to own the reader. */}
+      <mesh
+        position={[0, LENS_LOCAL_Y, -0.006]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={startDrag}
+        onPointerOver={showGrabCursor}
+        onPointerOut={() => { document.body.style.cursor = 'auto' }}
+      >
         <planeGeometry args={[0.15, 0.075]} />
         <meshStandardMaterial map={texture} roughness={0.88} metalness={0} side={THREE.DoubleSide} />
       </mesh>
