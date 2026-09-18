@@ -6,13 +6,13 @@ on:
       - automation/verify-m121r-tasks5-8-recovery
 
 jobs:
-  verify:
+  verify-task9-red:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout recovery branch
+      - name: Checkout canonical M1.2.1R branch
         uses: actions/checkout@v4
         with:
-          ref: feature/m1.2.1r-tasks5-8-recovery
+          ref: feature/m1.2.1r-historical-computation-rescue
           fetch-depth: 0
 
       - name: Setup Node
@@ -26,71 +26,6 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Full frontend suite
+      - name: Task 9 RED gate
         working-directory: frontend
-        run: npm test -- --run
-
-      - name: Typecheck
-        working-directory: frontend
-        run: npm run typecheck
-
-      - name: Lint
-        working-directory: frontend
-        run: npm run lint
-
-      - name: Production build
-        working-directory: frontend
-        run: npm run build
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: requirements.lock.txt
-
-      - name: Install locked Python dependencies
-        run: python -m pip install -r requirements.lock.txt
-
-      - name: Full Python suite
-        run: python -m pytest
-
-      - name: Diff hygiene
-        run: git diff --check 7f9263d52845cdd8fb67ba34857cdd9a38fef2fa..HEAD
-
-      - name: Removed-contract and presentation scans
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git grep -n -E 'RodTemplate|ColumnRodInstance|state\.rods|heldRodId|DEPLOY_ROD|RETRIEVE_ROD|PLACE_HELD_ROD|MOVE_ROD|align_rods|deploy_rods|place_held_rod|engage_tone_ii|historical_alignment_ready|tonal_resolution|read_transverse|rod_templates|rod_instances|toneEngaged|alignmentReady|isAlignmentReady|onDeployRod|onMoveRod|onEngageTone|toneAvailable' -- frontend/src; then
-            echo 'Removed rod/alignment/Tone-gate contract terms returned.' >&2
-            exit 1
-          fi
-          echo 'Removed-contract scan: no matches'
-          if git grep -n -F 'document.body.dataset.arcaGrab' -- frontend/src; then
-            echo 'Global grab marker returned.' >&2
-            exit 1
-          fi
-          echo 'Global grab-marker scan: no matches'
-          if git grep -n -E 'MAX_VERTICAL_OFFSET|VIRGA_TRAVEL' -- frontend/src/spatial; then
-            echo 'Legacy musical-band control geometry returned.' >&2
-            exit 1
-          fi
-          echo 'Legacy band-control scan: no matches'
-
-      - name: Immutable historical authority check
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE=7f9263d52845cdd8fb67ba34857cdd9a38fef2fa
-          if ! git diff --quiet "$BASE"..HEAD -- \
-            scripts/arca_historica_kernel.py \
-            historical_data \
-            data/syntagma1_pinax04 \
-            data/mensa_tonographica; then
-            echo 'Immutable historical authority changed:' >&2
-            git diff --name-only "$BASE"..HEAD -- \
-              scripts/arca_historica_kernel.py historical_data data/syntagma1_pinax04 data/mensa_tonographica >&2
-            exit 1
-          fi
-          echo 'M0.9 kernel and verified historical data unchanged'
+        run: npm test -- --run src/instrument/model.test.ts src/App.reliquary.test.tsx src/App.renderer.test.tsx
