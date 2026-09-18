@@ -324,31 +324,32 @@ jobs:
             await page.mouse.up()
             await sleep(100)
 
-            // Orbit must resume after off-target release.
+            // Orbit must resume after off-target release. Use a real browser
+            // pointer sequence rather than synthetic dispatch so React/R3F receives
+            // the same event path as an operator gesture.
             const camBeforeOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-            await page.evaluate(()=>{
-              const stage=document.querySelector('.spatial-stage')
-              stage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:77,clientX:80,clientY:100,button:0,buttons:1}))
-              stage.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:77,clientX:150,clientY:145,button:0,buttons:1}))
-              window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:77,clientX:150,clientY:145,button:0,buttons:0}))
-            })
-            await sleep(120)
+            await page.mouse.move(80,100)
+            await page.mouse.down()
+            await page.mouse.move(150,145,{steps:8})
+            await page.mouse.up()
+            await sleep(180)
             const camAfterOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
 
-            // Cancel path: claim the reader again, dispatch pointercancel, then prove orbit can move again.
+            // Cancel path: claim the reader again, dispatch the browser mouse
+            // pointer's cancel event, then prove orbit can move through a second
+            // real browser gesture.
             const currentEnd=await page.evaluate(()=>window.__arcaProbe.project(0,0.053,0.1938))
             await page.mouse.move(currentEnd.x,currentEnd.y)
             await page.mouse.down()
             await page.evaluate(()=>window.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:1,buttons:0})))
             await page.mouse.up()
+            await sleep(80)
             const camBeforeCancelOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-            await page.evaluate(()=>{
-              const stage=document.querySelector('.spatial-stage')
-              stage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:78,clientX:180,clientY:110,button:0,buttons:1}))
-              stage.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:78,clientX:230,clientY:145,button:0,buttons:1}))
-              window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:78,clientX:230,clientY:145,button:0,buttons:0}))
-            })
-            await sleep(120)
+            await page.mouse.move(180,110)
+            await page.mouse.down()
+            await page.mouse.move(230,145,{steps:8})
+            await page.mouse.up()
+            await sleep(180)
             const camAfterCancelOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
 
             const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])
@@ -360,6 +361,7 @@ jobs:
               cameraDeltaAfterCancelOrbit:distance(camBeforeCancelOrbit,camAfterCancelOrbit),
               releaseOutside:true,cancelDispatched:true,
             }
+            fs.writeFileSync('/tmp/m121r-evidence/browser-qa-pointer.json',JSON.stringify(results.pointer,null,2))
             if(!/Event 6 of 6/i.test(during.status)) throw new Error('Reader pointer drag did not reach event 6')
             if(results.pointer.cameraDeltaDuringReader>0.002) throw new Error('Orbit moved while reader owned pointer')
             if(results.pointer.cameraDeltaAfterReleaseOrbit<0.001) throw new Error('Orbit did not resume after off-target release')
