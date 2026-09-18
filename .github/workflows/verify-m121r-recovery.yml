@@ -6,7 +6,7 @@ on:
       - automation/verify-m121r-tasks5-8-recovery
 
 jobs:
-  verify-task9-red:
+  verify-task9-green:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout canonical M1.2.1R branch
@@ -26,6 +26,23 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Task 9 RED gate
+      - name: Task 9 frontend gate
         working-directory: frontend
-        run: npm test -- --run src/instrument/model.test.ts src/App.reliquary.test.tsx src/App.renderer.test.tsx
+        run: npm test -- --run src/instrument/model.test.ts src/instrument/reading.test.ts src/App.reliquary.test.tsx src/App.renderer.test.tsx
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.lock.txt
+
+      - name: Install locked Python dependencies
+        run: python -m pip install -r requirements.lock.txt
+
+      - name: Task 9 bridge and kernel gate
+        run: python -m pytest tests/test_arca_mechanica_bridge.py tests/test_arca_historica_kernel.py -q
