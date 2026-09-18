@@ -35,6 +35,9 @@ export function VoiceManifestation({ execution, onReturn }: VoiceManifestationPr
           <div>
             <p className="eyebrow">PRINT_1650 · SOURCE-BACKED SYMBOLIC CONTENT · H1 EDITORIAL PAIRING</p>
             <h2 id="voices-title">Four voices manifest</h2>
+            <p className="voice-manifestation__authority">
+              {execution.reading.classification} · {execution.format} · modern representation
+            </p>
           </div>
           <p className="voice-manifestation__tally">
             {fragment.events.length} events · {fragment.total_duration_minim_units} relative minim units
@@ -84,7 +87,7 @@ export function VoiceManifestation({ execution, onReturn }: VoiceManifestationPr
 
         <div className="voice-revelation__footer">
           <p className="voice-nonclaim">
-            Symbolic pitch classes and relative durations only. No octave, register, MIDI note, BPM, or modern beat meaning has been inferred.
+            {fragment.explicitly_not_claimed.join(' · ')}
           </p>
           <button type="button" className="return-to-rule" onClick={onReturn}>
             <span className="return-to-rule__pull" aria-hidden="true" />
