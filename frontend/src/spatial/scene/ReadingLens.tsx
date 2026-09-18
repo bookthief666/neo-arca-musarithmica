@@ -7,6 +7,8 @@ import { useReaderDrag } from '../readerInteraction'
 import { EVENT_READER_DETENTS, EVENT_READER_LOCAL_MAX, EVENT_READER_LOCAL_MIN } from './stations'
 import { buildReadingLensDisplay } from './readingLensModel'
 
+const HANDLE_LOCAL_Y = 0.006
+
 function makeLensTexture(frame: ReadingFrame) {
   const display = buildReadingLensDisplay(frame)
   const canvas = document.createElement('canvas')
@@ -89,7 +91,12 @@ export function ReadingLens({ frame, travelRef, onPosition }: {
     math.raycaster.setFromCamera(math.ndc, camera)
     node.position.z = travelRef.current
     node.updateWorldMatrix(true, false)
-    node.getWorldPosition(math.origin)
+    // Project onto the same local Y plane as the visible/grabbable handle.
+    // Using the group origin here shifts the perspective projection because
+    // the handle itself sits above that origin; the endpoint then snaps one
+    // detent short even though the pointer is over the visible endpoint.
+    math.origin.set(0, HANDLE_LOCAL_Y, 0)
+    node.localToWorld(math.origin)
     node.getWorldQuaternion(math.rotation)
     math.axis.set(0, 0, 1).applyQuaternion(math.rotation).normalize()
     return {
@@ -126,7 +133,7 @@ export function ReadingLens({ frame, travelRef, onPosition }: {
       ))}
 
       <mesh
-        position={[0, 0.006, detent]}
+        position={[0, HANDLE_LOCAL_Y, detent]}
         onPointerDown={(event) => {
           event.stopPropagation()
           begin(event.nativeEvent)
