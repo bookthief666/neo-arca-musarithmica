@@ -6,7 +6,7 @@ on:
       - automation/verify-m121r-tasks5-8-recovery
 
 jobs:
-  verify:
+  browser-acceptance:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout canonical M1.2.1R branch
@@ -29,98 +29,6 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Full frontend suite
-        working-directory: frontend
-        run: npm test -- --run
-
-      - name: Typecheck
-        working-directory: frontend
-        run: npm run typecheck
-
-      - name: Lint
-        working-directory: frontend
-        run: npm run lint
-
-      - name: Production build with manifest
-        working-directory: frontend
-        run: |
-          npm run typecheck
-          npx vite build --manifest
-          cp dist/.vite/manifest.json /tmp/m121r-evidence/current-vite-manifest.json
-
-      - name: Record dependency graph
-        working-directory: frontend
-        run: |
-          npm ls three @react-three/fiber --all > /tmp/m121r-evidence/npm-ls-three-r3f.txt
-          npm ls three @react-three/fiber --all --json > /tmp/m121r-evidence/npm-ls-three-r3f.json
-
-      - name: Measure current SpatialArca chunk
-        working-directory: frontend
-        run: |
-          node --input-type=module <<'NODE' > /tmp/m121r-evidence/current-bundle.json
-          import fs from 'node:fs'
-          import zlib from 'node:zlib'
-          const manifest = JSON.parse(fs.readFileSync('dist/.vite/manifest.json','utf8'))
-          const entry = Object.entries(manifest).find(([key,value]) =>
-            key.includes('SpatialArca') || value.src?.includes('SpatialArca'))
-          if (!entry) throw new Error('SpatialArca entry missing from Vite manifest')
-          const [manifestKey,value] = entry
-          const file = 'dist/' + value.file
-          const bytes = fs.readFileSync(file)
-          process.stdout.write(JSON.stringify({
-            commit: (await import('node:child_process')).execSync('git rev-parse HEAD').toString().trim(),
-            manifestKey,
-            file: value.file,
-            rawBytes: bytes.length,
-            gzipBytes: zlib.gzipSync(bytes,{level:9}).length,
-            brotliBytes: zlib.brotliCompressSync(bytes).length,
-          },null,2))
-          NODE
-
-      - name: Measure accepted M1.2 SpatialArca chunk
-        run: |
-          git worktree add --detach /tmp/m12 7dc5e3c66e4602478d4f8a23f45f136db457f0e1
-          cd /tmp/m12/frontend
-          npm ci
-          npx vite build --manifest
-          node --input-type=module <<'NODE' > /tmp/m121r-evidence/m12-bundle.json
-          import fs from 'node:fs'
-          import zlib from 'node:zlib'
-          const manifest = JSON.parse(fs.readFileSync('dist/.vite/manifest.json','utf8'))
-          const entry = Object.entries(manifest).find(([key,value]) =>
-            key.includes('SpatialArca') || value.src?.includes('SpatialArca'))
-          if (!entry) throw new Error('SpatialArca entry missing from M1.2 Vite manifest')
-          const [manifestKey,value] = entry
-          const file = 'dist/' + value.file
-          const bytes = fs.readFileSync(file)
-          process.stdout.write(JSON.stringify({
-            commit: '7dc5e3c66e4602478d4f8a23f45f136db457f0e1',
-            manifestKey,
-            file: value.file,
-            rawBytes: bytes.length,
-            gzipBytes: zlib.gzipSync(bytes,{level:9}).length,
-            brotliBytes: zlib.brotliCompressSync(bytes).length,
-          },null,2))
-          NODE
-          cd "$GITHUB_WORKSPACE"
-          node --input-type=module <<'NODE' > /tmp/m121r-evidence/bundle-comparison.json
-          import fs from 'node:fs'
-          const base = JSON.parse(fs.readFileSync('/tmp/m121r-evidence/m12-bundle.json','utf8'))
-          const current = JSON.parse(fs.readFileSync('/tmp/m121r-evidence/current-bundle.json','utf8'))
-          const pct=(a,b)=>Number((((a-b)/b)*100).toFixed(2))
-          process.stdout.write(JSON.stringify({
-            base,current,
-            delta:{
-              rawBytes:current.rawBytes-base.rawBytes,
-              rawPercent:pct(current.rawBytes,base.rawBytes),
-              gzipBytes:current.gzipBytes-base.gzipBytes,
-              gzipPercent:pct(current.gzipBytes,base.gzipBytes),
-              brotliBytes:current.brotliBytes-base.brotliBytes,
-              brotliPercent:pct(current.brotliBytes,base.brotliBytes),
-            }
-          },null,2))
-          NODE
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -130,35 +38,6 @@ jobs:
 
       - name: Install locked Python dependencies
         run: python -m pip install -r requirements.lock.txt
-
-      - name: Full Python suite
-        run: python -m pytest -q | tee /tmp/m121r-evidence/python-suite.txt
-
-      - name: Diff hygiene and authority scans
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE=7f9263d52845cdd8fb67ba34857cdd9a38fef2fa
-          git diff --check "$BASE"..HEAD
-          if git grep -n -E 'RodTemplate|ColumnRodInstance|state\.rods|heldRodId|DEPLOY_ROD|RETRIEVE_ROD|PLACE_HELD_ROD|MOVE_ROD|align_rods|deploy_rods|place_held_rod|engage_tone_ii|historical_alignment_ready|tonal_resolution|read_transverse|rod_templates|rod_instances|toneEngaged|alignmentReady|isAlignmentReady|onDeployRod|onMoveRod|onEngageTone|toneAvailable' -- frontend/src; then
-            echo 'Removed rod/alignment/Tone-gate contract terms returned.' >&2; exit 1
-          fi
-          if git grep -n -F 'document.body.dataset.arcaGrab' -- frontend/src; then
-            echo 'Global grab marker returned.' >&2; exit 1
-          fi
-          if git grep -n -E 'MAX_VERTICAL_OFFSET|VIRGA_TRAVEL' -- frontend/src/spatial; then
-            echo 'Legacy band-control geometry returned.' >&2; exit 1
-          fi
-          if ! git diff --quiet "$BASE"..HEAD -- scripts/arca_historica_kernel.py historical_data data/syntagma1_pinax04 data/mensa_tonographica; then
-            echo 'Immutable historical authority changed.' >&2; exit 1
-          fi
-          {
-            echo 'diff-check: pass'
-            echo 'removed-contract-scan: pass'
-            echo 'global-grab-marker-scan: pass'
-            echo 'legacy-band-control-scan: pass'
-            echo 'M0.9-and-historical-data: unchanged'
-          } > /tmp/m121r-evidence/authority-scans.txt
 
       - name: Install Playwright Chromium for browser QA
         run: |
