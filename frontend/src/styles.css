@@ -2961,6 +2961,17 @@ button.bank-plate[aria-pressed='true'] {
   position: relative;
   overflow: hidden;
 }
+
+/* Spatial chrome owns distinct corners. The generic provenance leaf is in
+   normal flow, which otherwise stacks its seal directly over the semantic
+   controls at narrow widths. Keep the source apparatus top-right while the
+   canonical instrument controls remain top-left. */
+.instrument-shell--spatial > .provenance-leaf {
+  position: absolute;
+  top: max(0.7rem, env(safe-area-inset-top));
+  right: max(0.7rem, env(safe-area-inset-right));
+  z-index: 30;
+}
 .spatial-stage {
   position: absolute; inset: 0;
   /* The canvas owns every gesture inside it: without this the browser claims
