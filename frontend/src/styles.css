@@ -3045,6 +3045,7 @@ button.bank-plate[aria-pressed='true'] {
   padding: 0.7rem 0.8rem 0.9rem;
   border: 1px solid rgba(195, 162, 92, 0.26);
   border-radius: 4px;
+  color: #e0c692;
   background: linear-gradient(180deg, rgba(34, 21, 13, 0.95), rgba(14, 9, 6, 0.95));
   backdrop-filter: blur(6px);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.6);
