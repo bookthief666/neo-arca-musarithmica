@@ -51,18 +51,35 @@ describe('one-carrier instrument', () => {
     expect(createReadingRequest(moved, manifest)).toEqual(createReadingRequest(s, manifest))
     expect(Object.keys(createReadingRequest(s, manifest)).sort()).toEqual(['carrier_instance', 'content_digest', 'format', 'manifest_id'])
   })
-  it('preserves instance and cursor across error, retry, success and return', () => {
-    const s = reduce(seated(), { type: 'SET_READING_POSITION', position: 5 })
-    const pending = reduce(s, { type: 'EXECUTE' })
+  it('preserves the exact carrier and cursor through error, retry, success and return', () => {
+    const seatedAtSix = reduce(seated(), { type: 'SET_READING_POSITION', position: 5 })
+    const id = seatedAtSix.carriers[0].instance_id
+
+    const pending = reduce(seatedAtSix, { type: 'EXECUTE' })
     expect(isReadingReady(pending, manifest)).toBe(false)
+    expect(pending.carriers[0].instance_id).toBe(id)
+    expect(pending.readingPosition).toBe(5)
+
     const error = reduce(pending, { type: 'EXECUTION_ERROR', message: 'offline' })
+    expect(error.carriers[0].instance_id).toBe(id)
+    expect(error.readingPosition).toBe(5)
+
     const retry = reduce(error, { type: 'EXECUTE' })
+    expect(retry.carriers[0].instance_id).toBe(id)
+    expect(retry.readingPosition).toBe(5)
+
     const success = reduce(retry, { type: 'EXECUTION_SUCCESS', execution: executionFixture })
     expect(deriveInstrumentView(success)).toBe('revelation')
+    expect(success.carriers[0].instance_id).toBe(id)
+    expect(success.execution?.reading.carrier_instance.instance_id).toBe(id)
+    expect(success.readingPosition).toBe(5)
+
     const back = reduce(success, { type: 'RETURN_TO_WORKING' })
-    expect(back.carriers).toEqual(s.carriers)
+    expect(back.carriers[0].instance_id).toBe(id)
+    expect(back.carriers).toEqual(seatedAtSix.carriers)
     expect(back.readingPosition).toBe(5)
     expect(back.execution).toBeNull()
+    expect(back.error).toBeNull()
   })
   it('ignores a late success outside execution', () => {
     const s = seated()
