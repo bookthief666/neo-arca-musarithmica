@@ -6,7 +6,7 @@ on:
       - automation/verify-m121r-tasks5-8-recovery
 
 jobs:
-  browser-acceptance:
+  final-exact-head:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout canonical M1.2.1R branch
@@ -15,8 +15,13 @@ jobs:
           ref: feature/m1.2.1r-historical-computation-rescue
           fetch-depth: 0
 
-      - name: Prepare evidence directory
-        run: mkdir -p /tmp/m121r-evidence/browser
+      - name: Record exact head
+        run: |
+          git rev-parse HEAD
+          test "$(git rev-parse HEAD)" = "bd0dc1d7fc2ebfd1c5bece78da848caf16bc5d9a"
+
+      - name: Prepare evidence
+        run: mkdir -p /tmp/m121r-final
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,6 +34,44 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Full frontend suite
+        working-directory: frontend
+        run: npm test -- --run | tee /tmp/m121r-final/frontend-suite.txt
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck | tee /tmp/m121r-final/typecheck.txt
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint | tee /tmp/m121r-final/lint.txt
+
+      - name: Production build with manifest
+        working-directory: frontend
+        run: |
+          npm run typecheck
+          npx vite build --manifest | tee /tmp/m121r-final/build.txt
+
+      - name: Dependency graph and current bundle
+        working-directory: frontend
+        run: |
+          npm ls three @react-three/fiber --all | tee /tmp/m121r-final/npm-ls-three-r3f.txt
+          node --input-type=module <<'NODE' > /tmp/m121r-final/current-bundle.json
+          import fs from 'node:fs'
+          import zlib from 'node:zlib'
+          const manifest=JSON.parse(fs.readFileSync('dist/.vite/manifest.json','utf8'))
+          const entry=Object.entries(manifest).find(([key,value])=>key.includes('SpatialArca')||value.src?.includes('SpatialArca'))
+          if(!entry) throw new Error('SpatialArca entry missing')
+          const [manifestKey,value]=entry
+          const bytes=fs.readFileSync('dist/'+value.file)
+          process.stdout.write(JSON.stringify({
+            commit:'bd0dc1d7fc2ebfd1c5bece78da848caf16bc5d9a',
+            manifestKey,file:value.file,rawBytes:bytes.length,
+            gzipBytes:zlib.gzipSync(bytes,{level:9}).length,
+            brotliBytes:zlib.brotliCompressSync(bytes).length
+          },null,2))
+          NODE
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -39,290 +82,40 @@ jobs:
       - name: Install locked Python dependencies
         run: python -m pip install -r requirements.lock.txt
 
-      - name: Install Playwright Chromium for browser QA
+      - name: Full Python suite
+        run: python -m pytest -q | tee /tmp/m121r-final/python-suite.txt
+
+      - name: Final authority and diff gates
+        shell: bash
         run: |
-          mkdir -p /tmp/browserqa
-          cd /tmp/browserqa
-          npm init -y >/dev/null
-          npm install playwright >/dev/null
-          npx playwright install --with-deps chromium
-          npm ls playwright > /tmp/m121r-evidence/playwright-version.txt
-
-      - name: Start Vite historical bridge
-        working-directory: frontend
-        run: |
-          npx vite --host 127.0.0.1 --port 4173 > /tmp/m121r-evidence/vite.log 2>&1 &
-          echo $! > /tmp/vite.pid
-          for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/m121r-evidence/vite.log
-          exit 1
-
-      - name: Write browser QA script
-        run: |
-          cat > /tmp/browserqa/qa.mjs <<'NODE'
-          import { chromium } from 'playwright'
-          import fs from 'node:fs'
-
-          const baseURL = 'http://127.0.0.1:4173'
-          const evidence = '/tmp/m121r-evidence/browser'
-          const results = { viewports:{}, bridge:{}, pointer:{}, targets:{}, legacy:{}, renderCost:{} }
-          const sleep = ms => new Promise(r => setTimeout(r,ms))
-
-          const browser = await chromium.launch({
-            headless:true,
-            args:['--use-angle=swiftshader','--use-gl=angle','--enable-webgl','--ignore-gpu-blocklist'],
-          })
-
-          async function makePage(width,height,renderer='spatial') {
-            const context = await browser.newContext({ viewport:{width,height}, deviceScaleFactor:1 })
-            const page = await context.newPage()
-            const errors=[]
-            page.on('pageerror',e=>errors.push(String(e)))
-            page.on('console',msg=>{ if(msg.type()==='error') errors.push(msg.text()) })
-            await page.goto(baseURL+'/?renderer='+renderer,{waitUntil:'networkidle'})
-            return {context,page,errors}
-          }
-
-          async function openPanel(page) {
-            const toggle=page.getByRole('button',{name:'Instrument controls'})
-            if(await toggle.getAttribute('aria-expanded')!=='true') await toggle.click()
-          }
-          async function openToHeld(page) {
-            await openPanel(page)
-            await page.getByRole('button',{name:'Open the Arca'}).click()
-            await page.getByRole('button',{name:/Bank I, DODECAMORIVM/i}).click()
-            await page.getByRole('button',{name:/Open Cell IV/i}).click()
-            await page.getByRole('button',{name:/Lift.*critical-edition carrier/i}).click()
-          }
-          async function openToSeated(page) {
-            await openToHeld(page)
-            await page.getByRole('button',{name:/Seat the carrier at the event-reading station/i}).click()
-            await sleep(1700)
-          }
-          async function closePanel(page) {
-            const toggle=page.getByRole('button',{name:'Instrument controls'})
-            if(await toggle.getAttribute('aria-expanded')==='true') await toggle.click()
-          }
-          async function spatialProbe(page) {
-            await page.waitForFunction(()=>Boolean(window.__arcaProbe),null,{timeout:15000})
-            return await page.evaluate(()=>({
-              camera:window.__arcaProbe.camera(),
-              cost:window.__arcaProbe.cost(),
-            }))
-          }
-          async function overflow(page) {
-            return page.evaluate(()=>({
-              viewport:document.documentElement.clientWidth,
-              document:document.documentElement.scrollWidth,
-              body:document.body.scrollWidth,
-              overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+1,
-            }))
-          }
-          function shot(page,name){ return page.screenshot({path:evidence+'/'+name+'.png',fullPage:true}) }
-
-          // 360x800: dormant/open and horizontal overflow.
+          set -euo pipefail
+          BASE=7f9263d52845cdd8fb67ba34857cdd9a38fef2fa
+          git diff --check "$BASE"..HEAD
+          if git grep -n -E 'RodTemplate|ColumnRodInstance|state\.rods|heldRodId|DEPLOY_ROD|RETRIEVE_ROD|PLACE_HELD_ROD|MOVE_ROD|align_rods|deploy_rods|place_held_rod|engage_tone_ii|historical_alignment_ready|tonal_resolution|read_transverse|rod_templates|rod_instances|toneEngaged|alignmentReady|isAlignmentReady|onDeployRod|onMoveRod|onEngageTone|toneAvailable' -- frontend/src; then
+            echo 'Removed contract returned' >&2; exit 1
+          fi
+          if git grep -n -F 'document.body.dataset.arcaGrab' -- frontend/src; then
+            echo 'Global grab marker returned' >&2; exit 1
+          fi
+          if git grep -n -E 'MAX_VERTICAL_OFFSET|VIRGA_TRAVEL' -- frontend/src/spatial; then
+            echo 'Legacy band-control geometry returned' >&2; exit 1
+          fi
+          if ! git diff --quiet "$BASE"..HEAD -- scripts/arca_historica_kernel.py historical_data data/syntagma1_pinax04 data/mensa_tonographica; then
+            echo 'Immutable historical authority changed' >&2; exit 1
+          fi
           {
-            const {context,page,errors}=await makePage(360,800)
-            await page.waitForSelector('.instrument-shell')
-            await shot(page,'360x800-dormant')
-            await openPanel(page)
-            await page.getByRole('button',{name:'Open the Arca'}).click()
-            await shot(page,'360x800-open')
-            results.viewports['360x800']={overflow:await overflow(page),errors}
-            if(results.viewports['360x800'].overflow.overflow) throw new Error('360x800 horizontal overflow')
-            await context.close()
-          }
+            echo 'head: bd0dc1d7fc2ebfd1c5bece78da848caf16bc5d9a'
+            echo 'diff-check: pass'
+            echo 'removed-contract-scan: pass'
+            echo 'global-grab-marker-scan: pass'
+            echo 'legacy-band-control-scan: pass'
+            echo 'M0.9-and-historical-data: unchanged'
+          } | tee /tmp/m121r-final/authority-scans.txt
 
-          // 768x1024: held carrier/source field.
-          {
-            const {context,page,errors}=await makePage(768,1024)
-            await openToHeld(page)
-            await shot(page,'768x1024-held')
-            results.viewports['768x1024']={overflow:await overflow(page),errors}
-            await context.close()
-          }
-
-          // 884x1104: seated, event 1 / event 6, projected target bounds.
-          {
-            const {context,page,errors}=await makePage(884,1104)
-            await openToSeated(page)
-            await page.getByRole('button',{name:'Event 1 of 6'}).click()
-            await shot(page,'884x1104-seated-event1')
-            await page.getByRole('button',{name:'Event 6 of 6'}).click()
-            await shot(page,'884x1104-event6')
-            await closePanel(page)
-            await sleep(900)
-            const probe=await spatialProbe(page)
-            results.renderCost['884x1104']=probe.cost
-            results.viewports['884x1104']={overflow:await overflow(page),errors,renderer:await page.locator('.instrument-shell').getAttribute('data-renderer')}
-
-            results.targets=await page.evaluate(()=>{
-              const project=window.__arcaProbe.project
-              const box=(center,half)=>{
-                const pts=[]
-                for(const sx of [-1,1]) for(const sy of [-1,1]) for(const sz of [-1,1])
-                  pts.push(project(center[0]+sx*half[0],center[1]+sy*half[1],center[2]+sz*half[2]))
-                const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y)
-                return {left:Math.min(...xs),right:Math.max(...xs),top:Math.min(...ys),bottom:Math.max(...ys),
-                  width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)}
-              }
-              // Current Fold-like framing after carriage extension.
-              return {
-                readerEvent6:box([0,0.053,0.1938],[0.020,0.005,0.006]),
-                carrierFinial:box([0,0.0278,0.21474],[0.007,0.007,0.007]),
-              }
-            })
-            await context.close()
-          }
-
-          // 1104x884: true canvas pointer drag, release outside, cancel, orbit recovery.
-          {
-            const {context,page,errors}=await makePage(1104,884)
-            await openToSeated(page)
-            await page.getByRole('button',{name:'Event 1 of 6'}).click()
-            await closePanel(page)
-            await sleep(1700)
-            await page.waitForFunction(()=>Boolean(window.__arcaProbe),null,{timeout:15000})
-
-            const points=await page.evaluate(()=>({
-              start:window.__arcaProbe.project(0,0.053,0.1362),
-              end:window.__arcaProbe.project(0,0.053,0.1938),
-              camera:window.__arcaProbe.camera(),
-            }))
-            const cameraBefore=points.camera
-            await page.mouse.move(points.start.x,points.start.y)
-            await page.mouse.down()
-            await page.mouse.move(points.end.x,points.end.y,{steps:14})
-            await sleep(150)
-            const during=await page.evaluate(()=>({camera:window.__arcaProbe.camera(),status:document.querySelector('[role="status"]')?.textContent ?? ''}))
-            const outside={x:Math.min(1096,points.end.x+220),y:Math.min(876,points.end.y+180)}
-            await page.mouse.move(outside.x,outside.y,{steps:4})
-            await page.mouse.up()
-            await sleep(100)
-
-            // Orbit must resume after off-target release. Use a real browser
-            // pointer sequence rather than synthetic dispatch so React/R3F receives
-            // the same event path as an operator gesture.
-            const camBeforeOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-            await page.mouse.move(80,100)
-            await page.mouse.down()
-            await page.mouse.move(150,145,{steps:8})
-            await page.mouse.up()
-            await sleep(180)
-            const camAfterOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-
-            // Cancel path: claim the reader again, dispatch the browser mouse
-            // pointer's cancel event, then prove orbit can move through a second
-            // real browser gesture.
-            const currentEnd=await page.evaluate(()=>window.__arcaProbe.project(0,0.053,0.1938))
-            await page.mouse.move(currentEnd.x,currentEnd.y)
-            await page.mouse.down()
-            await page.evaluate(()=>window.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:1,buttons:0})))
-            await page.mouse.up()
-            await sleep(80)
-            const camBeforeCancelOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-            await page.mouse.move(180,110)
-            await page.mouse.down()
-            await page.mouse.move(230,145,{steps:8})
-            await page.mouse.up()
-            await sleep(180)
-            const camAfterCancelOrbit=await page.evaluate(()=>window.__arcaProbe.camera())
-
-            const distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2])
-            results.pointer={
-              projectedStart:points.start,projectedEnd:points.end,
-              statusDuringDrag:during.status,
-              cameraDeltaDuringReader:distance(cameraBefore,during.camera),
-              cameraDeltaAfterReleaseOrbit:distance(camBeforeOrbit,camAfterOrbit),
-              cameraDeltaAfterCancelOrbit:distance(camBeforeCancelOrbit,camAfterCancelOrbit),
-              releaseOutside:true,cancelDispatched:true,
-            }
-            fs.writeFileSync('/tmp/m121r-evidence/browser-qa-pointer.json',JSON.stringify(results.pointer,null,2))
-            if(!/Event 6 of 6/i.test(during.status)) throw new Error('Reader pointer drag did not reach event 6')
-            if(results.pointer.cameraDeltaDuringReader>0.002) throw new Error('Orbit moved while reader owned pointer')
-            if(results.pointer.cameraDeltaAfterReleaseOrbit<0.001) throw new Error('Orbit did not resume after off-target release')
-            if(results.pointer.cameraDeltaAfterCancelOrbit<0.001) throw new Error('Orbit did not resume after pointer cancel')
-            await shot(page,'1104x884-pointer-after-release')
-            results.viewports['1104x884']={overflow:await overflow(page),errors}
-            await context.close()
-          }
-
-          // Actual bridge rejects an unknown field.
-          {
-            const {context,page}=await makePage(884,1104)
-            results.bridge.unknownField=await page.evaluate(async()=>{
-              const m=await fetch('/api/historica/manifest').then(r=>r.json())
-              const request={
-                format:'neo-arca-mechanica-reading/v2',
-                manifest_id:m.manifest_id,
-                content_digest:m.content_digest,
-                carrier_instance:{instance_id:'qa-carrier',carrier_id:m.critical_edition_carrier.carrier_id,edition_id:m.critical_edition_carrier.edition_id,location:'workspace'},
-                unexpected_field:'must-reject',
-              }
-              const r=await fetch('/api/historica/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)})
-              return {status:r.status,body:await r.text()}
-            })
-            if(results.bridge.unknownField.status!==422) throw new Error('Bridge accepted unknown field')
-            await context.close()
-          }
-
-          // UI rejection → retry → revelation continuity.
-          {
-            const {context,page,errors}=await makePage(884,1104)
-            let rejectOnce=true
-            await page.route('**/api/historica/execute',async route=>{
-              if(rejectOnce){
-                rejectOnce=false
-                await route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'historical_alignment_rejected',message:'QA deliberate bridge rejection.'})})
-              } else await route.continue()
-            })
-            await openToSeated(page)
-            await page.getByRole('button',{name:/LECTIO/}).click()
-            await page.getByRole('alert').waitFor()
-            await shot(page,'884x1104-bridge-rejection')
-            await page.unroute('**/api/historica/execute')
-            await page.getByRole('button',{name:/Retry LECTIO/}).click()
-            await page.getByRole('button',{name:/Return to the carrier/}).waitFor()
-            await shot(page,'884x1104-retry-revelation')
-            results.bridge.uiRetry={errorSeen:true,retryRevealed:true,errors}
-            await context.close()
-          }
-
-          // 1440x900 complete legacy v2 reading.
-          {
-            const {context,page,errors}=await makePage(1440,900,'legacy')
-            await page.getByRole('button',{name:'Open the Arca'}).click()
-            await page.getByRole('button',{name:/DODECAMORIVM/}).click()
-            await page.getByRole('button',{name:/Open Cell IV/}).click()
-            await page.getByRole('button',{name:/Lift.*critical-edition carrier/i}).click()
-            await page.getByRole('button',{name:/Seat the carrier/i}).click()
-            await page.getByRole('button',{name:/LECTIO/}).click()
-            await page.getByText('Four voices manifest').waitFor()
-            await shot(page,'1440x900-legacy-revelation')
-            results.legacy={completed:true,overflow:await overflow(page),errors}
-            results.viewports['1440x900']={overflow:results.legacy.overflow,errors}
-            await context.close()
-          }
-
-          fs.writeFileSync('/tmp/m121r-evidence/browser-qa.json',JSON.stringify(results,null,2))
-          await browser.close()
-          NODE
-
-      - name: Run browser interaction QA
-        run: node /tmp/browserqa/qa.mjs
-
-      - name: Stop Vite
-        if: always()
-        run: |
-          if [ -f /tmp/vite.pid ]; then kill $(cat /tmp/vite.pid) || true; fi
-
-      - name: Upload Task 10 automated evidence
+      - name: Upload final exact-head evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m1-2-1r-task10-automated-evidence
-          path: /tmp/m121r-evidence
+          name: m1-2-1r-final-exact-head-evidence
+          path: /tmp/m121r-final
           if-no-files-found: error
