@@ -3101,6 +3101,10 @@ button.bank-plate[aria-pressed='true'] {
   }
   .spatial-reset { font-size: 0.76rem; padding: 0.3rem 0.7rem; }
   .spatial-controls { max-width: calc(100vw - 1.4rem); }
+  /* The semantic panel already exposes provenance on narrow screens. Hiding
+     the redundant corner seal prevents it from occluding the primary
+     Instrument controls target while the dialog itself remains available. */
+  .instrument-shell--spatial > .provenance-leaf > .provenance-seal { display: none; }
 }
 
 .spatial-loading {
